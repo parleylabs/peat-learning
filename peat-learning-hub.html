@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PEAT — Learning Hub</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c232c; --ink:#e6edf3; --muted:#9aa7b4;
+    --line:#2a323c; --accent:#3fb950; --accent2:#58a6ff; --warn:#d29922; --code:#0b0f14;
+    --pill:#21303f;
+    /* status accents */
+    --st-ship:#3fb950; --st-flight:#58a6ff; --st-prop:#d29922; --st-spec:#db6d6d;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink);}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .layout{display:flex;min-height:100vh}
+  /* sidebar */
+  nav.side{width:280px;flex:0 0 280px;background:var(--panel);border-right:1px solid var(--line);
+       position:sticky;top:0;height:100vh;overflow-y:auto;padding:22px 18px}
+  nav.side h1{font-size:18px;margin:0 0 2px;letter-spacing:.5px}
+  nav.side .tag{color:var(--muted);font-size:12px;margin-bottom:18px}
+  nav.side a{display:block;color:var(--muted);padding:7px 10px;border-radius:7px;font-size:14px;margin:2px 0}
+  nav.side a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+  nav.side a.active{background:var(--pill);color:#fff}
+  nav.side .num{display:inline-block;width:22px;color:var(--accent);font-weight:700}
+  nav.side .grp{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6b7785;margin:16px 8px 4px}
+  /* main */
+  main{flex:1;max-width:920px;margin:0 auto;padding:46px 40px 120px}
+  section{display:none;animation:fade .25s ease}
+  section.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h2{font-size:30px;margin:0 0 4px;line-height:1.2}
+  h3{font-size:21px;margin:34px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  h4{font-size:16px;margin:22px 0 6px;color:var(--accent2)}
+  .lead{color:var(--muted);font-size:17px;margin:6px 0 20px}
+  p{margin:12px 0}
+  code{background:var(--code);padding:2px 6px;border-radius:5px;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;color:#e6edf3}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.55}
+  pre code{background:none;padding:0}
+  .kw{color:#ff7b72}.fn{color:#d2a8ff}.str{color:#a5d6ff}.cm{color:#7d8590;font-style:italic}.ty{color:#79c0ff}.nm{color:#ffa657}.attr{color:#7ee787}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--accent2);font-weight:600}
+  tr:hover td{background:var(--panel)}
+  .tbl-wrap{overflow-x:auto}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+  .note{border-left:3px solid var(--accent2);background:var(--panel2);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  .warn{border-left:3px solid var(--warn);background:#241e10;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  .ok{border-left:3px solid var(--accent);background:#0f1f14;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  .bad{border-left:3px solid var(--st-spec);background:#231414;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  .pill{display:inline-block;background:var(--pill);color:#cfe3ff;font-size:12px;padding:2px 9px;border-radius:20px;margin:0 4px 4px 0}
+  /* status badges */
+  .st{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.3px;padding:1px 8px;border-radius:20px;
+      margin:0 5px 2px 0;text-transform:uppercase;vertical-align:middle;border:1px solid transparent}
+  .st.ship{background:rgba(63,185,80,.16);color:#5fd97a;border-color:rgba(63,185,80,.4)}
+  .st.flight{background:rgba(88,166,255,.16);color:#79b8ff;border-color:rgba(88,166,255,.4)}
+  .st.prop{background:rgba(210,153,34,.16);color:#e0b250;border-color:rgba(210,153,34,.4)}
+  .st.spec{background:rgba(219,109,109,.16);color:#e88;border-color:rgba(219,109,109,.4)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
+  .grid .card{margin:0}
+  .grid .card h4{margin-top:0}
+  .chk{background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:14px 18px;margin:22px 0}
+  .chk b{color:var(--accent)}
+  .crumbs{display:flex;justify-content:space-between;align-items:center;margin-top:48px;border-top:1px solid var(--line);padding-top:18px}
+  .btn{background:var(--pill);color:#cfe3ff;border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;font-size:14px}
+  .btn:hover{background:#2a3f52}
+  .file{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--accent);background:#0c130c;border:1px solid #1d2b1d;padding:2px 7px;border-radius:5px}
+  .phase{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+  .phase .p{flex:1;min-width:180px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .phase .p .n{color:var(--accent);font-weight:700;font-size:13px}
+  svg{max-width:100%;height:auto}
+  .fig{background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:16px 16px 12px;margin:18px 0;overflow-x:auto}
+  .fig > svg{display:block;margin:0 auto}
+  .muted{color:var(--muted)}
+  ul{margin:10px 0;padding-left:22px}li{margin:5px 0}
+  .legend{font-size:12px;color:var(--muted);margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+  .legend b{color:var(--ink)}
+  .legend .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin:0 4px 0 8px}
+  .keytable{font-size:12.5px}
+  @media(max-width:880px){nav.side{display:none}main{padding:26px 18px}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="side">
+    <h1>PEAT · Learning Hub</h1>
+    <div class="tag">Mesh protocol for autonomy · onboarding track</div>
+    <a data-go="m0"><span class="num">0</span> Start Here</a>
+    <div class="grp">Orient</div>
+    <a data-go="mbig"><span class="num">1·5</span> The Big Idea (Why)</a>
+    <a data-go="m1"><span class="num">1</span> Architecture Overview</a>
+    <div class="grp">Core</div>
+    <a data-go="m2"><span class="num">2</span> peat-protocol (SDK)</a>
+    <a data-go="m25"><span class="num">2·5</span> Formation &amp; Leadership</a>
+    <a data-go="m3"><span class="num">3</span> peat-mesh (network)</a>
+    <div class="grp">Reach</div>
+    <a data-go="m4"><span class="num">4</span> peat-btle &amp; peat-lite</a>
+    <a data-go="m5"><span class="num">5</span> peat-gateway</a>
+    <div class="grp">Synthesize</div>
+    <a data-go="m6"><span class="num">6</span> Data Flows</a>
+    <a data-go="muc"><span class="num">6·5</span> Use Cases</a>
+    <a data-go="m7"><span class="num">7</span> Repos &amp; Gaps</a>
+    <div class="grp">Apply &amp; Reference</div>
+    <a data-go="m8"><span class="num">8</span> Running &amp; Operating</a>
+    <a data-go="m9"><span class="num">9</span> Protocol Specs</a>
+  </nav>
+  <main>
+
+  <!-- ===== STATUS LEGEND (global) ===== -->
+  <!-- Used by every module. Shipped/In-flight/Proposed/Speculative badges appear inline next to capabilities. -->
+
+  <!-- ===== MODULE 0 ===== -->
+  <section id="m0" class="active">
+    <h2>Start Here</h2>
+    <p class="lead">A self-paced track for understanding the PEAT open-source mesh protocol — from
+    high-level architecture down to how each repo is built and connected. It is written to survive a
+    skeptical staff engineer reading it with the PEAT source open in another window.</p>
+
+    <div class="note"><b>PEAT in one sentence.</b> A decentralized mesh protocol that connects
+    heterogeneous systems — phones, servers, sensors, embedded devices, AI models — into one
+    coordinated whole, over the transports it supports, even when the network is degraded or denied.
+    The team's mental model is <em>“TCP/IP for autonomy.”</em> Built by Defense Unicorns, Apache-2.0.</div>
+
+    <h3>Read every claim with its status badge</h3>
+    <p>The single most important habit on this track: <b>never read a capability without its status.</b>
+    PEAT's code is ahead of some of its docs and behind others, so this material tags each capability so
+    you always know what is real today versus what is a plan.</p>
+    <div class="card">
+      <p style="margin-top:0"><span class="st ship">Shipped</span> in code and tested at the audited
+      commit. You can run it.</p>
+      <p><span class="st flight">In flight</span> an open issue, PR, or epic is actively building it.
+      Partially present.</p>
+      <p><span class="st prop">Proposed</span> an ADR exists in <code>Proposed</code> status with no
+      implementation yet.</p>
+      <p style="margin-bottom:0"><span class="st spec">Speculative</span> a design invented for teaching
+      or a whitepaper concept that exists in no repo. Do not assume it ships.</p>
+    </div>
+    <div class="warn"><b>Audited against (the source of truth for every badge below).</b> peat
+    <code>35d0f11</code> (workspace 0.9.0-rc.25) · peat-mesh <code>00ab0c9</code> (rc.42) · peat-btle
+    <code>3d70f48</code> (0.4.0) · peat-lite <code>7a8a8fb</code> (0.2.5) · peat-gateway
+    <code>8d16824</code> (0.1.0) · peat-node <code>4e1b5c8</code> (0.4.3). The single recurring pattern:
+    <b>code &gt; current ADRs &gt; specs/guide/README</b>. READMEs and the developer guide are months
+    older than the code and are wrong in several places this track flags.</div>
+
+    <h3>How to use this</h3>
+    <p>Go through the modules <b>in order</b> using the sidebar. Each has a <em>concept</em>, a
+    <em>code walkthrough</em> with real file paths, and a <em>checkpoint</em>. A matching Markdown
+    version of every module lives next to this file (<span class="file">00-START-HERE.md</span> …
+    <span class="file">09-protocol-specs.md</span>).</p>
+
+    <h3>The ordered modules</h3>
+    <div class="tbl-wrap"><table>
+      <tr><th>#</th><th>Module</th><th>What you'll learn</th></tr>
+      <tr><td>1·5</td><td><a data-go="mbig">The Big Idea (Why PEAT exists)</a></td><td>The whitepaper's argument: scaling crisis, the missing coordination layer, the hierarchy insight, open architecture</td></tr>
+      <tr><td>1</td><td><a data-go="m1">Architecture Overview</a></td><td>The layer models (two lenses), the repos, how they depend on each other</td></tr>
+      <tr><td>2</td><td><a data-go="m2">peat-protocol</a></td><td>The one crate you depend on; cells, hierarchy, security, QoS, the three phases</td></tr>
+      <tr><td>2·5</td><td><a data-go="m25">Formation &amp; Leadership</a></td><td>Code-level: formation auth handshake, deterministic election, roles, failover</td></tr>
+      <tr><td>3</td><td><a data-go="m3">peat-mesh</a></td><td>P2P transport (Iroh/QUIC), Automerge CRDT sync, negentropy, discovery</td></tr>
+      <tr><td>4</td><td><a data-go="m4">peat-btle &amp; peat-lite</a></td><td>BLE mesh across phones/MCUs; <code>no_std</code> CRDT primitives for small devices</td></tr>
+      <tr><td>5</td><td><a data-go="m5">peat-gateway</a></td><td>Control plane: enrollment, CDC, identity, envelope encryption — never in the data path</td></tr>
+      <tr><td>6</td><td><a data-go="m6">Data Flows</a></td><td>End-to-end traces: a track update, cell formation, hierarchical aggregation</td></tr>
+      <tr><td>6·5</td><td><a data-go="muc">Use Cases</a></td><td>Five worked, end-to-end scenarios, each labeled leg by leg</td></tr>
+      <tr><td>7</td><td><a data-go="m7">Repos &amp; Gaps</a></td><td>What's local, what's referenced, and where a new contributor gets leverage</td></tr>
+      <tr><td>8</td><td><a data-go="m8">Running &amp; Operating</a></td><td>Quickstart + operator guide: config, deploy, monitor, troubleshoot</td></tr>
+      <tr><td>9</td><td><a data-go="m9">Protocol Specs</a></td><td>The normative specs, and exactly where they have drifted from the code</td></tr>
+    </table></div>
+
+    <div class="ok"><b>Want to see it work right now?</b> Jump to <a data-go="m8">Module 8 — Running</a>
+    for a small mesh on your laptop, then come back. Watching <code>sync:</code> lines converge makes the
+    rest concrete. <span class="muted">(The exact quickstart binary name is flagged as unverified there —
+    treat the commands as a guide, not a guarantee.)</span></div>
+
+    <div class="warn"><b>Three facts to keep in your head from the start.</b>
+      <ul>
+        <li>You depend on <b>one</b> crate: <code>peat-protocol</code>. It re-exports
+        <code>peat-mesh</code> and <code>peat-schema</code>, so the whole stack comes along.</li>
+        <li>The dependency arrow points “down” from the facade: <code>peat-protocol</code>
+        <em>depends on</em> <code>peat-mesh</code>. An older diagram drew it the other way — the code is
+        the source of truth (Module 1 explains the history).</li>
+        <li>The leaf hierarchy tier is named <code>Node</code> in the shipped enums — <b>not</b>
+        <code>Platform</code>. The abstract vocabulary (ADR-066) is still <span class="st prop">Proposed</span>
+        and the rename is mid-flight. If you grep <code>HierarchyLevel</code> you will see <code>Node</code>.</li>
+      </ul>
+    </div>
+    <div class="crumbs"><span></span><button class="btn" data-go="mbig">Module 1·5 · The Big Idea →</button></div>
+  </section>
+
+  <!-- ===== THE BIG IDEA ===== -->
+  <section id="mbig">
+    <h2>1·5 · The Big Idea — Why PEAT Exists</h2>
+    <p class="lead">The <em>argument</em> for PEAT, distilled from the whitepaper
+    (<span class="file">peat/docs/whitepaper/</span>). Read this before the architecture — it's the
+    "why" everything else serves. Treat the whitepaper as positioning and design intent
+    (<span class="st spec">Speculative</span> unless a module later confirms the code), not as proof of
+    field results.</p>
+
+    <h3>1 · The scaling crisis — math, not technology</h3>
+    <p>Distributed multi-agent systems consistently plateau at <b>~20 nodes</b>. The cause is
+    <b>O(n²) message complexity</b>: in a full mesh, every node syncs with every other node.</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Nodes</th><th>Pairwise links (n·(n-1)/2)</th><th>Impact</th></tr>
+      <tr><td>10</td><td>45</td><td>manageable</td></tr>
+      <tr><td>20</td><td>190</td><td>heavy load — the empirical ceiling</td></tr>
+      <tr><td>100</td><td>4,950</td><td>network collapse</td></tr>
+      <tr><td>1,000</td><td>~500,000</td><td>physically impossible as a full mesh</td></tr>
+    </table></div>
+    <div class="note"><b>The key line:</b> “Better algorithms optimize <em>within</em> the constraint;
+    they don't escape it. More bandwidth shifts the wall; it doesn't remove it.” The barrier is
+    architectural, so the fix is architectural. <span class="st ship">Shipped</span> as the
+    <code>hierarchy</code> module (Module 2) plus the routing rule that forbids cross-cell direct
+    messaging — that rule is what bends the curve.</div>
+
+    <h3>2 · The standards paradox — the missing layer</h3>
+    <p>MQTT, DDS, gRPC, ROS2, Modbus, CoT… all work, but all assume coordination “happens somewhere
+    else — your application handles that.” Control moves bytes; coordination decides who should act.
+    PEAT supplies the coordination layer and <b>bridges</b> the existing standards (notably CoT/TAK,
+    Module 5) rather than replacing them.</p>
+    <pre><code>Application: domain logic
+─────────────────────────────────────────────
+COORDINATION: hierarchical orchestration          <span class="cm">← the layer PEAT fills</span>
+─────────────────────────────────────────────
+Messaging: MQTT · DDS · gRPC · ROS2
+Device control: Modbus · CAN · proprietary APIs
+Network: TCP/IP · UDP · BLE · (LoRa, proposed)</code></pre>
+
+    <h3>3 · The hierarchy insight — the reframe</h3>
+    <p>Hierarchy here is communication compression, not bureaucracy. A leader tracking 3 child summaries
+    instead of 24 raw states is doing aggregation. The complexity claim — <b>full mesh is O(n²),
+    hierarchy is O(n log n)</b> — is an <span class="st spec">analytical/design</span> result from the
+    whitepaper's connection table (full mesh ~9,120 links vs hierarchical ~384 at scale), <em>not</em> a
+    measured runtime benchmark. A second whitepaper figure (500,000 vs ~4,000 at depth 4) is a looser
+    model that disagrees with the first by roughly 10×, so treat the exact numbers as illustrative.</p>
+    <div class="phase">
+      <div class="p"><div class="n">UPWARD · aggregation</div>raw state summarized at each level — each tier gets only the granularity it needs</div>
+      <div class="p"><div class="n">DOWNWARD · dissemination</div>intent translated into action — higher levels say <em>what</em>, lower decide <em>how</em></div>
+      <div class="p"><div class="n">LATERAL · coordination</div>peers sync within a level (handoffs, deconfliction) without involving the hierarchy</div>
+    </div>
+    <p class="muted">→ the three flows are Module 6 Trace C; the routing rule that enforces them is the
+    Module 2 routing snippet. <b>Autonomy under human authority:</b> higher tiers express intent, lower
+    tiers retain how-to-execute discretion within delegated bounds.</p>
+
+    <h3>4 · Capability composition &amp; emergence</h3>
+    <p>Cells combine member capabilities into <b>emergent</b> ones no single node has, and coordinators
+    <b>task by requirement, not by node</b> (the cell reallocates on failure). The capability taxonomy in
+    code is <code>CapabilityType</code> = <code>SENSOR, COMPUTE, COMMUNICATION, MOBILITY, PAYLOAD,
+    EMERGENT</code> <span class="st ship">Shipped</span> (<span class="file">peat-schema/proto/capability.proto</span>).
+    There is <b>no <code>Weapon</code> type</b> — weapons fall under <code>PAYLOAD</code>.</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Individual</th><th>Emergent cell capability</th></tr>
+      <tr><td>Sensor + Compute</td><td>Edge AI processing</td></tr>
+      <tr><td>Multiple sensors</td><td>Wide-area observation</td></tr>
+      <tr><td>Sensor + Mobility</td><td>Sense-and-move loop</td></tr>
+      <tr><td>Heterogeneous sensors</td><td>Multi-spectral fusion</td></tr>
+    </table></div>
+
+    <h3>5 · Human-machine authority — “trust as data”</h3>
+    <p>Humans sit <b>within</b> the hierarchy. The design intent is that delegation and revocation
+    propagate like any replicated document, so a disconnected node keeps operating within its last-known
+    authority — <b>autonomy under human authority</b>. The whitepaper draws a six-level ladder, but that
+    ladder is <span class="st spec">whitepaper-only</span>; the shipped axis is a five-value enum.</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Whitepaper ladder (Speculative)</th><th>Shipped <code>AuthorityLevel</code> enum <span class="st ship">Shipped</span></th></tr>
+      <tr><td>Level 0 Root … Level 5 Node (six levels)</td><td><code>UNSPECIFIED, OBSERVER, ADVISOR, SUPERVISOR, COMMANDER</code> (five) — <span class="file">peat-schema/proto/node.proto</span></td></tr>
+    </table></div>
+    <div class="warn"><b>Three different axes — do not conflate them.</b> <code>AuthorityLevel</code>
+    (human-machine teaming, above) is distinct from the RBAC <code>Role</code> enum
+    (<code>Leader, Member, Observer, Commander, Admin</code>) and from <code>CellRole</code>
+    (the capability axis: <code>Leader, Sensor, Compute, Relay, Strike, Follower</code>). The README's
+    "Operator/Supervisor" RBAC names are <b>wrong</b> — those strings are not in the enum.</div>
+
+    <h3>6 · CRDTs instead of consensus</h3>
+    <p>Consensus (Paxos/Raft/2PC) blocks until quorum — a poor fit when partitions are the norm. PEAT
+    assumes partitions: nodes operate autonomously and merge deterministically on reconnect via
+    Automerge CRDTs. <span class="st ship">Shipped</span> — this is the strongest part of PEAT.</p>
+    <div class="note"><b>Terminology:</b> the whitepaper says <b>DIL</b> (Disconnected, Intermittent,
+    Limited); the code/README says <b>DDIL</b> — the same, plus <b>Denied</b> (adversarial).</div>
+
+    <h3>7 · The numbers — what was actually validated</h3>
+    <p>The headline figures deserve precision, because a customer will check them. Each is tagged with
+    what it really is.</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Claim you may have heard</th><th>What the evidence actually says</th></tr>
+      <tr><td>"93–99% bandwidth reduction"</td><td><b>Not a verbatim result.</b> The experiments whitepaper reports <b>79%</b> replication-op reduction at 24 nodes, <b>60–95%</b> CRDT diff-sync, and a <b>"95%+"</b> hierarchical <em>target</em>. The "93–99%" rounding appears in no repo. <span class="st spec">Marketing rounding</span></td></tr>
+      <tr><td>"1,000+ node validation"</td><td><b>Single-machine simulation</b> to ~1,000 nodes with a <b>1,023 hard cap</b> (Linux bridge) — not a field deployment. Larger scale is open work (#724–#727 target 900 / 1.2K / 10K). <span class="st flight">In flight</span></td></tr>
+      <tr><td>"&lt;5 s P1 latency"</td><td>A configured <b>target</b>. QoS classes ship and order traffic, but cross-class wire-level preemption is not enforced in v1. <span class="st flight">In flight</span></td></tr>
+      <tr><td>Phase validation: 2-node &lt;1 s/100%, 12-node 26 s, 24-node 54 s (6.1 s mean)</td><td>Whitepaper lab figures; the largest <em>code-side</em> lab referenced is a 7-node failover lab (peat-mesh CHANGELOG rc.37). <span class="st spec">Whitepaper lab</span></td></tr>
+      <tr><td>"TRL 4–5"</td><td>A whitepaper positioning claim, not a code-verifiable fact. <span class="st spec">Positioning</span></td></tr>
+    </table></div>
+
+    <h3>8–9 · Open imperative &amp; why now</h3>
+    <p><b>The TCP/IP lesson:</b> infrastructure wins by enabling, not capturing. PEAT is Apache-2.0,
+    IETF-spec'd, reference-implemented — coordination substrate, not product. <b>Three integration
+    depths</b> (with author LOC/latency estimates, <span class="st spec">not measured</span>): shallow
+    (adapters/bridge, ~500–1000 LOC) · medium (native capability advertisement, ~2000–5000 LOC) · deep
+    (native <code>peat-ffi</code>/<code>peat-lite</code>, ~5000+ LOC).</p>
+
+    <div class="chk"><b>Checkpoint.</b> Why is the 20-node ceiling math not technology? · what's the
+    “missing layer,” and control vs. coordination? · name the three information flows · which three
+    authority axes must not be conflated, and which RBAC names are wrong in the README? · which headline
+    numbers are whitepaper roundings or simulation ceilings rather than field results?</div>
+    <div class="crumbs"><button class="btn" data-go="m0">← Start</button><button class="btn" data-go="m1">Module 1 · Architecture Overview →</button></div>
+  </section>
+
+  <!-- ===== MODULE 1 ===== -->
+  <section id="m1">
+    <h2>1 · Architecture Overview</h2>
+    <p class="lead">The shape of PEAT before touching code: the problem, the three phases, the layer
+    lenses, the repos, and the real dependency graph.</p>
+
+    <h3>The problem</h3>
+    <p>Edge and tactical environments are <b>heterogeneous</b> and the network is frequently
+    <b>degraded, disrupted, intermittent, or limited (DDIL)</b>. Phones, ESP32 sensors, edge AI servers,
+    and robots speak different protocols over different radios and often can't reach each other directly.
+    PEAT gives them a common coordination layer that is offline-first (CRDT-based, no central server),
+    transport-agnostic across the transports it supports, and scales by hierarchy.</p>
+
+    <h3>The three phases (runtime mental model)</h3>
+    <div class="phase">
+      <div class="p"><div class="n">1 · DISCOVERY</div>Nodes find each other — mDNS, BLE ads, static config, or Kubernetes EndpointSlice. <span class="st ship">Shipped</span></div>
+      <div class="p"><div class="n">2 · CELL FORMATION</div>Discovered nodes form a <b>cell</b> by capability, compose those capabilities, and elect a leader. <span class="st ship">Shipped</span></div>
+      <div class="p"><div class="n">3 · COORDINATION</div>Cells self-organize into a hierarchy; state aggregates up, commands flow down — without flooding. <span class="st ship">Shipped</span></div>
+    </div>
+    <p>A <b>cell</b> is the fundamental unit of organization. Cells form parent/child tiers
+    (node → cell → cohort → federation → coalition) and keep operating autonomously when cut off.
+    <span class="muted">The leaf tier is <code>Node</code> in code; see Module 2·5 for the full
+    vocabulary status.</span></p>
+
+    <h3>The architecture, through two lenses</h3>
+    <p>There's <b>no single "official layer count."</b> The repo documents the architecture two
+    complementary ways — knowing they're two <em>lenses</em>, not a contradiction, saves confusion.</p>
+    <div class="grid">
+      <div class="card"><h4>Lens A · crate/packaging (5 layers)</h4>
+        <span class="muted"><span class="file">ARCHITECTURE.md</span> · 2025-01-07 · organizes by which crate owns what</span>
+        <pre><code>APPLICATION   CoT/TAK bridge · inference · your app
+BINDING       peat-ffi (Kotlin/Swift)
+TRANSPORT     peat-mesh · peat-transport
+              peat-lite · peat-btle
+PROTOCOL      peat-protocol
+SCHEMA        peat-schema (Protobuf)</code></pre></div>
+      <div class="card"><h4>Lens B · runtime data-flow (4 layers)</h4>
+        <span class="muted"><span class="file">DEVELOPER_GUIDE.md</span> · 2025-12-08 · organizes by how a change flows</span>
+        <pre><code>APPLICATION          transport · inference · your app
+PROTOCOL             peat-protocol
+  Discovery→Cell→Hierarchy · QoS · etc.
+STORAGE ABSTRACTION  Automerge + Iroh backend
+NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
+    </div>
+    <div class="note"><b>Which to hold in your head?</b> Use <b>Lens B</b> as your working model — it
+    matches the code's runtime flow. Use <b>Lens A</b> when reasoning about crates &amp; packaging. But
+    <b>treat both docs as dated</b> (2025): the developer guide predates every audited commit, so verify
+    its specifics against code (it is wrong on, e.g., RBAC role names and crypto).</div>
+
+    <h4>Lens B in motion — one local change becomes peer state</h4>
+    <div class="fig">
+      <svg viewBox="0 0 740 96" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="12">
+        <defs>
+          <marker id="a1" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/></marker>
+        </defs>
+        <g>
+          <rect x="6"   y="30" width="118" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="65"  y="48" fill="#e6edf3" text-anchor="middle">Local change</text><text x="65"  y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">node state, CRDT</text>
+          <rect x="158" y="30" width="100" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="208" y="48" fill="#e6edf3" text-anchor="middle">Delta</text><text x="208" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">generator</text>
+          <rect x="292" y="30" width="104" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="344" y="48" fill="#e6edf3" text-anchor="middle">QoS class</text><text x="344" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">P1–P5</text>
+          <rect x="430" y="30" width="104" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="482" y="48" fill="#e6edf3" text-anchor="middle">Sync engine</text><text x="482" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">Automerge</text>
+          <rect x="568" y="30" width="104" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="620" y="48" fill="#e6edf3" text-anchor="middle">Hierarchical</text><text x="620" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">router</text>
+          <rect x="568" y="0"  width="104" height="0"/>
+        </g>
+        <g stroke="#9aa7b4" stroke-width="1.5" fill="none" marker-end="url(#a1)">
+          <path d="M124,50 L156,50"/><path d="M258,50 L290,50"/><path d="M396,50 L428,50"/><path d="M534,50 L566,50"/>
+        </g>
+        <text x="690" y="52" fill="#5fd97a" font-size="11">→ peer</text>
+      </svg>
+      <div class="legend"><b>Legend.</b> <span class="sw" style="background:#21303f;border:1px solid #58a6ff"></span>where your code touches it ·
+      <span class="sw" style="background:#161b22;border:1px solid #2a323c"></span>internal stage · arrow = data flows toward.
+      The QoS stage assigns a class but does not yet enforce cross-class preemption (<span class="st flight">In flight</span>).</div>
+    </div>
+    <div class="warn"><b>Name trivia:</b> the developer guide expands the name as “Peat (Hierarchical
+    Intelligence for Versatile Entities)” — which spells <b>HIVE</b>, the project's former name (ADR-049,
+    “HIVE mesh extraction”). PEAT is the rename.</div>
+
+    <h3>The repositories</h3>
+    <div class="grid">
+      <div class="card"><h4>peat/</h4><span class="muted">Umbrella workspace.</span> Real code lives in
+        <code>peat-protocol</code> (the SDK facade), <code>peat-schema</code> (Protobuf),
+        <code>peat-transport</code> (HTTP/REST + CoT/TAK TCP bridge), <code>peat-persistence</code>,
+        <code>peat-ffi</code> (Kotlin/Swift). The bare <code>peat</code> crate is a reserved-name
+        placeholder with zero deps.</div>
+      <div class="card"><h4>peat-mesh/</h4><span class="muted">Network layer.</span> QUIC/Iroh P2P,
+        Automerge CRDT sync, negentropy, discovery, topology. <span class="muted">A
+        <code>peat-mesh-node</code> binary is referenced in the curriculum but its existence at this HEAD
+        is <span class="st spec">unverified</span> — the deployable node is <code>peat-node</code>.</span></div>
+      <div class="card"><h4>peat-btle/</h4><span class="muted">BLE mesh.</span> Bluetooth transport for
+        phones, sensors, MCUs. <span class="st ship">Shipped</span> on Linux/Android/macOS/ESP32; iOS and
+        Windows are <span class="st flight">In flight</span>.</div>
+      <div class="card"><h4>peat-lite/</h4><span class="muted">Embedded.</span> <code>no_std</code> CRDT
+        primitives + tiny wire protocol for small microcontrollers. <span class="st ship">Shipped</span>
+        (the 256 KB figure is a design target, not enforced).</div>
+      <div class="card"><h4>peat-gateway/</h4><span class="muted">Control plane.</span> Multi-tenant
+        enrollment, CDC, identity federation, envelope encryption. <b>Never in the data path.</b></div>
+      <div class="card"><h4>peat-node/</h4><span class="muted">Deployable node.</span> A real, separate
+        gRPC/Connect sidecar that embeds peat-mesh + peat-protocol. Iroh QUIC only (no BLE).
+        <span class="st ship">Shipped</span> at 0.4.3.</div>
+    </div>
+
+    <h3>The dependency graph (the literal truth)</h3>
+    <p>This is what the <code>Cargo.toml</code> files declare. Arrows mean “depends on.”</p>
+    <div class="fig">
+    <svg viewBox="0 0 760 440" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="13">
+      <defs>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/>
+        </marker>
+        <marker id="aro" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#d29922"/>
+        </marker>
+      </defs>
+      <g>
+        <rect x="300" y="20" width="170" height="44" rx="8" fill="#21303f" stroke="#3fb950"/>
+        <text x="385" y="40" fill="#e6edf3" text-anchor="middle">peat-gateway</text>
+        <text x="385" y="56" fill="#9aa7b4" text-anchor="middle" font-size="10">control plane</text>
+
+        <rect x="60" y="150" width="160" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
+        <text x="140" y="170" fill="#e6edf3" text-anchor="middle">peat-transport</text>
+        <text x="140" y="186" fill="#9aa7b4" text-anchor="middle" font-size="10">HTTP / CoT-TAK</text>
+
+        <rect x="60" y="240" width="160" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
+        <text x="140" y="260" fill="#e6edf3" text-anchor="middle">peat-ffi</text>
+        <text x="140" y="276" fill="#9aa7b4" text-anchor="middle" font-size="10">Kotlin / Swift</text>
+
+        <rect x="280" y="150" width="210" height="56" rx="8" fill="#21303f" stroke="#58a6ff"/>
+        <text x="385" y="172" fill="#e6edf3" text-anchor="middle" font-weight="bold">peat-protocol</text>
+        <text x="385" y="190" fill="#9aa7b4" text-anchor="middle" font-size="10">SDK facade · re-exports mesh+schema</text>
+
+        <rect x="560" y="150" width="150" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
+        <text x="635" y="170" fill="#e6edf3" text-anchor="middle">peat-persistence</text>
+
+        <rect x="300" y="250" width="170" height="48" rx="8" fill="#21303f" stroke="#58a6ff"/>
+        <text x="385" y="270" fill="#e6edf3" text-anchor="middle" font-weight="bold">peat-mesh</text>
+        <text x="385" y="286" fill="#9aa7b4" text-anchor="middle" font-size="10">QUIC/Iroh · Automerge</text>
+
+        <rect x="540" y="250" width="150" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
+        <text x="615" y="270" fill="#e6edf3" text-anchor="middle">peat-btle</text>
+        <text x="615" y="286" fill="#9aa7b4" text-anchor="middle" font-size="10">BLE (opt)</text>
+
+        <rect x="540" y="330" width="150" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
+        <text x="615" y="350" fill="#e6edf3" text-anchor="middle">peat-lite</text>
+        <text x="615" y="366" fill="#9aa7b4" text-anchor="middle" font-size="10">no_std (opt)</text>
+
+        <rect x="280" y="360" width="210" height="48" rx="8" fill="#0f1f14" stroke="#3fb950"/>
+        <text x="385" y="380" fill="#e6edf3" text-anchor="middle">peat-schema</text>
+        <text x="385" y="396" fill="#9aa7b4" text-anchor="middle" font-size="10">Protobuf · leaf, no PEAT deps</text>
+      </g>
+      <!-- arrows: each verified against manifests -->
+      <g stroke="#9aa7b4" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+        <path d="M220,168 L278,170"/>           <!-- transport -> protocol -->
+        <path d="M220,258 L278,188"/>           <!-- ffi -> protocol -->
+        <path d="M558,176 L492,182"/>           <!-- persistence -> protocol -->
+        <path d="M385,206 L385,248"/>           <!-- protocol -> mesh -->
+        <path d="M470,272 L538,272"/>           <!-- mesh -> btle (optional) -->
+        <path d="M470,290 L538,345"/>           <!-- mesh -> lite (optional) -->
+        <path d="M615,294 L615,328"/>           <!-- btle -> lite (optional) -->
+        <path d="M385,298 L385,358"/>           <!-- protocol/mesh stack -> schema -->
+      </g>
+      <!-- gateway depends on peat-mesh as a library (NOT protocol): long curved arrow gateway -> mesh -->
+      <path d="M470,46 C640,80 560,200 472,262" stroke="#d29922" stroke-width="1.7" fill="none" marker-end="url(#aro)"/>
+    </svg>
+    </div>
+    <p class="legend"><b>Legend.</b>
+      <span class="sw" style="background:#21303f;border:1px solid #58a6ff"></span>the two crates an integrator cares about most (bold) ·
+      <span class="sw" style="background:#161b22;border:1px solid #2a323c"></span>other crate ·
+      <span class="sw" style="background:#0f1f14;border:1px solid #3fb950"></span>dependency-free leaf ·
+      <span class="sw" style="background:#9aa7b4"></span>gray arrow = "depends on" ·
+      <span class="sw" style="background:#d29922"></span>amber arrow = <code>peat-gateway</code> depends on <code>peat-mesh</code> <em>as a library</em> (not on peat-protocol).
+      Arrows into <code>peat-btle</code>/<code>peat-lite</code> are <code>optional = true</code> Cargo features.</p>
+
+    <div class="warn"><b>Why the arrows point the way they do.</b> <code>peat-mesh</code> started life
+    <em>inside</em> <code>peat-protocol</code>; ADR-049 (“HIVE mesh extraction”) and peat-mesh ADR-0002
+    <b>extracted</b> it into its own repo so it could be versioned and published independently. After
+    extraction, <code>peat-protocol</code> became a facade that depends on and re-exports
+    <code>peat-mesh</code>. The old <span class="file">ARCHITECTURE.md</span> (2025-01-07) still draws the
+    pre-extraction arrow. <b>Trust the manifests.</b></div>
+
+    <h3>The modularity model (read this twice)</h3>
+    <div class="ok"><b>peat-lite and peat-btle are standalone leaf crates. The rest of PEAT depends on
+    <em>them</em>; they depend on <em>nothing</em> in PEAT.</b> Dependencies flow <b>down into</b> the
+    edge crates, never out of them. <span class="st ship">Shipped</span></div>
+    <ul>
+      <li><b>peat-lite is a pure leaf</b> — <em>zero</em> PEAT dependencies (only <code>heapless</code>). A self-contained <code>no_std</code> CRDT library.</li>
+      <li><b>peat-btle is almost a leaf</b> — its only PEAT dependency is an <em>optional</em> <code>peat-lite</code> (feature <code>peat-lite-frame</code>). At 0.4.0 it has <b>zero <code>peat-mesh</code> dependency</b>.</li>
+      <li><b>The core reaches outward to consume them, optionally</b> — <code>peat-mesh</code> pulls in <code>peat-btle</code> (<code>bluetooth</code>) and <code>peat-lite</code> (<code>lite-bridge</code>). Never the other way.</li>
+    </ul>
+    <pre><code>peat-protocol / peat-ffi / peat-mesh   <span class="cm">← the "core" stack</span>
+            │  (optional features point DOWN)
+            ▼
+       peat-btle    <span class="cm">← standalone BLE transport; only optional dep is peat-lite</span>
+            │  (optional)
+            ▼
+       peat-lite    <span class="cm">← pure leaf: zero PEAT deps, no_std, reusable anywhere</span></code></pre>
+    <p><b>Why it matters:</b> (1) <b>independent reuse</b> — each edge crate is adoptable on its own;
+    (2) <b>independent versioning/publishing</b> (each is its own crates.io + Maven artifact); (3) it
+    <b>reaches targets the core can't</b> — bare-metal MCUs, mobile; (4) it <b>keeps the graph acyclic</b>.
+    The cycle did appear once: <code>peat-btle</code> used to depend back on <code>peat-mesh</code>;
+    ADR-059 Amendment 4 broke that back-edge (cycle-break tracked by peat-mesh#828, <span class="st flight">In flight</span>).</p>
+
+    <div class="chk"><b>Checkpoint.</b> Name the three phases in order · which single crate does an app add
+    to Cargo.toml and what does it re-export? · which crate is the dependency-free foundation? · does
+    peat-gateway depend on peat-protocol or on peat-mesh? · why does the graph contradict the old diagram?</div>
+    <div class="crumbs"><button class="btn" data-go="m0">← Start</button><button class="btn" data-go="m2">Module 2 · peat-protocol →</button></div>
+  </section>
+
+  <!-- ===== MODULE 2 ===== -->
+  <section id="m2">
+    <h2>2 · peat-protocol — the SDK facade</h2>
+    <p class="lead">The crate you actually program against. It owns the high-level concepts and
+    re-exports the lower layers so you depend on one thing. <span class="file">peat/peat-protocol/</span></p>
+
+    <h3>The three phases as a flow</h3>
+    <div class="fig">
+      <svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="12">
+        <defs><marker id="a2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+        <rect x="10"  y="20" width="190" height="52" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="105" y="42" fill="#e6edf3" text-anchor="middle">Phase 1 · DISCOVERY</text><text x="105" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">mDNS / static / k8s</text>
+        <rect x="265" y="20" width="190" height="52" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="360" y="42" fill="#e6edf3" text-anchor="middle">Phase 2 · FORMATION</text><text x="360" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">authenticate · elect · roles</text>
+        <rect x="520" y="20" width="190" height="52" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="615" y="42" fill="#e6edf3" text-anchor="middle">Phase 3 · HIER. OPS</text><text x="615" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">aggregate up · command down</text>
+        <g stroke="#9aa7b4" stroke-width="1.5" fill="none" marker-end="url(#a2)">
+          <path d="M200,46 L263,46"/><text x="232" y="38" fill="#9aa7b4" text-anchor="middle" font-size="9">peers</text>
+          <path d="M455,46 L518,46"/><text x="487" y="38" fill="#9aa7b4" text-anchor="middle" font-size="9">Ready</text>
+          <path d="M520,66 C420,120 460,120 360,72" /><text x="440" y="118" fill="#d29922" text-anchor="middle" font-size="9">leader lost → re-elect</text>
+          <path d="M265,66 C180,116 195,116 105,72"/><text x="185" y="114" fill="#db6d6d" text-anchor="middle" font-size="9">timeout / too few members</text>
+        </g>
+      </svg>
+      <div class="legend"><b>Legend.</b> Blue boxes = the three runtime phases · gray = forward progress ·
+      amber = re-election on leader loss · red = fall back to discovery. All <span class="st ship">Shipped</span>.</div>
+    </div>
+
+    <h3>The entry point</h3>
+    <p>Open <span class="file">peat/peat-protocol/src/lib.rs</span>. The facade re-exports the lower layers:</p>
+    <pre><code><span class="cm">// Facade re-exports: downstream consumers depend on peat-protocol alone.</span>
+<span class="kw">pub use</span> peat_mesh;     <span class="cm">// P2P plumbing: transport, topology, CRDT sync</span>
+<span class="kw">pub use</span> peat_schema;   <span class="cm">// wire types (Protobuf)</span></code></pre>
+    <p>There is <b>no <code>prelude</code> module</b> in the current code (a “doc lags code” case). The
+    real, runnable imports from <span class="file">peat/examples/quickstart/</span> are explicit paths:</p>
+    <pre><code><span class="kw">use</span> peat_mesh::discovery::{<span class="ty">DiscoveryStrategy</span> <span class="kw">as</span> <span class="ty">MeshDiscoveryStrategy</span>, <span class="ty">MdnsDiscovery</span>};
+<span class="kw">use</span> peat_protocol::network::{<span class="ty">EndpointId</span>, <span class="ty">IrohTransport</span>, <span class="ty">PeerInfo</span>};
+<span class="kw">use</span> peat_protocol::storage::{<span class="ty">AutomergeBackend</span>, <span class="ty">AutomergeStore</span>};
+<span class="kw">use</span> peat_protocol::storage::capabilities::{<span class="ty">CrdtCapable</span>, <span class="ty">SyncCapable</span>, <span class="ty">TypedCollection</span>};</code></pre>
+    <div class="note">When in doubt, open the example and copy its imports — not the doc snippet. The
+    <code>security/*</code> and <code>network/iroh_transport</code> modules in peat-protocol are thin
+    <code>pub use peat_mesh::…</code> re-export shims.</div>
+
+    <h3>The module map</h3>
+    <div class="tbl-wrap"><table>
+      <tr><th>Module</th><th>Role</th></tr>
+      <tr><td><code>cell</code></td><td>Phase 2 — formation, leader election, capability aggregation</td></tr>
+      <tr><td><code>hierarchy</code></td><td>Phase 3 — zone coordination, state aggregation, routing rules, flow control</td></tr>
+      <tr><td><code>discovery</code></td><td>Phase 1 — domain-level discovery strategies (discovery itself now lives in <code>peat_mesh::discovery</code>; <code>peat-discovery</code> was retired under peat#919)</td></tr>
+      <tr><td><code>sync</code></td><td>Data-sync abstraction (traits) + the Automerge backend</td></tr>
+      <tr><td><code>security</code></td><td>RBAC + membership policy on top of re-exported peat-mesh crypto</td></tr>
+      <tr><td><code>qos</code></td><td>5-class priority, TTL, eviction, bandwidth (ADR-019); enforcement of preemption <span class="st flight">In flight</span></td></tr>
+      <tr><td><code>command</code> · <code>event</code></td><td>Commands down / events up, conflict resolution, priority queues</td></tr>
+      <tr><td><code>composition</code></td><td>Capability composition: additive / emergent / redundant / constraint</td></tr>
+      <tr><td><code>cot</code> · <code>distribution</code></td><td>CoT/TAK interop (Cursor-on-Target) · model distribution</td></tr>
+    </table></div>
+    <p class="muted">Defaults from <code>lib.rs</code>: <code>DEFAULT_CELL_SIZE = 5</code>,
+    <code>DEFAULT_DISCOVERY_TIMEOUT_SECS = 60</code>, <code>DEFAULT_HIERARCHY_DEPTH = 4</code>.</p>
+
+    <h3>Phase 2 — leader election is deterministic</h3>
+    <p>Every node computes the <em>same</em> score for every candidate, so they all converge on the same
+    leader with no vote-counting round. <span class="st ship">Shipped</span>. <b>Be precise about which
+    formula lives where</b> — there are two:</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Where</th><th>Scoring</th><th>Status</th></tr>
+      <tr><td>peat-protocol cell formation (<span class="file">cell/leader_election.rs</span>)</td><td><code>compute·0.30 + communication·0.25 + sensors·0.20 + power·0.15 + reliability·0.10</code>, lexicographic node-id tiebreak. Matches spec-004.</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td>peat-mesh runtime role (<span class="file">hierarchy/dynamic_strategy.rs</span>)</td><td>A <b>different</b> formula: mobility, (1−CPU%), (1−mem%), battery%, ×1.1 if can-parent, ×parent-priority; becomes <code>Leader</code> iff its score ≥ best peer × (1+hysteresis).</td><td><span class="st ship">Shipped</span></td></tr>
+    </table></div>
+    <div class="warn"><b>Do not present a single global algorithm.</b> The cell-formation weights
+    (0.30/0.25/…) are the spec-004 model; the mesh layer's runtime score uses entirely different inputs.
+    A reader who greps <code>dynamic_strategy.rs</code> will not find the 0.30/0.25 split.</div>
+    <p>A cell only becomes <code>Ready</code> when <code>CellCoordinator::check_formation_complete()</code>
+    passes: min size, leader elected, roles assigned, capability coverage, readiness ≥ 0.7, and
+    <b>human approval for mission-critical formations</b> — autonomy under human authority.</p>
+
+    <h3>Phase 3 — the routing rule that defines the topology</h3>
+    <p><span class="file">hierarchy/router.rs</span>:</p>
+    <pre><code><span class="cm">// Same cell → always allowed.</span>
+<span class="kw">if</span> from_cell == to_cell { <span class="kw">return</span> <span class="ty">true</span>; }
+<span class="cm">// Cross-cell direct messaging → rejected. Route up through your cell leader.</span>
+<span class="kw">return</span> <span class="ty">false</span>;</code></pre>
+    <p>That single rule prevents an everyone-talks-to-everyone flood. State flows up
+    (node→cell→cohort→federation→coalition), commands flow down, peers handle handoffs sideways. Cell
+    leaders route upward; non-leaders cannot cross-cell or reach the zone.</p>
+
+    <h3>State, QoS, security</h3>
+    <p>State is Automerge CRDT documents grouped into named collections; the <code>AutomergeBackend</code>
+    indexes docs by <code>collection:id</code>, fires observer channels on change, and orders deletions
+    with a Lamport-counted tombstone. QoS classifies every message into <b>5 classes</b>
+    (Critical=1 … Bulk=5) so contact reports are ordered ahead of routine telemetry — <b>ordering ships;
+    cross-class wire-level preemption is <span class="st flight">In flight</span></b>. Generic crypto
+    (<code>DeviceKeypair</code>, <code>FormationKey</code>) lives in <code>peat-mesh::security</code> and is
+    re-exported; <code>peat-protocol</code> adds the RBAC policy layer.</p>
+
+    <div class="chk"><b>Checkpoint.</b> Why can leader election be decided locally? · which two scoring
+    formulas exist and where? · collection vs document? · name the 5 QoS classes and which behavior ships
+    vs is in flight · where does generic crypto live vs. PEAT policy?</div>
+    <div class="crumbs"><button class="btn" data-go="m1">← Module 1</button><button class="btn" data-go="m25">Module 2·5 · Formation &amp; Leadership →</button></div>
+  </section>
+
+  <!-- ===== MODULE 2.5 ===== -->
+  <section id="m25">
+    <h2>2·5 · Forming a Cell &amp; Electing Leaders</h2>
+    <p class="lead">A code-level walkthrough of how nodes discover each other, authenticate into a
+    <b>formation</b>, elect a leader, take roles, and recover. Normative reference is
+    <span class="file">docs/spec/004-coordination.md</span> (Draft, 2025-01-07 — verify against code).</p>
+
+    <h3>The hierarchy enum — what the code actually says</h3>
+    <p>The shipped leaf-tier enum in <code>peat_mesh::beacon::HierarchyLevel</code> is:</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Tier</th><th>Shipped enum value</th><th>Meaning</th></tr>
+      <tr><td>0</td><td><code>Node</code> (0) <span class="st ship">Shipped</span></td><td>a single node — <b>the leaf is <code>Node</code>, not <code>Platform</code></b></td></tr>
+      <tr><td>1</td><td><code>Cell</code> (1)</td><td>smallest aggregation: <b>one leader + N members</b> (sizing comment: 4–13 nodes, not enforced)</td></tr>
+      <tr><td>2</td><td><code>Cohort</code> (2)</td><td>cells sharing a mission/role/region (2–4 cells, not enforced)</td></tr>
+      <tr><td>3</td><td><code>Federation</code> (3)</td><td>alliance of cohorts</td></tr>
+      <tr><td>4</td><td><code>Coalition</code> (4)</td><td>top tier: alliance of federations</td></tr>
+    </table></div>
+    <div class="warn"><b>Vocabulary is mid-rename — this is the most catchable error in older docs.</b>
+      <ul>
+        <li>The abstract vocabulary (ADR-066) is <span class="st prop">Proposed</span>, not accepted; the
+        base-unit name is debated in ADR-068 (<span class="st prop">Proposed</span>). Epics #904 / #968 /
+        #970 track the churn.</li>
+        <li>peat-mesh and peat-protocol use <code>Node</code> as the leaf. <b>No shipped enum uses
+        <code>Platform</code> as the leaf.</b></li>
+        <li><code>peat-btle</code> still ships fully legacy <code>Platform / Squad / Platoon / Company</code>
+        <span class="st flight">In flight</span> to migrate.</li>
+        <li><code>peat-schema</code> proto still ships <code>SquadSummary</code> / <code>squad_id</code>
+        <span class="st flight">In flight</span>.</li>
+      </ul>
+      Any doc presenting "Platform/Cell/Cohort/Federation/Coalition" as the current canonical enum is wrong
+      on two counts: the enum says <code>Node</code>, and ADR-066 is Proposed.</div>
+
+    <h3>The lifecycle: discover → form → elect → assign → confirm</h3>
+    <div class="fig">
+      <svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11.5">
+        <defs><marker id="a3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+        <rect x="250" y="6"   width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="24" fill="#e6edf3" text-anchor="middle">Discovery</text><text x="360" y="38" fill="#9aa7b4" text-anchor="middle" font-size="10">mDNS / static / k8s</text>
+        <rect x="250" y="66"  width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="84" fill="#e6edf3" text-anchor="middle">Formation handshake</text><text x="360" y="98" fill="#9aa7b4" text-anchor="middle" font-size="10">HMAC challenge-response</text>
+        <rect x="250" y="126" width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="144" fill="#e6edf3" text-anchor="middle">Leader election</text><text x="360" y="158" fill="#9aa7b4" text-anchor="middle" font-size="10">deterministic score</text>
+        <rect x="250" y="186" width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="204" fill="#e6edf3" text-anchor="middle">Role assignment</text><text x="360" y="218" fill="#9aa7b4" text-anchor="middle" font-size="10">RoleScorer fitness</text>
+        <polygon points="360,246 480,278 360,310 240,278" fill="#241e10" stroke="#d29922"/><text x="360" y="276" fill="#e6edf3" text-anchor="middle">check_formation_complete</text><text x="360" y="290" fill="#9aa7b4" text-anchor="middle" font-size="9">size·leader·roles·coverage·≥0.7</text>
+        <rect x="500" y="120" width="120" height="36" rx="7" fill="#231414" stroke="#db6d6d"/><text x="560" y="142" fill="#e6edf3" text-anchor="middle">Forming</text>
+        <rect x="40"  y="260" width="150" height="36" rx="7" fill="#241e10" stroke="#d29922"/><text x="115" y="282" fill="#e6edf3" text-anchor="middle">human approval?</text>
+        <rect x="40"  y="330" width="150" height="26" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="115" y="347" fill="#e6edf3" text-anchor="middle">Ready</text>
+        <rect x="540" y="320" width="150" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="615" y="339" fill="#e6edf3" text-anchor="middle">Ready (no approval)</text>
+        <g stroke="#9aa7b4" stroke-width="1.4" fill="none" marker-end="url(#a3)">
+          <path d="M360,46 L360,64"/><path d="M360,106 L360,124"/><path d="M360,166 L360,184"/><path d="M360,226 L360,244"/>
+          <path d="M480,278 L500,150" stroke="#db6d6d"/><text x="520" y="200" fill="#db6d6d" font-size="9">gate fails</text>
+          <path d="M560,120 C560,150 470,150 470,150"/>
+          <path d="M240,278 L192,278"/><text x="216" y="270" fill="#d29922" font-size="9">pass</text>
+          <path d="M115,296 L115,328" stroke="#3fb950"/><text x="150" y="318" fill="#3fb950" font-size="9">no→Ready</text>
+          <path d="M480,300 L540,330" stroke="#3fb950"/>
+        </g>
+      </svg>
+      <div class="legend"><b>Legend.</b>
+        <span class="sw" style="background:#21303f;border:1px solid #58a6ff"></span>process step ·
+        <span class="sw" style="background:#241e10;border:1px solid #d29922"></span>gate/decision ·
+        <span class="sw" style="background:#231414;border:1px solid #db6d6d"></span>retry state ·
+        <span class="sw" style="background:#0f1f14;border:1px solid #3fb950"></span>terminal Ready. A
+        mission-critical capability routes through <b>human approval</b> before Ready (autonomy under human
+        authority). All <span class="st ship">Shipped</span>.</div>
+    </div>
+
+    <h3>Step 2 · Formation auth — the handshake (the security crux)</h3>
+    <p><b>Membership is proven by a shared formation key, never by mere reachability.</b>
+    <code>FormationKey</code> is derived from <code>formation_id</code> + a 32-byte secret via
+    <b>HKDF-SHA-256</b>. The handshake runs over ALPN <code>b"peat/formation-auth/1"</code> (30 s timeout)
+    before any state is exchanged. <span class="st ship">Shipped</span>
+    (<span class="file">peat-protocol/src/network/formation_handshake.rs</span>;
+    <span class="file">peat-mesh/src/security/formation_key.rs</span>).</p>
+    <div class="fig">
+      <svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11.5">
+        <defs><marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+        <rect x="40"  y="10" width="200" height="34" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="140" y="32" fill="#e6edf3" text-anchor="middle">Initiator (dialing node)</text>
+        <rect x="400" y="10" width="200" height="34" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="500" y="32" fill="#e6edf3" text-anchor="middle">Responder (member)</text>
+        <line x1="140" y1="44" x2="140" y2="240" stroke="#2a323c"/><line x1="500" y1="44" x2="500" y2="240" stroke="#2a323c"/>
+        <text x="320" y="60" fill="#9aa7b4" text-anchor="middle" font-size="10">QUIC stream · ALPN "peat/formation-auth/1"</text>
+        <g stroke="#9aa7b4" stroke-width="1.3" marker-end="url(#a4)">
+          <line x1="140" y1="80"  x2="498" y2="80"/><line x1="500" y1="112" x2="142" y2="112"/><line x1="140" y1="150" x2="498" y2="150"/>
+        </g>
+        <text x="320" y="74"  fill="#e6edf3" text-anchor="middle" font-size="10">1 · formation_id</text>
+        <text x="320" y="106" fill="#e6edf3" text-anchor="middle" font-size="10">2 · fresh random nonce (challenge)</text>
+        <text x="320" y="144" fill="#e6edf3" text-anchor="middle" font-size="10">3 · HMAC-SHA-256(nonce ‖ formation_id), keyed by FormationKey</text>
+        <text x="500" y="168" fill="#d29922" text-anchor="middle" font-size="10">verify in constant time (subtle)</text>
+        <line x1="500" y1="190" x2="142" y2="190" stroke="#3fb950" stroke-width="1.3" marker-end="url(#a4)"/>
+        <text x="320" y="184" fill="#5fd97a" text-anchor="middle" font-size="10">4a · MAC valid → admitted</text>
+        <line x1="500" y1="222" x2="142" y2="222" stroke="#db6d6d" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#a4)"/>
+        <text x="320" y="216" fill="#e88" text-anchor="middle" font-size="10">4b · MAC invalid → rejected</text>
+      </svg>
+      <div class="legend"><b>Legend.</b> Solid gray = handshake messages · amber note = constant-time
+      verification · green = admit · red dashed = reject. Fresh nonce + formation_id inside the MAC make it
+      non-replayable; the key never crosses the wire.</div>
+    </div>
+
+    <h3>Step 3 · Leader election — deterministic, no consensus</h3>
+    <p>Every node computes the <em>same</em> winner from the same advertised capabilities — no vote round,
+    split-brain safe. <span class="st ship">Shipped</span>. The spec-004 / cell-formation model:</p>
+    <pre><code><span class="cm">// peat-protocol cell formation (spec-004 model)</span>
+score = compute·0.30 + communication·0.25 + sensors·0.20 + power·0.15 + reliability·0.10
+ties → lexicographic node id</code></pre>
+    <div class="warn"><b>The mesh runtime uses a different formula.</b> <code>DynamicHierarchyStrategy</code>
+    scores mobility / (1−CPU%) / (1−mem%) / battery% with can-parent and parent-priority multipliers — not
+    the 0.30/0.25 split. Both are deterministic; they just live at different layers.</div>
+    <div class="warn"><b>Election timing constants are illustrative.</b> Numbers like "heartbeat 2 s,
+    re-elect after 3 missed (~6 s), election 5 s" are <span class="st spec">not traced to a code constant</span>
+    in the audit. peat-node has a reconnect watchdog (5 s interval, 5 s→120 s backoff), but that is a
+    different mechanism. Treat the specific cell-election timings as spec/illustrative until cited.</div>
+
+    <h3>Step 4 · Roles — Leader elected, the rest assigned</h3>
+    <p><code>CellRole</code> (capability axis): <code>Leader</code> (elected) + assigned <code>Sensor</code>,
+    <code>Compute</code>, <code>Relay</code>, <code>Strike</code>, <code>Follower</code>
+    <span class="st ship">Shipped</span> (<span class="file">peat-protocol/src/models/role.rs</span>).
+    <b>There is no <code>Support</code> variant</b> — older curriculum invented it. The distinct RBAC
+    <code>Role</code> enum is <code>Leader, Member, Observer, Commander, Admin</code> (the README's
+    "Operator/Supervisor" names are wrong). <code>RoleScorer::best_role_for_platform</code> picks by
+    fitness; required capabilities are blocking.</p>
+
+    <h3>Step 5 · Confirm — the readiness gates</h3>
+    <p><code>CellCoordinator::check_formation_complete()</code> requires, in order: min size · confirmed
+    leader · every member has a role · capability coverage (Comms + Sensor) · readiness ≥ 0.7 · human
+    approval if any capability needs oversight. Result → <code>FormationStatus</code>
+    (Forming / AwaitingApproval / Ready / Failed). <span class="st ship">Shipped</span></p>
+
+    <h3>State &amp; conflict resolution (the CRDT cell document)</h3>
+    <div class="tbl-wrap"><table>
+      <tr><th>Field</th><th>CRDT</th><th>Merge</th></tr>
+      <tr><td><code>members</code></td><td>OR-Set</td><td>union</td></tr>
+      <tr><td><code>leader_id</code></td><td>LWW-Register</td><td>latest timestamp wins</td></tr>
+      <tr><td>capabilities</td><td>G-Set</td><td>union</td></tr>
+    </table></div>
+    <div class="ok">Because <code>leader_id</code> is <b>LWW</b>, two partitions that elected different
+    leaders converge deterministically on merge — no special reconciliation code path.
+    <span class="st ship">Shipped</span></div>
+
+    <div class="chk"><b>Checkpoint.</b> What is the shipped leaf tier name, and what is the status of
+    ADR-066? · why is membership ≠ reachability? · walk the 4-step handshake and why it's non-replayable ·
+    which two election formulas exist · which <code>CellRole</code> variant does <em>not</em> exist · how do
+    two leader_ids reconcile after a partition?</div>
+    <div class="crumbs"><button class="btn" data-go="m2">← Module 2</button><button class="btn" data-go="m3">Module 3 · peat-mesh →</button></div>
+  </section>
+
+  <!-- ===== MODULE 3 ===== -->
+  <section id="m3">
+    <h2>3 · peat-mesh — the network layer</h2>
+    <p class="lead">How bytes actually move: pluggable transports, Automerge CRDT sync over Iroh/QUIC,
+    negentropy reconciliation, discovery, and topology. <span class="file">peat-mesh/</span></p>
+
+    <div class="note">If <code>peat-protocol</code> is the “what” (cells, hierarchy, policy),
+    <code>peat-mesh</code> is the “how” (connections, sync messages, persistence). It's re-exported, so
+    apps rarely call it directly — but everything bottoms out here.</div>
+
+    <h3>The transports — shipped vs proposed</h3>
+    <p>The <code>TransportType</code> enum lists eight categories
+    (<code>Quic, BluetoothClassic, BluetoothLE, WifiDirect, LoRa, TacticalRadio, Satellite, Custom</code>),
+    but that is a <b>taxonomy, not an inventory</b>. Only three are real <code>MeshTransport</code>
+    implementations:</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Transport</th><th>What it is</th><th>Status</th></tr>
+      <tr><td><b>QUIC / Iroh</b></td><td>TLS 1.3 over QUIC, Automerge sync; default transport</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td><b>BLE / GATT</b> (peat-btle)</td><td>Cross-platform BLE mesh, MTU chunking, relay; feature <code>bluetooth</code></td><td><span class="st ship">Shipped, opt-in</span></td></tr>
+      <tr><td><b>peat-lite UDP bridge</b></td><td>Bridge to embedded/ESP32 Lite nodes; feature <code>lite-bridge</code></td><td><span class="st ship">Shipped, opt-in</span></td></tr>
+      <tr><td>UDP bypass</td><td>A low-level send/recv channel (<code>UdpBypassChannel</code>), <b>not</b> a full <code>MeshTransport</code></td><td><span class="st ship">Shipped primitive</span></td></tr>
+      <tr><td>peat-sbd (Iridium satellite)</td><td>No crate, no module; <code>Satellite</code> is an enum variant only</td><td><span class="st prop">Proposed (ADR-051)</span></td></tr>
+      <tr><td>peat-lora (LoRa)</td><td>No crate; <code>LoRa</code> variant resolves to "no transport registered". <b>ADR-052 carries ChaCha20 — a FIPS conflict to fix before any impl.</b></td><td><span class="st prop">Proposed (ADR-052)</span></td></tr>
+      <tr><td>Multi-transport PACE failover</td><td>README "Phase 2 Planned"</td><td><span class="st prop">Proposed</span></td></tr>
+    </table></div>
+    <div class="note"><b>Relay default is off.</b> The n0 hosted relay is behind the
+    <code>relay-n0-hosted</code> feature and is OFF by default — correct for air-gapped/tactical builds. A
+    runtime toggle landed in rc.42; disabling-by-default is tracked by peat-mesh#833.</div>
+
+    <h3>The CRDT sync wire protocol</h3>
+    <p>Sync is Automerge over Iroh QUIC, reconciled by <b>negentropy</b> set reconciliation. The wire is
+    one-byte-tagged messages in <span class="file">storage/automerge_sync.rs</span>:</p>
+    <pre><code><span class="attr">#[repr(u8)]</span>
+<span class="kw">pub enum</span> <span class="ty">SyncMessageType</span> {
+    <span class="ty">DeltaSync</span>          = <span class="nm">0x00</span>,  <span class="cm">// standard Automerge sync</span>
+    <span class="ty">StateSnapshot</span>      = <span class="nm">0x01</span>,  <span class="cm">// full doc.save()</span>
+    <span class="ty">Tombstone</span>          = <span class="nm">0x04</span>,  <span class="cm">// deletion</span>
+    <span class="ty">SyncBatch</span>          = <span class="nm">0x07</span>,  <span class="cm">// multiple docs in one message</span>
+    <span class="ty">NegentropyInit</span>     = <span class="nm">0x08</span>,  <span class="cm">// set reconciliation (ADR-040, #435)</span>
+    <span class="ty">NegentropyResponse</span> = <span class="nm">0x09</span>,
+    <span class="ty">NegentropyRequest</span>  = <span class="nm">0x0A</span>,
+}
+<span class="cm">// Exact discriminant values are illustrative — verify against the source before relying on them.</span></code></pre>
+    <div class="note"><b>Why negentropy?</b> It is a set-reconciliation protocol that finds the difference
+    between two doc sets in <b>O(log n)</b> rounds by exchanging fingerprints, so peers learn <em>which</em>
+    docs differ before sending heavy data. <span class="st ship">Shipped</span> (cites arxiv 2012.00472;
+    <code>negentropy = 0.5</code>). The "O(log n)" is the algorithm's claim, <span class="st spec">not an
+    independent benchmark</span>. <b>Version-vector, snapshot-since-T, hierarchical-digest, and IBLT schemes
+    are not implemented</b> — those are teaching-only design.</div>
+    <div class="fig">
+      <svg viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
+        <defs><marker id="a5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+        <rect x="40" y="10" width="160" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="120" y="31" fill="#e6edf3" text-anchor="middle">Node A</text>
+        <rect x="400" y="10" width="160" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="480" y="31" fill="#e6edf3" text-anchor="middle">Node B</text>
+        <line x1="120" y1="42" x2="120" y2="270" stroke="#2a323c"/><line x1="480" y1="42" x2="480" y2="270" stroke="#2a323c"/>
+        <text x="300" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">Iroh QUIC stream (formation-gated)</text>
+        <g stroke="#9aa7b4" stroke-width="1.3" marker-end="url(#a5)">
+          <line x1="120" y1="80"  x2="478" y2="80"/><line x1="480" y1="110" x2="122" y2="110"/>
+          <line x1="120" y1="140" x2="478" y2="140"/><line x1="480" y1="170" x2="122" y2="170"/>
+          <line x1="480" y1="200" x2="122" y2="200"/>
+        </g>
+        <text x="300" y="74"  fill="#e6edf3" text-anchor="middle" font-size="10">NegentropyInit 0x08 — range fingerprints</text>
+        <text x="300" y="104" fill="#e6edf3" text-anchor="middle" font-size="10">NegentropyResponse 0x09 — differing ranges</text>
+        <text x="300" y="134" fill="#e6edf3" text-anchor="middle" font-size="10">NegentropyRequest 0x0A — doc IDs A is missing</text>
+        <text x="300" y="164" fill="#e6edf3" text-anchor="middle" font-size="10">StateSnapshot 0x01 — docs A lacks</text>
+        <text x="300" y="194" fill="#e6edf3" text-anchor="middle" font-size="10">DeltaSync 0x00 — deltas for docs A has</text>
+        <text x="120" y="226" fill="#9aa7b4" text-anchor="middle" font-size="9">persist to redb · checkpoint</text>
+        <text x="120" y="244" fill="#9aa7b4" text-anchor="middle" font-size="9">gossip: re-push to other peers except B</text>
+      </svg>
+      <div class="legend"><b>Legend.</b> Blue = node · gray arrows = sync messages in order. Tombstone
+      handling rides the same channel (<code>Tombstone 0x04</code>). Transitive gossip with echo suppression
+      is <span class="st ship">Shipped</span> in peat-node; the exact one-byte tags above are illustrative —
+      confirm against <code>automerge_sync.rs</code>.</div>
+    </div>
+
+    <h3>Discovery → connection</h3>
+    <div class="fig">
+      <svg viewBox="0 0 720 170" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
+        <defs><marker id="a6" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+        <rect x="10"  y="10" width="140" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="80" y="29" fill="#e6edf3" text-anchor="middle">MdnsDiscovery</text>
+        <rect x="10"  y="52" width="140" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="80" y="71" fill="#e6edf3" text-anchor="middle">KubernetesDiscovery</text>
+        <rect x="10"  y="94" width="140" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="80" y="113" fill="#e6edf3" text-anchor="middle">StaticDiscovery</text>
+        <rect x="200" y="52" width="150" height="28" rx="6" fill="#21303f" stroke="#58a6ff"/><text x="275" y="71" fill="#e6edf3" text-anchor="middle">PeerFound event</text>
+        <rect x="400" y="52" width="120" height="28" rx="6" fill="#21303f" stroke="#58a6ff"/><text x="460" y="71" fill="#e6edf3" text-anchor="middle">PeerConnector</text>
+        <rect x="400" y="110" width="120" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="460" y="129" fill="#e6edf3" text-anchor="middle">IrohTransport</text>
+        <polygon points="595,66 660,90 595,114 530,90" fill="#241e10" stroke="#d29922"/><text x="595" y="86" fill="#e6edf3" text-anchor="middle" font-size="9">formation</text><text x="595" y="98" fill="#e6edf3" text-anchor="middle" font-size="9">auth?</text>
+        <rect x="560" y="10" width="150" height="28" rx="6" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="29" fill="#e6edf3" text-anchor="middle">sync begins</text>
+        <rect x="560" y="130" width="150" height="28" rx="6" fill="#231414" stroke="#db6d6d"/><text x="635" y="149" fill="#e6edf3" text-anchor="middle">rejected</text>
+        <g stroke="#9aa7b4" stroke-width="1.3" fill="none" marker-end="url(#a6)">
+          <path d="M150,24 L198,60"/><path d="M150,66 L198,66"/><path d="M150,108 L198,72"/>
+          <path d="M350,66 L398,66"/><path d="M460,80 L460,108"/><path d="M520,100 L545,95"/>
+          <path d="M595,66 L560,40" stroke="#3fb950"/><path d="M595,114 L560,134" stroke="#db6d6d"/>
+        </g>
+      </svg>
+      <div class="legend"><b>Legend.</b>
+        <span class="sw" style="background:#161b22;border:1px solid #2a323c"></span>discovery source/transport ·
+        <span class="sw" style="background:#21303f;border:1px solid #58a6ff"></span>connection stage ·
+        <span class="sw" style="background:#241e10;border:1px solid #d29922"></span>formation-auth gate ·
+        green = sync begins · red = rejected. All <span class="st ship">Shipped</span>.</div>
+    </div>
+
+    <h3>The pluggable transport &amp; feature flags</h3>
+    <p>Everything that moves bytes implements one trait (<span class="file">transport/mod.rs</span>).
+    Connection-health enum variants (Healthy/Degraded/Suspect/Dead) exist, but the specific RTT/loss
+    thresholds in older docs are <span class="st spec">illustrative</span> — verify against the source.
+    Cross-transport bridging (ADR-059, <span class="st prop">Proposed</span>) goes through a
+    <code>Translator</code> trait; the trait + <code>BleTranslator</code> codec <b>ship</b> in peat-mesh.</p>
+    <div class="phase">
+      <div class="p"><div class="n">automerge-backend (on)</div>CRDT storage + Iroh sync + redb</div>
+      <div class="p"><div class="n">bluetooth / lite-bridge</div>BLE transport · peat-lite UDP bridge</div>
+      <div class="p"><div class="n">broker / kubernetes</div>Axum introspection · k8s discovery</div>
+      <div class="p"><div class="n">relay-n0-hosted (off)</div>opt-in n0 relays — off for tactical no-phone-home</div>
+    </div>
+    <div class="note"><b>FIPS posture (ADR-060, formally <span class="st prop">Proposed</span> but §5
+    already implemented in code).</b> <code>aes-gcm</code> (AES-256-GCM), <code>p256</code> (ECDH P-256
+    — <b>P-256 only, no P-384</b>), <code>rustls</code> over <b><code>aws-lc-rs</code></b> (not
+    <code>ring</code>, which is not FIPS-validated). See Module 9 for the algorithm-vs-module caveat.</div>
+
+    <div class="chk"><b>Checkpoint.</b> Which three transports are real <code>MeshTransport</code> impls, and
+    which two are Proposed-only? · why negentropy <em>before</em> deltas, and is "O(log n)" measured? · what
+    is the relay default and why? · which TLS crate, and why not <code>ring</code>?</div>
+    <div class="crumbs"><button class="btn" data-go="m2">← Module 2</button><button class="btn" data-go="m4">Module 4 · btle &amp; lite →</button></div>
+  </section>
+
+  <!-- ===== MODULE 4 ===== -->
+  <section id="m4">
+    <h2>4 · peat-btle &amp; peat-lite — the edge</h2>
+    <p class="lead">Reaching the smallest, most disconnected devices: BLE mesh for phones/sensors/MCUs,
+    and <code>no_std</code> CRDT primitives for bare-metal sensors.</p>
+
+    <h3>peat-btle — BLE mesh transport <span class="st ship">Shipped</span></h3>
+    <p>When there's no Wi-Fi/cell/satellite, the Bluetooth radio becomes the network. The crate is
+    organized around a <code>BleAdapter</code> trait implemented per OS:</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Platform</th><th>Adapter</th><th>Backed by</th><th>Status</th></tr>
+      <tr><td>Linux</td><td>BluerAdapter</td><td>bluer (BlueZ D-Bus)</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td>macOS</td><td>CoreBluetoothAdapter</td><td>objc2 + CoreBluetooth</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td>iOS</td><td>CoreBluetoothAdapter</td><td>objc2 + CoreBluetooth</td><td><span class="st flight">In flight (Beta)</span></td></tr>
+      <tr><td>Android</td><td>AndroidAdapter + Kotlin</td><td>UniFFI → Kotlin BLE APIs</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td>ESP32</td><td>esp32 module</td><td>esp-idf / NimBLE</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td>Windows</td><td>(planned)</td><td>—</td><td><span class="st flight">In flight (untested)</span></td></tr>
+    </table></div>
+    <p>BLE has tiny MTUs, so docs are <b>chunked</b> and reassembled (an 8-byte <code>ChunkHeader</code>,
+    30 s partial-reassembly timeout). Discovery uses a 16-byte <code>PeatBeacon</code> body (full
+    advertising data ~40 B — it <b>requires extended advertising and does not fit the legacy 31-byte
+    packet</b>). The GATT service UUID of record is <code>0xA1B2</code> / <code>a1b2c3d4…</code>
+    (the README's <code>0xF47A</code> and an old <code>gatt/mod.rs</code> value are stale; the spec's
+    <code>0x1826</code> is wrong — that is the standard Fitness Machine UUID).</p>
+    <p>Security is two-phase and FIPS-current: mesh-wide <b>AES-256-GCM</b> (HKDF-SHA-256 derived), then
+    per-peer <b>ECDH-P256 + AES-256-GCM</b> E2EE. <span class="st ship">Shipped</span>. NodeId addressing
+    uses BLAKE3 (not FIPS, but addressing-only, not a security boundary).</p>
+    <div class="warn"><b>Battery numbers are uncited marketing.</b> Figures like "&lt;5% duty cycle,
+    18–24 h, vs 3–4 h competitors" appear only in the README with no in-repo measurement. The
+    <code>PowerProfile</code> enum is <code>Aggressive / Balanced / LowPower</code> — the "UltraLow / 36 h"
+    profile has <b>no code path</b>. Power profiles ship; the specific hour figures are
+    <span class="st spec">unverified estimates</span>.</div>
+    <p class="muted">BLE rate/range constants (250 kB/s base, 125 kB/s Coded-S8 at 400 m, 500 kB/s LE2M at
+    50 m, 100 m base range) are <b>declared capability constants, not measured</b>.</p>
+    <div class="fig">
+      <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
+        <defs><marker id="a7" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+        <rect x="40" y="10" width="180" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="130" y="31" fill="#e6edf3" text-anchor="middle">Central (initiator)</text>
+        <rect x="380" y="10" width="180" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="470" y="31" fill="#e6edf3" text-anchor="middle">Peripheral (responder)</text>
+        <line x1="130" y1="42" x2="130" y2="190" stroke="#2a323c"/><line x1="470" y1="42" x2="470" y2="190" stroke="#2a323c"/>
+        <g stroke="#9aa7b4" stroke-width="1.3" marker-end="url(#a7)">
+          <line x1="130" y1="64" x2="468" y2="64"/><line x1="470" y1="96" x2="132" y2="96"/><line x1="130" y1="150" x2="468" y2="150"/>
+        </g>
+        <text x="300" y="58"  fill="#e6edf3" text-anchor="middle" font-size="10">[Write] SyncVector — what I have</text>
+        <text x="300" y="90"  fill="#e6edf3" text-anchor="middle" font-size="10">[Indicate] doc chunks (8B header + ≤MTU)</text>
+        <text x="300" y="120" fill="#9aa7b4" text-anchor="middle" font-size="9">ChunkReassembler rebuilds (30 s timeout)</text>
+        <text x="300" y="144" fill="#e6edf3" text-anchor="middle" font-size="10">[Write] Ack / EndSync</text>
+        <text x="300" y="174" fill="#9aa7b4" text-anchor="middle" font-size="9">DeltaEncoder — only changed keys resent on reconnect</text>
+      </svg>
+      <div class="legend"><b>Legend.</b> Blue = BLE role · gray arrows = GATT writes/indications · gray
+      notes = internal reassembly/delta tracking. <b>Caveat:</b> reconnect re-delivery of pending CRDT state
+      is <span class="st flight">In flight</span> (peat-btle#73) — a long BLE outage may not re-deliver
+      everything queued.</div>
+    </div>
+
+    <h3>peat-lite — <code>no_std</code> embedded primitives <span class="st ship">Shipped</span></h3>
+    <p>For ESP32-class devices: bounded CRDT primitives with no allocator (only dependency:
+    <code>heapless</code>). The <b>published library ships exactly two core CRDTs</b>:</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Type</th><th>Memory</th><th>Status</th></tr>
+      <tr><td><code>NodeId</code> (bare <code>u32</code>, no key derivation)</td><td>4 B</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td><code>CannedMessage</code></td><td>1 B</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td><code>LwwRegister&lt;T&gt;</code></td><td>sizeof(T)+12</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td><code>GCounter&lt;N=32&gt;</code></td><td>~260 B</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td><code>PnCounter</code> (two G-counters)</td><td>—</td><td><span class="st spec">Firmware-only</span>, not in the published library</td></tr>
+      <tr><td><code>OrSet</code></td><td>—</td><td><span class="st spec">Reserved wire byte only — no struct anywhere</span></td></tr>
+      <tr><td><code>command_log</code> CRDT</td><td>—</td><td><span class="st spec">Does not exist in any repo</span></td></tr>
+    </table></div>
+    <p>The merge rules are small enough to be obvious — CRDTs without the jargon:</p>
+    <pre><code><span class="cm">// lww.rs — last-writer-wins with a deterministic tiebreaker</span>
+<span class="kw">fn</span> <span class="fn">should_accept</span>(&amp;<span class="kw">self</span>, ts: <span class="ty">u64</span>, node: <span class="ty">NodeId</span>) -&gt; <span class="ty">bool</span> {
+    ts &gt; <span class="kw">self</span>.timestamp
+        || (ts == <span class="kw">self</span>.timestamp &amp;&amp; node.<span class="fn">as_u32</span>() &gt; <span class="kw">self</span>.node_id.<span class="fn">as_u32</span>())
+}
+<span class="cm">// counter.rs — grow-only counter merge = max per node (idempotent, commutative)</span>
+<span class="kw">pub fn</span> <span class="fn">merge</span>(&amp;<span class="kw">mut self</span>, other: &amp;<span class="ty">Self</span>) {
+    <span class="kw">for</span> (&amp;node, &amp;c) <span class="kw">in</span> other.counts.<span class="fn">iter</span>() {
+        <span class="kw">let</span> e = <span class="kw">self</span>.counts.<span class="fn">entry</span>(node).<span class="fn">or_insert</span>(<span class="nm">0</span>);
+        *e = (*e).<span class="fn">max</span>(c);
+    }
+}</code></pre>
+    <p>The <b>16-byte wire header</b> (ADR-035, <span class="st prop">Proposed</span> but the codec ships):
+    magic <code>"PEAT"</code> (4 ASCII bytes — <b>not <code>0xCAFE</code></b>), version 1, message type,
+    flags (2 B LE), node id (4 B LE), seq (4 B LE) — <b>no CRC-16</b>. <code>MAX_PACKET_SIZE = 512</code>
+    (<code>MAX_PAYLOAD = 496</code>), <code>DEFAULT_PORT = 5555</code>, multicast <code>239.255.72.76</code>.
+    A <code>Document (0x07)</code> message type carries <b>peat-lite's</b> universal <code>Document</code>
+    envelope (defined in <span class="file">peat-lite/src/protocol/document.rs</span>, not
+    <code>peat_mesh::Document</code>), so a tiny sensor shares the same document model as a server.</p>
+    <div class="warn"><b>The 256 KB budget is a design target, not an enforced limit.</b> ADR-035 states
+    256 KB, but there is no allocator cap and no static-RAM assertion. The often-quoted "~40× smaller than
+    Automerge" rests on two soft inputs (this target and an unverified ~10 MB Automerge footprint) — treat
+    it as illustrative.</div>
+
+    <h3>How they connect (and the cycle that was broken)</h3>
+    <pre><code>peat-mesh ──(bluetooth)──▶ peat-btle ──(peat-lite-frame)──▶ peat-lite
+     └────────(lite-bridge)──────────────────────────────────▶ (leaf: no peat deps)</code></pre>
+    <div class="note"><b>No cycles.</b> <code>peat-btle</code> used to depend on <code>peat-mesh</code>,
+    creating a cargo-breaking cycle. ADR-059 Amendment 4 deleted that back-edge: <code>peat-btle</code> 0.4.0
+    exposes only codec primitives (<code>translator-codec</code>) and has zero <code>peat-mesh</code>
+    dependency; <code>peat-mesh</code> implements the <code>Translator</code> on top. The cycle-break is
+    tracked by peat-mesh#828 (<span class="st flight">In flight</span>).</div>
+
+    <div class="chk"><b>Checkpoint.</b> Which two core CRDTs does the peat-lite <em>library</em> actually
+    ship (and which three are wire-bytes/firmware/nonexistent)? · what is the real wire magic and is there a
+    CRC? · is the 256 KB budget enforced? · which BLE platforms are shipped vs in flight? · what cycle was
+    broken and how?</div>
+    <div class="crumbs"><button class="btn" data-go="m3">← Module 3</button><button class="btn" data-go="m5">Module 5 · peat-gateway →</button></div>
+  </section>
+
+  <!-- ===== MODULE 5 ===== -->
+  <section id="m5">
+    <h2>5 · peat-gateway — the control plane</h2>
+    <p class="lead">The enterprise side: onboard teams, federate identity, manage keys, and stream mesh
+    events out — without ever sitting in the data path. <span class="file">peat-gateway/</span></p>
+
+    <div class="bad"><b>It is a control plane, not a node and not a data plane.</b> peat-gateway implements
+    <b>zero mesh transports</b>, does not sync CRDTs, and does not sit in the peer-to-peer path. External
+    mesh nodes register read-only handles into the gateway's API; the gateway <em>observes and manages</em>.
+    The data-plane "gateway/relay" in DDIL narratives is a peat-mesh relay <em>node</em>, which is a
+    different thing — and its reachability is exactly what DDIL operation must survive.</div>
+
+    <h3>Entry point</h3>
+    <p><span class="file">src/main.rs</span> is a <code>clap</code> CLI (<code>Serve</code>,
+    <code>MigrateKeys</code>, <code>LoadTest</code>). The <code>serve</code> path is the spine:</p>
+    <pre><code><span class="kw">let</span> tenant_mgr = <span class="ty">TenantManager</span>::<span class="fn">new</span>(config).<span class="fn">await</span>?;
+<span class="kw">let</span> cdc_engine = <span class="ty">CdcEngine</span>::<span class="fn">new</span>(config, tenant_mgr.<span class="fn">clone</span>()).<span class="fn">await</span>?;
+<span class="kw">let</span> app = api::<span class="fn">router</span>(tenant_mgr, cdc_engine, config.ui_dir, config.admin_token);
+<span class="cm">// ... serve `app` (an axum::Router) on config.bind_addr</span></code></pre>
+
+    <h3>The link to the mesh: MeshGenesis &amp; trust tiers</h3>
+    <p>The gateway manufactures the <em>trust material</em> autonomous nodes use — a <code>MeshGenesis</code>
+    per formation — and maps its own tier enum to peat-mesh wire tiers. <span class="st ship">Shipped</span>.</p>
+    <pre><code><span class="ty">MeshTier</span>::<span class="ty">Authority</span>      =&gt; peat_mesh::security::<span class="ty">MeshTier</span>::<span class="ty">Enterprise</span>,
+<span class="ty">MeshTier</span>::<span class="ty">Infrastructure</span> =&gt; peat_mesh::security::<span class="ty">MeshTier</span>::<span class="ty">Regional</span>,
+<span class="ty">MeshTier</span>::<span class="ty">Endpoint</span>       =&gt; peat_mesh::security::<span class="ty">MeshTier</span>::<span class="ty">Tactical</span>,</code></pre>
+    <div class="note">These map to <b>3 of 4</b> mesh wire tiers — the 4th, <code>Edge</code>, is unreachable
+    from the gateway. <b>Neither tier set is the ADR-066 hierarchy</b> (Node/Cell/Cohort/…). These are
+    trust/distribution tiers; keep them mentally separate from the formation hierarchy.</div>
+
+    <h3>Envelope encryption — four backends <span class="st ship">Shipped</span></h3>
+    <p>Authority keys are encrypted at rest: a per-record DEK is wrapped by a KEK behind a pluggable
+    <code>KeyProvider</code> trait. Backends: <code>PlaintextProvider</code> (dev),
+    <code>LocalKeyProvider</code> (AES-256-GCM), <code>AwsKmsProvider</code>, <code>VaultTransitProvider</code>;
+    selection priority KMS → Vault → local → plaintext (PENV v1 envelope, the best-tested subsystem).</p>
+    <div class="note"><b>FIPS boundary note.</b> The local-KEK path uses non-CMVP software AES; for a real
+    FIPS 140 boundary, the KMS/Vault HSM-backed path is the one to use. (A known gap: decrypted genesis
+    bytes are not zeroized after <code>open()</code> — peat-gateway#55, <span class="st flight">In flight</span>.)</div>
+
+    <h3>CDC — watching changes without being in sync</h3>
+    <p>Change Data Capture streams CRDT mutations to enterprise systems by <em>watching</em> the mesh's
+    document store. The <code>CdcEngine</code> fans <code>CdcEvent</code>s out per-org. <b>Only NATS and
+    Webhook actually deliver.</b></p>
+    <div class="fig">
+      <svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
+        <defs><marker id="a8" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+        <rect x="10"  y="60" width="150" height="44" rx="8" fill="#0e1f12" stroke="#3fb950"/><text x="85" y="80" fill="#e6edf3" text-anchor="middle">peat-mesh</text><text x="85" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">DocumentStore</text>
+        <rect x="210" y="60" width="130" height="44" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="275" y="80" fill="#e6edf3" text-anchor="middle">cdc/watcher</text><text x="275" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">observe()</text>
+        <rect x="390" y="60" width="140" height="44" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="460" y="80" fill="#e6edf3" text-anchor="middle">CdcEngine</text><text x="460" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">per-org fan-out</text>
+        <rect x="580" y="6"   width="110" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="25" fill="#e6edf3" text-anchor="middle">NATS JetStream</text>
+        <rect x="580" y="46"  width="110" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="65" fill="#e6edf3" text-anchor="middle">Webhook</text>
+        <rect x="580" y="92"  width="110" height="30" rx="7" fill="#1a2233" stroke="#58a6ff"/><text x="635" y="108" fill="#e6edf3" text-anchor="middle" font-size="10">Kafka (TODO)</text>
+        <rect x="580" y="130" width="110" height="30" rx="7" fill="#231414" stroke="#db6d6d"/><text x="635" y="148" fill="#e6edf3" text-anchor="middle" font-size="10">Redis (absent)</text>
+        <g stroke="#9aa7b4" stroke-width="1.3" fill="none" marker-end="url(#a8)">
+          <path d="M160,82 L208,82"/><text x="184" y="74" fill="#9aa7b4" text-anchor="middle" font-size="8">ChangeEvent</text>
+          <path d="M340,82 L388,82"/><text x="364" y="74" fill="#9aa7b4" text-anchor="middle" font-size="8">CdcEvent</text>
+          <path d="M530,76 L578,24" stroke="#3fb950"/><path d="M530,80 L578,60" stroke="#3fb950"/>
+          <path d="M530,90 L578,106" stroke="#58a6ff" stroke-dasharray="4 3"/><path d="M530,96 L578,144" stroke="#db6d6d" stroke-dasharray="4 3"/>
+        </g>
+      </svg>
+      <div class="legend"><b>Legend.</b>
+        <span class="sw" style="background:#0f1f14;border:1px solid #3fb950"></span><span class="st ship">Shipped</span> sink (delivers) ·
+        <span class="sw" style="background:#1a2233;border:1px solid #58a6ff"></span><span class="st flight">In flight</span> — Kafka dispatcher branch is an empty TODO, does <b>not</b> deliver ·
+        <span class="sw" style="background:#231414;border:1px solid #db6d6d"></span>Redis Streams does not exist (no sink variant). At-least-once delivery on the two shipped sinks.</div>
+    </div>
+
+    <h3>The rest at a glance</h3>
+    <div class="grid">
+      <div class="card"><h4>Identity</h4><b>OIDC token introspection</b> (RFC 7662, <code>openidconnect</code>) <span class="st ship">Shipped</span>; per-org <code>IdpConfig</code>. SAML / CAC federation are <span class="st prop">unverified / not corroborated</span> in code.</div>
+      <div class="card"><h4>Storage</h4><code>StorageBackend</code> trait → Postgres (<code>sqlx</code>) or embedded redb. Holds orgs, formations, peers, tokens, certs, encrypted genesis.</div>
+      <div class="card"><h4>Admin API + UI</h4>Axum routers; <code>/health</code>, <code>/metrics</code> (Prometheus). <b>Admin API is fully open when <code>PEAT_ADMIN_TOKEN</code> is unset.</b></div>
+      <div class="card"><h4>Packaging</h4>Helm <code>chart/</code> + <code>bundle/uds-bundle.yaml</code> (Zarf/UDS) for air-gapped, SSO-integrated deployment.</div>
+    </div>
+    <div class="warn"><b>Not production-secure yet (material for an air-gap/enterprise reader).</b> Ingress
+    AuthZ is a permissive stub — all events allowed (#99). No NATS broker ACLs (#97), no NATS auth/TLS
+    (#124/#125). Enrollment validates the pubkey for <b>length only</b> — <b>no proof-of-possession</b>. The
+    <code>Strict</code> enrollment policy is unimplemented (always 403s). All <span class="st flight">In flight</span>.</div>
+    <p class="muted">Depends on <code>peat-mesh = "=0.9.0-rc.1"</code> purely as a library — an intentionally
+    frozen pin that lags the mesh ecosystem (rc.42) by ~40 RCs.</p>
+
+    <div class="chk"><b>Checkpoint.</b> Why is the gateway never in the data path, and what is the "gateway"
+    in a DDIL story instead? · which two CDC sinks actually deliver, and what is the status of Kafka and
+    Redis? · which identity method is really shipped? · which path gives a real FIPS boundary? · name two
+    security gaps that are still in flight.</div>
+    <div class="crumbs"><button class="btn" data-go="m4">← Module 4</button><button class="btn" data-go="m6">Module 6 · Data Flows →</button></div>
+  </section>
+
+  <!-- ===== MODULE 6 ===== -->
+  <section id="m6">
+    <h2>6 · Cross-cutting data flows</h2>
+    <p class="lead">Tie the repos together by tracing real data end-to-end. Every hop below maps to shipped
+    code unless tagged otherwise.</p>
+
+    <h3>Trace A — a sensor reading reaches a CoT consumer <span class="st ship">Shipped</span></h3>
+    <pre><code>ESP32 sensor (peat-lite)
+   1. reading → peat-lite Document (0x07) frame, 16B header   <span class="cm">peat-lite/src/protocol/</span>
+        │ UDP / BLE
+   2. bridge into the DocumentStore, collection "tracks"      <span class="cm">peat-mesh/transport/lite.rs|btle.rs</span>
+   3. AutomergeBackend wraps as CRDT; observers fire          <span class="cm">peat-protocol/sync/automerge.rs</span>
+   4. sync to parent over Iroh/QUIC (negentropy reconciles)   <span class="cm">peat-mesh/storage/automerge_sync.rs</span>
+   5. parent aggregates cell summaries                        <span class="cm">peat-protocol/hierarchy/</span>
+   6. CoT bridge encodes Cursor-on-Target XML → CoT consumer  <span class="cm">peat-transport/tak/ + peat-protocol/cot/</span></code></pre>
+    <div class="fig">
+      <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
+        <defs><marker id="a9" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+        <rect x="20"  y="10" width="150" height="32" rx="7" fill="#0e1f12" stroke="#3fb950"/><text x="95"  y="31" fill="#e6edf3" text-anchor="middle" font-size="10">ESP32 sensor (lite)</text>
+        <rect x="200" y="10" width="160" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="280" y="31" fill="#e6edf3" text-anchor="middle" font-size="10">Cell leader (mesh)</text>
+        <rect x="400" y="10" width="140" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="470" y="31" fill="#e6edf3" text-anchor="middle" font-size="10">Zone / parent</text>
+        <rect x="580" y="10" width="110" height="32" rx="7" fill="#1a2233" stroke="#58a6ff"/><text x="635" y="31" fill="#e6edf3" text-anchor="middle" font-size="10">CoT consumer</text>
+        <line x1="95" y1="42" x2="95" y2="200" stroke="#2a323c"/><line x1="280" y1="42" x2="280" y2="200" stroke="#2a323c"/><line x1="470" y1="42" x2="470" y2="200" stroke="#2a323c"/><line x1="635" y1="42" x2="635" y2="200" stroke="#2a323c"/>
+        <g stroke="#9aa7b4" stroke-width="1.3" marker-end="url(#a9)">
+          <line x1="95" y1="64" x2="278" y2="64"/><line x1="280" y1="120" x2="468" y2="120"/><line x1="470" y1="170" x2="633" y2="170"/>
+        </g>
+        <text x="186" y="58" fill="#e6edf3" text-anchor="middle" font-size="9">16B frame · UDP or BLE</text>
+        <text x="280" y="88" fill="#9aa7b4" text-anchor="middle" font-size="8">Document in "tracks"; Automerge commits LOCALLY first</text>
+        <text x="375" y="114" fill="#e6edf3" text-anchor="middle" font-size="9">negentropy + delta (QUIC)</text>
+        <text x="470" y="146" fill="#9aa7b4" text-anchor="middle" font-size="8">HierarchicalAggregator folds CellDelta</text>
+        <text x="552" y="164" fill="#e6edf3" text-anchor="middle" font-size="9">CoT XML (MIL-STD-2525 type map)</text>
+      </svg>
+      <div class="legend"><b>Legend.</b>
+        <span class="sw" style="background:#0e1f12;border:1px solid #3fb950"></span>embedded leaf ·
+        <span class="sw" style="background:#21303f;border:1px solid #58a6ff"></span>mesh node ·
+        <span class="sw" style="background:#1a2233;border:1px solid #58a6ff"></span>external consumer (vendor-neutral). Gray notes = what happens internally at each hop. End-to-end <span class="st ship">Shipped</span>.</div>
+    </div>
+    <div class="ok"><b>Offline-first:</b> a partition between steps 4 and 5 loses nothing — the CRDT update
+    is committed locally and syncs when the link returns. <b>QoS:</b> a Critical contact report is
+    <em>ordered ahead of</em> routine telemetry; cross-class wire-level preemption is <span class="st flight">In flight</span>,
+    and "&lt;5 s P1" is a target, not an enforced SLA.</div>
+
+    <h3>Trace B — discovery to a formed, led cell <span class="st ship">Shipped</span></h3>
+    <pre><code>Phase 1  peat-mesh/discovery (mDNS/k8s/static) → PeerConnector dials (Iroh QUIC)
+         peat-protocol/discovery → candidate pool
+Phase 2  a. CapabilityAnnounce on the reliable CellMessageBus (seq + ACK + retransmit)
+         b. every node computes the SAME score → all converge on one leader (no vote round)
+         c. CompositionEngine detects EMERGENT capabilities (camera+comms+range → ISR)
+         d. check_formation_complete() → Ready → Phase 3</code></pre>
+    <p><b>Why no consensus round?</b> Scoring depends only on advertised capabilities, which every node
+    receives. Same inputs → same winner, computed independently. Robust on a flaky network.</p>
+
+    <h3>Trace C — aggregation up, command down <span class="st ship">Shipped (with caveats)</span></h3>
+    <pre><code>UP    node track → CellDelta → HierarchicalAggregator → SummaryStorage → cohort/federation
+DOWN  CommandCoordinator.issue_command() → CommandRouter resolves targets
+      → cell leader forwards to members → ACKs tracked by TimeoutManager
+      → conflicting commands resolved by ConflictResolver
+        (LAST_WRITE_WINS / HIGHEST_PRIORITY_WINS / HIGHEST_AUTHORITY_WINS / MERGE_COMPATIBLE / REJECT_CONFLICT)</code></pre>
+    <div class="warn"><b>Two honest caveats on the DOWN path.</b> Commands are ordinary JSON documents in a
+    <code>commands</code> collection — <b>there is no <code>command_log</code> CRDT</b> (<span class="st spec">Speculative</span>).
+    <b>Targeted</b> delivery to a specific node/role is ADR-046 (<span class="st prop">Proposed</span>), epic
+    #853 (<span class="st flight">In flight</span>); today a command propagates to the cell and receivers
+    filter. Mission-critical tasking still routes through human approval — autonomy under human authority.</div>
+
+    <h3>The whole picture</h3>
+    <pre><code>┌─ peat-gateway (optional) ─ mints MeshGenesis · streams CDC · federates identity ─┐
+│        manages (NEVER in data path)                  observes changes            │
+└──────────▲──────────────────────────────────────────────────┬────────────────────┘
+   ┌────────┴──────────────── MESH (data plane) ────────────────┴──────────┐
+   │  peat-protocol  (cells · hierarchy · QoS · security · CoT)  ← you here │
+   │       ├── peat-schema (Protobuf)                                       │
+   │       └── peat-mesh   (Iroh/QUIC · Automerge · negentropy · topology)  │
+   │                ├── peat-btle (BLE)        └── peat-lite (no_std MCU)    │
+   │  peat-transport (HTTP/CoT-TAK)       peat-ffi (Kotlin/Swift)           │
+   │  peat-node (gRPC sidecar — the deployable node, Iroh QUIC only)        │
+   └────────────────────────────────────────────────────────────────────────┘</code></pre>
+
+    <div class="chk"><b>Checkpoint.</b> In Trace A, name the crate for each step and why a partition between
+    4 and 5 loses nothing · Trace B: why no consensus round? · Trace C: what does <em>not</em> exist
+    (command_log) and which delivery is only proposed? · where does the gateway touch — and not touch —
+    these flows?</div>
+    <div class="crumbs"><button class="btn" data-go="m5">← Module 5</button><button class="btn" data-go="muc">Module 6·5 · Use Cases →</button></div>
+  </section>
+
+  <!-- ===== MODULE 6.5 USE CASES ===== -->
+  <section id="muc">
+    <h2>6·5 · Use Cases — five worked, end-to-end</h2>
+    <p class="lead">Each scenario is grounded in shipped code and labeled <b>leg by leg</b>. Where a leg is
+    not implemented, it says so. Numbers that are external hardware specs or design targets are flagged, not
+    presented as PEAT measurements.</p>
+
+    <div class="note"><b>Shared facts.</b> Shipped transports: QUIC/Iroh, BLE, peat-lite UDP bridge,
+    HTTP/REST, CoT/TAK TCP. CRDT engine = Automerge over Iroh, reconciled by negentropy. QoS 5 classes
+    (Critical=1…Bulk=5); <code>commands</code>/<code>contact-reports</code>/<code>alerts</code>→Critical.
+    Hierarchy leaf is <code>Node</code>. peat-gateway is a control plane, never in the data path.
+    SBD/LoRa are Proposed-only.</div>
+
+    <h3>1 · CoT/TAK operator picture <span class="st ship">Mostly Shipped</span></h3>
+    <p><b>Scenario.</b> Dismounted teams carry phones; a vehicle runs a peat-node sidecar; a CoT consumer at
+    the command post renders the common operating picture.</p>
+    <ul>
+      <li><b>Transports.</b> phones ↔ phones over <b>BLE</b> <span class="st ship">Shipped</span>; phone ↔
+      vehicle via a BLE→QUIC bridge (ADR-059 codec <span class="st ship">Shipped</span>, ADR
+      <span class="st prop">Proposed</span>); vehicle ↔ command post over <b>QUIC/Iroh</b>
+      <span class="st ship">Shipped</span>; bridged to the CoT consumer over <b>CoT/TAK TCP</b>
+      <span class="st ship">Shipped</span>.</li>
+      <li><b>Hierarchy.</b> each device a <code>Node</code>; a dismounted team is a <code>Cell</code>; the
+      command post observes <code>CohortSummary</code> roll-ups.</li>
+      <li><b>Data flow.</b> a position publishes to <code>tracks</code> (Normal) → BLE-syncs in the cell →
+      the leader's vehicle node bridges over QUIC (negentropy reconciles) → the CoT layer encodes
+      Cursor-on-Target XML (MIL-STD-2525 + <code>&lt;_peat_&gt;</code> extension) → the consumer renders.</li>
+      <li><b>Worked.</b> a position delta is tens of bytes; the intra-cell BLE hop is sub-millisecond at the
+      <em>declared</em> 250 kB/s constant (a BLE-spec figure, not a PEAT measurement); the QUIC hop adds
+      ~1–2 RTT after the handshake. Caveat: QoS preemption and "&lt;5 s" are not enforced.</li>
+    </ul>
+
+    <h3>2 · UGV / robot joining a cell and being tasked <span class="st ship">Join Shipped</span> · <span class="st flight">Tasking In flight</span></h3>
+    <p><b>Scenario.</b> A ground robot powers on, discovers a nearby cell, authenticates, takes a role,
+    receives a task.</p>
+    <ul>
+      <li><b>Join (Shipped).</b> discovery (mDNS / static / k8s) → <code>connect_and_authenticate</code> over
+      QUIC → <b>formation HMAC-SHA-256 handshake</b> (ALPN <code>peat/formation-auth/1</code>, key never on
+      wire) → membership granted, role by deterministic capability scoring → Automerge sync begins.
+      Deterministic iroh identity via <code>HKDF-SHA256(shared_key, "iroh:"+node_id)</code>.</li>
+      <li><b>Tasking (In flight / Proposed).</b> a command publishes to <code>commands</code> (Critical) as
+      an <b>ordinary JSON document</b> — <b>no <code>command_log</code> CRDT</b>
+      (<span class="st spec">Speculative</span>). Targeted delivery to <code>role:strike</code> is ADR-046
+      (<span class="st prop">Proposed</span>) / epic #853 (<span class="st flight">In flight</span>);
+      <code>CapableScope</code> is reserved-but-rejected in v1. Conflicts resolve via the real
+      <code>ConflictPolicy</code> enum. <b>A mission-critical capability requires human approval at
+      formation</b> (readiness ≥ 0.7) — autonomy under human authority.</li>
+      <li><b>Worked.</b> a command JSON doc is a few hundred bytes and syncs as one Automerge change; the
+      <em>targeted</em> send that would reach only <code>role:strike</code> is <b>not shipped</b> — today it
+      propagates to the cell and the receiver filters.</li>
+    </ul>
+
+    <h3>3 · Maritime / beyond-line-of-sight relay <span class="st ship">Relay Shipped</span> · <span class="st prop">Satellite Proposed</span></h3>
+    <p><b>Scenario.</b> A vessel relays a coastal sensor cell's summary to a shore post; the line-of-sight
+    link drops and it would fall back to satellite.</p>
+    <ul>
+      <li><b>Transports.</b> sensor↔vessel and vessel↔shore over <b>QUIC/Iroh</b> when in range
+      <span class="st ship">Shipped</span>; the beyond-line-of-sight fallback to <b>Iridium SBD is
+      <span class="st prop">Proposed (ADR-051)</span></b> — no crate, no code. A LoRa leg is likewise
+      <span class="st prop">Proposed (ADR-052)</span>.</li>
+      <li><b>Hierarchy.</b> the sensor cell is a <code>Cell</code>; the vessel is its <code>Leader</code>
+      routing upward; the shore post observes <code>CohortSummary</code>/<code>FederationSummary</code>.</li>
+      <li><b>Data flow.</b> in range, standard Automerge-over-QUIC with negentropy. Out of LOS, the
+      <em>design intent</em> is to send a compact summary up and commands down over the satellite link using
+      a single-burst digest — but <b>the satellite transport and that digest scheme are both
+      Proposed/Speculative</b>; shipped negentropy assumes an interactive QUIC channel and would not work
+      over a one-shot frame as-is.</li>
+      <li><b>Worked (clearly Proposed math).</b> a single Iridium SBD frame caps near <b>1,960 B MO /
+      1,890 B MT</b> (an <em>Iridium hardware limit</em> from research, <b>not a PEAT measurement</b>) at
+      <b>5–20 s</b> latency, <b>~$0.04–0.13/msg</b>; a round-trip summary would be ~40 s and two paid
+      messages — illustrative arithmetic over an unbuilt transport. <code>+SBDIX</code> MO+MT-in-one-pass is
+      an external Iridium fact, not a PEAT fact.</li>
+    </ul>
+
+    <h3>4 · Disaster-response disconnected cell reconciling on reconnect <span class="st ship">Shipped</span></h3>
+    <p><b>Scenario.</b> A team works in a comms-denied building, accumulates state locally, then reconnects
+    and converges automatically. <b>This is the strongest shipped story in PEAT.</b></p>
+    <ul>
+      <li><b>Transports.</b> intra-team <b>BLE</b> and/or <b>QUIC</b> on local Wi-Fi
+      <span class="st ship">Shipped</span>; reconnect over <b>QUIC/Iroh</b>. n0 relay is off by default —
+      correct for this air-gapped posture.</li>
+      <li><b>Data flow.</b> while partitioned, every node commits Automerge changes <b>locally first</b>; a
+      partitioned cell elects a leader locally (deterministic, <b>no quorum → no split-brain stall</b>). On
+      reconnect, the watchdog re-establishes QUIC, <b>negentropy reconciles</b> the document sets, only the
+      genuinely-missing deltas transfer, and Automerge merges deterministically; two independently-elected
+      leaders converge by LWW on <code>leader_id</code>.</li>
+      <li><b>Caveat.</b> peat-btle reconnect re-delivery of pending CRDT state is
+      <span class="st flight">In flight (#73)</span>; the QUIC/peat-node path is the robust one. Tombstone
+      retention (168 h / 7-day default) governs what survives a long offline window (peat-node#136).</li>
+      <li><b>Worked.</b> a team offline 30 min accumulates ~200 changes; on reconnect, negentropy exchanges
+      fingerprints in O(log n) rounds (an <em>algorithmic</em> claim, not benchmarked) and transfers only the
+      ~200 missing deltas — not the full history. Convergence is automatic.</li>
+    </ul>
+
+    <h3>5 · Remote sensor field over a constrained link <span class="st ship">Embedded legs Shipped</span> · <span class="st prop">LoRa leg Proposed</span></h3>
+    <p><b>Scenario.</b> Battery ESP32 sensors report to a better-resourced bridge node, which aggregates
+    into the full Automerge mesh.</p>
+    <ul>
+      <li><b>Transports.</b> sensor↔bridge over <b>peat-lite UDP</b> (codec <span class="st ship">Shipped</span>;
+      bridged by <code>LiteMeshTransport</code>, feature <code>lite-bridge</code>); bridge↔mesh over
+      <b>QUIC/Iroh</b> <span class="st ship">Shipped</span>. A LoRa variant of the first leg is
+      <span class="st prop">Proposed (ADR-052)</span>. OTA firmware push is <span class="st ship">Shipped</span>
+      (<code>lite_ota.rs</code>, ADR-047, stop-and-wait, SHA-256, optional Ed25519 signing).</li>
+      <li><b>CRDT types on the wire.</b> <code>LwwRegister</code> (latest reading) and <code>GCounter</code>
+      (event counts) — the only core peat-lite CRDTs that actually ship.</li>
+      <li><b>Hierarchy.</b> each sensor a <code>Node</code>; the bridge node is the <code>Cell</code> leader /
+      boundary translator — a <b>mesh node</b>, not the peat-gateway control plane. A gateway, if present,
+      only <em>observes</em> CDC events.</li>
+      <li><b>Worked.</b> a reading fits one UDP datagram: 16 B header + ~12 B position (fixed-point lat/lon
+      microdegrees + alt cm) + envelope framing, well under the 496 B payload limit. A <code>GCounter</code>
+      over 32 nodes is ~260 B (a <em>design-budget</em> figure, not measured RAM — the 256 KB total is a
+      design target, ADR-035, not enforced). A LoRa first leg (7–87 km, 1.5–9.1 kB/s —
+      <em>external LoRa hardware specs</em>) is Proposed.</li>
+    </ul>
+
+    <h3>What ships across all five</h3>
+    <div class="tbl-wrap"><table>
+      <tr><th>Capability</th><th>Status</th></tr>
+      <tr><td>Automerge-over-QUIC sync + negentropy + offline-first convergence (the backbone)</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td>BLE mesh, peat-lite UDP bridge, OTA, CoT/TAK bridge, deterministic election, formation HMAC handshake</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td>Cross-transport bridging codec (ADR-059)</td><td><span class="st ship">Shipped codec</span>, ADR <span class="st prop">Proposed</span></td></tr>
+      <tr><td>QoS class ordering</td><td><span class="st ship">Shipped</span>; preemption + "&lt;5 s P1" <span class="st flight">In flight</span></td></tr>
+      <tr><td>Gateway CDC (NATS/Webhook), envelope encryption, OIDC enrollment</td><td><span class="st ship">Shipped</span>; Kafka stub, Redis absent; ingress AuthZ/PoP <span class="st flight">In flight</span></td></tr>
+      <tr><td>Targeted command delivery (ADR-046)</td><td><span class="st flight">In flight (#853)</span>; <code>command_log</code> CRDT <span class="st spec">Speculative</span></td></tr>
+      <tr><td>Satellite (SBD) / LoRa transports, PACE failover, satellite digest schemes</td><td><span class="st prop">Proposed</span> / <span class="st spec">Speculative</span></td></tr>
+      <tr><td>MLS forward secrecy</td><td><span class="st prop">Proposed (ADR-044)</span></td></tr>
+    </table></div>
+
+    <div class="chk"><b>Checkpoint.</b> In use case 2, what part of tasking is shipped and what is not? · in
+    use case 3, which legs are real and which are Proposed math? · in use case 4, why is there no
+    split-brain stall? · across all five, name the one capability that is the backbone.</div>
+    <div class="crumbs"><button class="btn" data-go="m6">← Module 6</button><button class="btn" data-go="m7">Module 7 · Repos &amp; Gaps →</button></div>
+  </section>
+
+  <!-- ===== MODULE 7 ===== -->
+  <section id="m7">
+    <h2>7 · Repo map, gaps &amp; where to contribute</h2>
+    <p class="lead">What's local, what's referenced, and — for a defense-prime engineer — where a new
+    contributor gets the most leverage.</p>
+
+    <h3>The repositories</h3>
+    <div class="tbl-wrap"><table>
+      <tr><th>Repo</th><th>Role</th><th>Upstream</th></tr>
+      <tr><td>peat/</td><td>protocol, schema, transport, persistence, ffi, examples, spec</td><td>github.com/defenseunicorns/peat</td></tr>
+      <tr><td>peat-mesh/</td><td>network layer</td><td>github.com/defenseunicorns/peat-mesh</td></tr>
+      <tr><td>peat-btle/</td><td>BLE mesh</td><td>github.com/defenseunicorns/peat-btle</td></tr>
+      <tr><td>peat-lite/</td><td>embedded CRDTs</td><td>github.com/defenseunicorns/peat-lite</td></tr>
+      <tr><td>peat-gateway/</td><td>control plane</td><td>github.com/defenseunicorns/peat-gateway</td></tr>
+      <tr><td><b>peat-node/</b></td><td><b>the deployable node</b> — a real, separate gRPC/Connect sidecar embedding peat-mesh + peat-protocol; Iroh QUIC only</td><td>github.com/defenseunicorns/peat-node</td></tr>
+    </table></div>
+    <div class="note"><b>peat-node, not "peat-mesh-node."</b> The deployable node is the standalone
+    <code>peat-node</code> repo (0.4.3), exposing a gRPC/Connect API (the proto defines ~28 RPCs / 27
+    implemented — the README's "25" is outdated). Whether a <code>peat-mesh-node</code> binary also exists is
+    <span class="st spec">unverified</span> at the audited HEAD. v1 honesty caveats in peat-node: the gRPC
+    surface is <b>unauthenticated</b> (#38, <span class="st flight">In flight</span>); attachment priority
+    does not enforce wire-level preemption; <code>DistributionStatus</code> is sender-side only;
+    <code>CapableScope</code> is reserved-but-rejected.</div>
+    <div class="note"><b>Referenced but unaudited.</b> <code>peat-sim</code> (network simulator),
+    <code>peat-inference</code> (edge AI — YOLOv8/TensorRT etc.), <code>peat-registry</code> (ADR-054),
+    <code>peat-sdk-go</code>, <code>peat-android</code> are referenced in docs but were
+    <span class="st spec">not audited</span> in this checkout; treat their specifics as documented-but-unverified.</div>
+
+    <h3>Where a new contributor gets the most leverage</h3>
+    <div class="tbl-wrap"><table>
+      <tr><th>Contribution</th><th>What &amp; why</th><th>Status / size</th></tr>
+      <tr><td><b>Doc-fixes</b></td><td>Make stale docs match shipped code: README RBAC names (drop Operator/Supervisor → Leader/Member/Observer/Commander/Admin); README crypto (ChaCha20/X25519 → AES-256-GCM/ECDH-P256); peat-mesh version (0.3.2 → rc.42); peat-node RPC count (25 → 28/27); GATT UUID (→ 0xA1B2); peat-lite README missing <code>Document</code> 0x07. Highest-ROI first PR.</td><td><span class="st flight">Doc-fix</span> · trivial–small</td></tr>
+      <tr><td><b>FIPS module validation</b></td><td>Swap RustCrypto (<code>aes-gcm</code>/<code>p256</code>) for a CMVP-validated module via <code>aws-lc-rs</code> behind the existing security trait. The single most important enterprise-readiness item.</td><td><span class="st flight">In flight (peat-btle#75)</span> · medium</td></tr>
+      <tr><td><b>QoS enforcement</b></td><td>Wire-level cross-class preemption so a Critical bundle can pause an in-flight Bulk transfer; make "&lt;5 s P1" real.</td><td><span class="st flight">In flight</span> · medium</td></tr>
+      <tr><td><b>Control-plane auth</b></td><td>peat-node gRPC auth (#38); gateway ingress AuthZ (#99), NATS ACLs/auth/TLS (#97/#124/#125), enrollment proof-of-possession.</td><td><span class="st flight">In flight</span> · medium</td></tr>
+      <tr><td><b>command_log CRDT</b></td><td>An append-only, causally-ordered, authority-gated CRDT for tasking — the missing half of capability-based tasking under human authority. Needs a wire encoding for Automerge and the embedded tiers.</td><td><span class="st spec">Speculative</span> · large</td></tr>
+      <tr><td><b>Constrained-comms stack</b></td><td>peat-sbd / peat-lora transports + a single-burst digest scheme for non-interactive links (negentropy needs interactive QUIC). Fix ADR-052's ChaCha20 cipher first.</td><td><span class="st prop">Proposed (ADR-051/052)</span> · large</td></tr>
+      <tr><td><b>MLS forward secrecy</b></td><td>Pick a FIPS-compatible MLS ciphersuite and integrate group-key lifecycle; today group keys rotate by leader distribution.</td><td><span class="st prop">Proposed (ADR-044)</span> · large</td></tr>
+      <tr><td><b>Hierarchy rename</b></td><td>Finish the military→abstract rename across peat-btle + peat-schema proto (with wire-compat care).</td><td><span class="st flight">In flight (#904/#968)</span> · medium</td></tr>
+    </table></div>
+
+    <h3>The ADR archive — your best primary source</h3>
+    <p><span class="file">peat/docs/adr/</span> has <b>75</b> decision records (older docs say "~60"). Of the
+    foundational set, <b>only ADR-041 (multi-transport embedded integration) is Accepted</b>; ADRs
+    011/032/035/039/060/063/066 are all <span class="st prop">Proposed</span> even where the code already
+    ships the decision. Triage epic #695 covers "22 Proposed ADRs before public release." High-value reads:
+    ADR-040 (negentropy), ADR-049 + mesh ADR-0002 (the extraction that flipped the dependency arrow),
+    ADR-059 (the cycle break), ADR-060 (FIPS, §5 already coded), ADR-066/068 (hierarchy rename).</p>
+
+    <div class="chk"><b>Checkpoint.</b> Which repo is the deployable node, and what is its API? · which single
+    ADR in the foundational set is Accepted? · what is the highest-ROI first contribution and why? · which
+    contribution is purely Speculative today?</div>
+    <div class="crumbs"><button class="btn" data-go="muc">← Use Cases</button><button class="btn" data-go="m8">Module 8 · Running &amp; Operating →</button></div>
+  </section>
+
+  <!-- ===== MODULE 8 ===== -->
+  <section id="m8">
+    <h2>8 · Running, Deploying &amp; Operating PEAT</h2>
+    <p class="lead">Get hands-on, then how PEAT is configured, deployed, secured, monitored, and
+    troubleshot. Sources: <span class="file">QUICKSTART.md</span> + <span class="file">OPERATOR_GUIDE.md</span>.</p>
+
+    <div class="warn"><b>Commands here are a guide, not a guarantee.</b> Several specifics below
+    (the <code>peat-quickstart</code> binary, the 4040/8080 ports, the recycle env var and its issue number,
+    the exact metric and endpoint names) were <span class="st spec">not verified against code</span> at the
+    audited HEAD. Verify each against the current repo before relying on it; where the audit found a
+    correction, it is noted inline.</div>
+
+    <h3>The Quickstart</h3>
+    <pre><code>git clone https://github.com/defenseunicorns/peat.git &amp;&amp; cd peat
+cargo build -p peat-quickstart --release   <span class="cm"># binary/crate name UNVERIFIED at this HEAD; needs Rust 1.70+ and protoc</span>
+./target/release/peat-quickstart --help     <span class="cm"># --name --bind --peer --mdns --storage</span></code></pre>
+    <p><b>Three log prefixes</b> are how you read the mesh:</p>
+    <ul>
+      <li><code>discovery:</code> — a peer was configured (<code>--peer</code>) or found (<code>--mdns</code>); not yet reached.</li>
+      <li><code>connection:</code> — transport-level QUIC connect/reconnect/lost.</li>
+      <li><code>sync: NAME (new|updated)</code> — <b>a remote doc arrived/changed: state is replicating.</b></li>
+    </ul>
+    <div class="fig">
+      <svg viewBox="0 0 560 150" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
+        <defs><marker id="aq" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+        <rect x="200" y="10" width="160" height="40" rx="8" fill="#0f1f14" stroke="#3fb950"/><text x="280" y="30" fill="#e6edf3" text-anchor="middle">alpha (hub) :39001</text><text x="280" y="44" fill="#9aa7b4" text-anchor="middle" font-size="9">peers = 2</text>
+        <rect x="20"  y="100" width="160" height="36" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="100" y="122" fill="#e6edf3" text-anchor="middle">bravo :39002</text>
+        <rect x="380" y="100" width="160" height="36" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="460" y="122" fill="#e6edf3" text-anchor="middle">charlie :39003</text>
+        <g stroke="#9aa7b4" stroke-width="1.4" fill="none" marker-end="url(#aq)">
+          <path d="M120,100 L250,52"/><path d="M440,100 L310,52"/>
+        </g>
+        <path d="M180,118 L378,118" stroke="#d29922" stroke-width="1.3" stroke-dasharray="5 4" fill="none"/>
+        <text x="280" y="112" fill="#d29922" text-anchor="middle" font-size="9">no direct link · gossip via alpha</text>
+        <text x="185" y="78" fill="#9aa7b4" font-size="9">--peer alpha</text><text x="345" y="78" fill="#9aa7b4" text-anchor="end" font-size="9">--peer alpha</text>
+      </svg>
+      <div class="legend"><b>Legend.</b> Green = hub · blue = joiners · solid gray = configured peering ·
+      amber dashed = transitive gossip (charlie sees bravo via alpha). Ports shown are
+      <span class="st spec">illustrative</span>.</div>
+    </div>
+    <div class="warn"><b>Gotcha (verify the specifics).</b> A 60 s connection-recycle workaround (an iroh
+    memory mitigation) can cause brief sync outages each minute; set <code>PEAT_CONNECTION_RECYCLE_SECS=0</code>
+    for low-traffic demos. The recycler issue is <b>peat-mesh#892</b> — <b>not #435</b> (#435 is
+    negentropy/set reconciliation). Confirm the env var name against the current operator guide.</div>
+
+    <h3>Configuration, deploy, ports</h3>
+    <p>Env vars (or <code>peat.toml</code>). Mandatory: <code>PEAT_APP_ID</code>, a secret key, and a
+    formation key (<code>openssl rand -base64 32</code>). Deploy single-host, multi-node (seed + joiners),
+    Docker Compose, or a k8s StatefulSet. <b>Port note:</b> older docs list 4040 P2P / 8080 HTTP / 5353 mDNS,
+    but <b>peat-lite's own UDP default is 5555</b> (multicast <code>239.255.72.76</code>); 4040/8080 are
+    <span class="st spec">unverified</span> — check the quickstart/operator config.</p>
+
+    <h3>Binaries — don't mix them up</h3>
+    <div class="tbl-wrap"><table>
+      <tr><th>Binary</th><th>Purpose</th><th>Status</th></tr>
+      <tr><td><code>peat-quickstart</code></td><td>minimal learning binary</td><td><span class="st spec">existence unverified</span></td></tr>
+      <tr><td><code>peat-node</code></td><td>the deployable production node (gRPC sidecar, Module 7)</td><td><span class="st ship">Shipped</span></td></tr>
+      <tr><td><code>peat-sim</code></td><td>operator-guide network simulator</td><td><span class="st spec">own repo, unaudited</span></td></tr>
+      <tr><td><code>peat-mesh-node</code></td><td>referenced by older curriculum as the node binary</td><td><span class="st spec">existence unverified</span></td></tr>
+    </table></div>
+
+    <h3>Security, monitoring, troubleshooting</h3>
+    <p>Formation key gates cell admission. <b>Cipher status:</b> the operator guide still names
+    <b>ChaCha20-Poly1305</b> — that is <b>stale</b>; the code moved to <b>AES-256-GCM + ECDH-P256</b>
+    (rc.12, 2026-05-18) and spec 005 was amended to match. <b>P-256 only</b> — there is no P-384 in code.</p>
+    <p>Observe via HTTP (<code>/health</code>, <code>/metrics</code> Prometheus on the gateway). Specific
+    metric names and <code>/api/v1/...</code> endpoints in older docs are <span class="st spec">unverified</span>
+    — confirm against code. <b>Recovery:</b> wiping a node's data dir is safe — it rejoins and re-syncs from
+    peers (CRDT convergence) <span class="st ship">Shipped</span>. Common fixes:
+    <code>[peers=0]</code> → firewall/mDNS; election timeouts → NTP clocks; reconnect-every-60s →
+    <code>PEAT_CONNECTION_RECYCLE_SECS=0</code>.</p>
+
+    <div class="chk"><b>Checkpoint.</b> What do the three log prefixes mean &amp; which proves replication? ·
+    how does charlie see bravo without a direct link? · which cipher is stale and what replaced it (and which
+    curve is <em>not</em> in code)? · why is wiping a node's data safe? · which specifics on this page must
+    you verify before trusting them?</div>
+    <div class="crumbs"><button class="btn" data-go="m7">← Module 7</button><button class="btn" data-go="m9">Module 9 · Protocol Specs →</button></div>
+  </section>
+
+  <!-- ===== MODULE 9 ===== -->
+  <section id="m9">
+    <h2>9 · The Protocol Specifications</h2>
+    <p class="lead">The normative layer — IETF RFC-style specs (<span class="file">docs/spec/</span>,
+    RFC 2119 MUST/SHOULD/MAY). They are the best single description of the protocol's shape, but they have
+    <b>drifted from the code</b>, and the table below lists exactly where.</p>
+    <div class="warn">All specs are Draft (2025-01-07) <b>except spec 005-security</b>, which was amended
+    2026-05-18 (rev 0.2.0) to AES-256-GCM and is now FIPS-clean. Where a spec disagrees with the code, the
+    <b>code wins</b>.</div>
+
+    <div class="grid">
+      <div class="card"><h4>001 · Transport</h4>Wire formats &amp; lifecycle. QUIC/Iroh primary; stream-id
+        ranges partition control/CRDT/app traffic. UDP bypass is unauthenticated by default — use Signed mode
+        on untrusted links. <span class="muted">Drift: spec says DeviceId = "32 bytes of SHA-256" and BLE GATT
+        <code>0x1826</code> — both wrong (see table).</span></div>
+      <div class="card"><h4>002 · Sync</h4>Exclusively <b>Automerge + Negentropy</b>. Automerge uses
+        observed-remove maps and RGA lists/text; map keys resolve last-write-wins by Lamport ts + actor-id
+        tiebreak. Deletes are tombstones (7-day default retention <span class="st ship">Shipped</span>).</div>
+      <div class="card"><h4>003 · Schema</h4>Protobuf tactical entities in versioned packages; strict
+        evolution rules. Bidirectional <b>CoT/TAK mapping</b> (<code>a-f/a-h/a-n/a-u</code>,
+        <code>&lt;_peat_&gt;</code> extension).</div>
+      <div class="card"><h4>004 · Coordination</h4>Cell state machine, formation handshake, the spec-004
+        election weights (0.30/0.25/0.20/0.15/0.10), emergent-capability patterns, the three flows, partition
+        merge. <span class="muted">Note: the mesh runtime uses a <em>different</em> election formula (Module
+        2·5).</span></div>
+      <div class="card"><h4>005 · Security</h4>Ed25519 identity, formation HMAC challenge-response, RBAC +
+        authority levels. <b>FIPS-approved suite: AES-256-GCM, ECDH P-256, HKDF/HMAC-SHA-256.</b>
+        <span class="muted">Drift: spec Role enum (Observer/Member/Operator/Leader/Supervisor) ≠ code
+        (Leader/Member/Observer/Commander/Admin); MLS is listed but not implemented.</span></div>
+    </div>
+
+    <h3>Where the specs/README contradict the code (memorize these)</h3>
+    <div class="tbl-wrap"><table class="keytable">
+      <tr><th>Topic</th><th>What docs say</th><th>What the code does</th><th>Status</th></tr>
+      <tr><td>Device identity</td><td>"DeviceId/PeerId = SHA-256(Ed25519 pubkey), 32 bytes, one derivation everywhere"</td><td><code>DeviceId</code> = <b>first 16 bytes</b> of SHA-256(Ed25519 key). Four <em>different</em> schemes: mesh transport <code>NodeId</code> is a String; peat-btle is a <code>u32</code> = BLAKE3[..4]; peat-lite is a bare <code>u32</code>; peat-node uses the raw iroh EndpointId (no SHA-256 wrap)</td><td><span class="st ship">Code is truth</span></td></tr>
+      <tr><td>Crypto suite</td><td>READMEs: ChaCha20-Poly1305 / X25519; "P-256/384"</td><td><b>AES-256-GCM + ECDH P-256</b> (swapped rc.12, 2026-05-18). <b>No P-384.</b> ChaCha20 survives only in <em>Proposed</em> ADRs (044 MLS, 052 LoRa) and stale READMEs</td><td><span class="st ship">Code is FIPS-approved</span></td></tr>
+      <tr><td>FIPS validation</td><td>"FIPS 140-3"</td><td>Algorithms are FIPS-<b>approved</b>, but run in pure-Rust RustCrypto crates — <b>not a CMVP-validated module</b>. A real FIPS 140 boundary needs the KMS/Vault HSM path (peat-btle#75 open)</td><td><span class="st flight">In flight</span></td></tr>
+      <tr><td>MLS forward secrecy</td><td>README §Layer-4 lists MLS as shipped</td><td><b>Not implemented</b> — no <code>openmls</code>/<code>mls-rs</code> anywhere. Group keys rotate by leader distribution today</td><td><span class="st prop">Proposed (ADR-044)</span></td></tr>
+      <tr><td>RBAC roles</td><td>README: Observer/Member/Operator/Leader/Supervisor</td><td><code>Role</code> = <b>Leader/Member/Observer/Commander/Admin</b>. "Operator"/"Supervisor" are not in the enum (they leaked from <code>AuthorityLevel</code>)</td><td><span class="st ship">Code is truth</span></td></tr>
+      <tr><td>peat-lite wire</td><td>spec: magic <code>0xCAFE</code>, CRC-16</td><td>magic <b><code>"PEAT"</code></b> (4 ASCII), <b>no CRC</b>; 16-byte header</td><td><span class="st ship">Code is truth</span></td></tr>
+      <tr><td>BLE GATT UUID</td><td>spec <code>0x1826</code> (= Fitness Machine); README <code>0xF47A</code></td><td><b><code>0xA1B2</code> / <code>a1b2c3d4…</code></b></td><td><span class="st ship">Code is truth</span></td></tr>
+      <tr><td>QoS "&lt;5 s P1"</td><td>headline latency claim</td><td>A target; cross-class preemption not enforced in v1</td><td><span class="st flight">In flight</span></td></tr>
+    </table></div>
+
+    <h3>Eight facts to carry from the specs (corrected)</h3>
+    <ul>
+      <li><code>DeviceId</code> = SHA-256(Ed25519 pubkey) <b>truncated to 16 bytes</b>; <code>NodeId</code> is
+      layer-specific (String in mesh, BLAKE3 <code>u32</code> in btle, bare <code>u32</code> in lite, iroh
+      EndpointId in node) — <b>not one derivation everywhere</b>.</li>
+      <li>Automerge + Negentropy is the only sync stack; conflict resolution is deterministic.</li>
+      <li>QUIC/Iroh is primary; stream-id ranges partition control/CRDT/app traffic.</li>
+      <li>UDP bypass is unauthenticated by default — use Signed mode on untrusted links.</li>
+      <li>Formation key = HMAC-SHA-256 proof-of-knowledge, separate from the Ed25519 device identity.</li>
+      <li>Leader election is deterministic, no consensus round — but two different scoring formulas exist
+      (cell-formation vs mesh runtime).</li>
+      <li>Emergent capabilities are formal patterns driving capability-based tasking under human authority.</li>
+      <li>Crypto is <b>FIPS-approved</b> (AES-256-GCM / ECDH P-256 / Ed25519 / HKDF / HMAC-SHA-256) but
+      <b>not yet in a CMVP-validated module</b>; the stale ChaCha20/X25519/P-384/MLS references are
+      Proposed-only or doc drift.</li>
+    </ul>
+
+    <div class="chk"><b>Checkpoint.</b> How is <code>DeviceId</code> really derived, and why is "one
+    derivation everywhere" wrong? · which crypto is shipped vs Proposed, and what curve is absent? · what is
+    the algorithm-vs-module FIPS distinction? · which RBAC names are wrong in the README? · is MLS shipped?</div>
+    <div class="crumbs"><button class="btn" data-go="m8">← Module 8</button><button class="btn" data-go="m0">↑ Back to Start</button></div>
+  </section>
+
+  </main>
+</div>
+<script>
+  const links = document.querySelectorAll('[data-go]');
+  const sections = document.querySelectorAll('section');
+  const navlinks = document.querySelectorAll('nav.side a');
+  function go(id){
+    sections.forEach(s=>s.classList.toggle('active', s.id===id));
+    navlinks.forEach(a=>a.classList.toggle('active', a.getAttribute('data-go')===id));
+    window.scrollTo({top:0,behavior:'instant'});
+  }
+  links.forEach(el=>el.addEventListener('click',e=>{
+    const id=el.getAttribute('data-go'); if(id){e.preventDefault(); go(id);}
+  }));
+  go('m0');
+</script>
+</body>
+</html>

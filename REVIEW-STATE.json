@@ -1,0 +1,111 @@
+{
+  "review": "PEAT learning-curriculum hardening to enterprise-onboarding grade",
+  "prompt": "learning/PROMPT-peat-training-doc-improvement.md",
+  "date": "2026-06-18",
+  "status": "complete",
+  "phases_completed": [
+    "Phase 1 — Ground truth established (per-repo audits + merged ground-truth.md)",
+    "Phase 2 — Adversarial audit of the curriculum (14 per-document ledgers + merged claim-ledger.md)",
+    "Phase 3 — Assumptions register",
+    "Phase 4 — Gaps & contribution map",
+    "Phase 5 — Use cases & examples (five worked, leg-by-leg labeled)",
+    "Phase 6 — Curriculum rewrite (hub + constrained track + 12 markdown modules, in place)",
+    "Phase 7 — Design-note validation + gbrain update",
+    "Deliverable assembly — CHANGELOG-review.md, review/README.md, REVIEW-STATE.json"
+  ],
+  "artifacts": {
+    "ground_truth_appendix": "learning/review/ground-truth.md",
+    "ground_truth_per_repo": "learning/review/ground-truth/",
+    "claim_ledger_merged": "learning/review/claim-ledger.md",
+    "claim_ledger_per_document": "learning/review/ledger/",
+    "assumptions_register": "learning/review/assumptions.md",
+    "gaps_contribution_map": "learning/review/gaps-contributions.md",
+    "use_cases": "learning/review/use-cases.md",
+    "design_note_discrepancies": "learning/review/design-note-discrepancies.md",
+    "gbrain_update_summary": "learning/review/gbrain-update-summary.md",
+    "change_log": "learning/review/CHANGELOG-review.md",
+    "review_index": "learning/review/README.md",
+    "originals": "learning/review/originals/"
+  },
+  "docs_rewritten": [
+    "learning/peat-learning-hub.html",
+    "learning/peat-constrained-networking.html",
+    "learning/00-START-HERE.md",
+    "learning/00b-the-big-idea.md",
+    "learning/01-architecture-overview.md",
+    "learning/02-peat-protocol.md",
+    "learning/02b-formation-and-leadership.md",
+    "learning/03-peat-mesh.md",
+    "learning/04-peat-btle-and-lite.md",
+    "learning/05-peat-gateway.md",
+    "learning/06-data-flows.md",
+    "learning/07-repo-links-and-gaps.md",
+    "learning/08-running-and-operating.md",
+    "learning/09-protocol-specs.md"
+  ],
+  "docs_validated_not_rewritten": [
+    "peat-addressing-transport-sync.md"
+  ],
+  "gbrain_pages": {
+    "created": ["peat-current-state"],
+    "updated_in_place": ["peat-hierarchy-vocabulary", "peat-open-issues-snapshot"],
+    "deleted": [],
+    "note": "All writes to the default source. No PEAT doc page deleted (memory: keep-peat-docs-in-gbrain-default). Pages cross-linked with wikilinks; put_page reported created_or_updated + write_through.written:true for all three."
+  },
+  "audited_commits": {
+    "peat": {
+      "head": "35d0f11",
+      "subject": "raise peat-mesh floor to rc.42 (#990)",
+      "version": "workspace 0.9.0-rc.25; peat-ffi 0.2.7",
+      "origin_status": "up to date, no pull"
+    },
+    "peat-mesh": {
+      "head": "00ab0c9",
+      "subject": "bump to 0.9.0-rc.42 (#260)",
+      "version": "0.9.0-rc.42 (README stale: advertises 0.3.2/0.1.0)",
+      "origin_status": "up to date, clean"
+    },
+    "peat-btle": {
+      "head": "3d70f48",
+      "subject": "HEAD = origin/main",
+      "version": "0.4.0",
+      "origin_status": "up to date"
+    },
+    "peat-lite": {
+      "head": "7a8a8fb",
+      "subject": "rename hierarchy tiers to abstract vocabulary (ADR-066) (#28)",
+      "version": "0.2.5, edition 2021, MSRV 1.70",
+      "origin_status": "even with origin"
+    },
+    "peat-gateway": {
+      "head": "8d16824",
+      "subject": "add dependabot config (#134)",
+      "version": "0.1.0; pins peat-mesh =0.9.0-rc.1 (~40 RCs stale, intentional)",
+      "origin_status": "up to date"
+    },
+    "peat-node": {
+      "head": "4e1b5c8",
+      "subject": "deterministic iroh identity (v0.4.3) (#162)",
+      "version": "0.4.3",
+      "origin_status": "origin 5 commits AHEAD (v0.4.4/v0.4.5 tagged, NOT audited — unverified delta)"
+    }
+  },
+  "open_todos": [
+    "Re-audit the peat-node origin delta (5 commits ahead: v0.4.4/v0.4.5) — could move the 28/27 RPC count, land gRPC auth #38, or change tombstone/RBAC details cited across modules 01,02b,03,04,05,06,07,08,09",
+    "Resolve CellRole Support discrepancy: merged ground-truth peat.md omits Support, but direct read of peat-protocol/src/models/role.rs:25 confirms it exists (7 variants). Per decision D1 source wins and Support was retained; reconcile the ground-truth doc to match",
+    "File/link a tracking issue for leader-election score-over-message convergence (leader_election.rs:340-345 follows higher node id with an in-code 'future work' comment; no issue located)",
+    "Confirm operator-guide config against compiled code: [security.pki] X.509 device-cert flow, CoT bind_port 8087 / type strings / command_authority enum surface (currently labeled Documented, not Shipped)",
+    "Verify quickstart node-count/latency by an actual Module 8 build/test run (audit was read-only per decision D3)",
+    "Verify crates.io / Maven Central publication status of PEAT crates (registries not checked)",
+    "Confirm standalone-repo existence/status: peat-sim, peat-registry, peat-sdk-go, a standalone peat-android repo"
+  ],
+  "unverifiable_claims": [
+    "peat-node origin delta (5 commits ahead, v0.4.4/v0.4.5 untested) — RPC count, gRPC auth #38, tombstone/RBAC could have shifted",
+    "Existence at the audited HEAD of a peat-quickstart binary; peat-mesh-node production-vs-demo status; PEAT_BIND_PORT 4040 / PEAT_HTTP_PORT 8080 defaults; PEAT_CONNECTION_RECYCLE_SECS env var and its 60s/5s behavior",
+    "Exact SyncMessageType discriminant byte values; connection-health RTT/loss thresholds; discovery 60s candidate-pool timeout; specific Prometheus metric names and /api/v1/... endpoints; stream-ID range enforcement at runtime",
+    "External-spec / design-target numbers (flagged, not asserted): BLE rate/range; LoRa/Iridium SBD figures; ~10 MB Automerge / 256 KB / ~40x memory comparison; <5s P1 latency; 1,000+ node validation (1023 sim ceiling, #724-#727); 20-node-plateau thesis; 500,000/4,000 vs 9,120/384 connection-model disagreement",
+    "Operator-guide config not traced into compiled code: [security.pki] X.509 device-cert flow; CoT bind_port 8087 / type strings; command_authority enum surface (labeled Documented)",
+    "crates.io / Maven Central publication of any PEAT crate; peat-sim, peat-registry, peat-sdk-go, standalone peat-android repo existence (only ADR/epic anchors corroborate: ADR-054, #724, Phase-3 roadmap)",
+    "Spec-defined, implementation unconfirmed: Automerge ActorId byte construction; access-level ladder Public(0)..Critical(4) + audit retention tiers (90d/1y/2y); partition original-leader-keeps-Cell-ID rule; leader-election score-over-message convergence; EdgeIntelligence variant / >=3-sensor WideAreaObservation threshold (dropped/softened); spec line count ~3,750 (dropped)"
+  ]
+}

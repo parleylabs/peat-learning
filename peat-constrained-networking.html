@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PEAT — Off the Grid</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c232c; --ink:#e6edf3; --muted:#9aa7b4;
+    --line:#2a323c; --accent:#39c5cf; --accent2:#58a6ff; --warn:#d29922; --code:#0b0f14;
+    --pill:#16323a; --ok:#3fb950;
+    --L-addr:#58a6ff; --L-trans:#39c5cf; --L-sync:#a371f7;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink);}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .layout{display:flex;min-height:100vh}
+  nav.side{width:288px;flex:0 0 288px;background:var(--panel);border-right:1px solid var(--line);
+       position:sticky;top:0;height:100vh;overflow-y:auto;padding:22px 18px}
+  nav.side h1{font-size:18px;margin:0 0 2px;letter-spacing:.5px}
+  nav.side h1 .dot{color:var(--accent)}
+  nav.side .tag{color:var(--muted);font-size:12px;margin-bottom:6px}
+  nav.side .trackbadge{display:inline-block;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;
+       color:#06222a;background:var(--accent);font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:16px}
+  nav.side a{display:block;color:var(--muted);padding:7px 10px;border-radius:7px;font-size:14px;margin:2px 0}
+  nav.side a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+  nav.side a.active{background:var(--pill);color:#fff}
+  nav.side .num{display:inline-block;width:24px;color:var(--accent);font-weight:700}
+  nav.side .grp{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6b7785;margin:16px 8px 4px}
+  nav.side .back{font-size:12.5px;color:var(--accent2);margin-bottom:14px;display:block}
+  main{flex:1;max-width:940px;margin:0 auto;padding:46px 40px 120px}
+  section{display:none;animation:fade .25s ease}
+  section.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h2{font-size:30px;margin:0 0 4px;line-height:1.2}
+  h3{font-size:21px;margin:34px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  h4{font-size:16px;margin:22px 0 6px;color:var(--accent2)}
+  .lead{color:var(--muted);font-size:17px;margin:6px 0 22px}
+  p{margin:12px 0}
+  code{background:var(--code);padding:2px 6px;border-radius:5px;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;color:#e6edf3}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.55}
+  pre code{background:none;padding:0}
+  .kw{color:#ff7b72}.fn{color:#d2a8ff}.str{color:#a5d6ff}.cm{color:#7d8590;font-style:italic}.ty{color:#79c0ff}.nm{color:#ffa657}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--accent2);font-weight:600}
+  tr:hover td{background:var(--panel)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+  .note{border-left:3px solid var(--accent2);background:var(--panel2);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  .warn{border-left:3px solid var(--warn);background:#241e10;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  .ok{border-left:3px solid var(--ok);background:#0f1f14;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  .pill{display:inline-block;background:var(--pill);color:#aee9ef;font-size:12px;padding:2px 9px;border-radius:20px;margin:0 4px 4px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:18px 0}
+  .grid .card{margin:0}.grid .card h4{margin-top:0}
+  .chk{background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:14px 18px;margin:22px 0}
+  .chk b{color:var(--accent)}
+  .crumbs{display:flex;justify-content:space-between;align-items:center;margin-top:48px;border-top:1px solid var(--line);padding-top:18px;gap:10px;flex-wrap:wrap}
+  .btn{background:var(--pill);color:#aee9ef;border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;font-size:14px}
+  .btn:hover{background:#1d3f49}
+  .btn.sel{background:var(--accent);color:#06222a;font-weight:700;border-color:var(--accent)}
+  .file{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--accent);background:#06181c;border:1px solid #103038;padding:2px 7px;border-radius:5px}
+  .muted{color:var(--muted)}
+  ul{margin:10px 0;padding-left:22px}li{margin:5px 0}
+  svg{max-width:100%;height:auto}
+  .fig{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:18px 0}
+  .fig .cap{color:var(--muted);font-size:13px;margin-top:10px;text-align:center}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:8px 0 0;justify-content:center}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .dot-addr{background:var(--L-addr)}.dot-trans{background:var(--L-trans)}.dot-sync{background:var(--L-sync)}
+  .hero{background:linear-gradient(160deg,#0c1a1e,#10151c);border:1px solid var(--line);border-radius:16px;padding:30px 32px;margin-bottom:8px}
+  .hero h2{font-size:34px}
+  .actorrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .actor{display:inline-flex;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:13px}
+  .actor .g{font-size:16px}
+  /* cn9 dial bars */
+  .dialwrap{max-width:540px;margin:16px auto 0;display:flex;flex-direction:column;gap:11px}
+  .dialrow{display:flex;align-items:center;gap:12px;font-size:13px}
+  .dialrow .nm2{width:112px;font-weight:600}
+  .dialbar{flex:1;height:13px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .dialbar > i{display:block;height:100%;border-radius:8px;width:20%;transition:width .4s ease}
+  .dialrow .val{width:130px;color:var(--muted);font-size:12px;text-align:right}
+  .presetrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0 0}
+  .statline{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin:8px 0;font-size:13px;color:var(--muted)}
+  .statline b{color:var(--accent);font-size:18px}
+  /* status labels: shipped / in-flight / proposed / speculative */
+  .st{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+      padding:2px 8px;border-radius:5px;margin:0 4px 0 0;vertical-align:middle;white-space:nowrap;border:1px solid}
+  .st-ship{color:#7ee2a8;background:#0f1f14;border-color:var(--ok)}
+  .st-flight{color:#e8c267;background:#241e10;border-color:var(--warn)}
+  .st-prop{color:#9ecbff;background:#0f1a2b;border-color:var(--accent2)}
+  .st-spec{color:#cbb3f5;background:#1a142b;border-color:var(--L-sync)}
+  .statuslegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center;
+      background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:14px 0}
+  .src{color:#6b7785;font-size:12px}
+  .src code{font-size:11.5px}
+  @media(max-width:880px){nav.side{display:none}main{padding:26px 18px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="side">
+  <a class="back" href="peat-learning-hub.html">← PEAT Learning Hub</a>
+  <h1>PEAT <span class="dot">·</span> Off the Grid</h1>
+  <div class="tag">Running the mesh when QUIC can't</div>
+  <span class="trackbadge">Advanced · Constrained</span>
+
+  <div class="grp">Start</div>
+  <a data-go="cn0"><span class="num">00</span>When the network won't cooperate</a>
+
+  <div class="grp">The mental model</div>
+  <a data-go="cn1"><span class="num">01</span>QUIC is not your address</a>
+  <a data-go="cn2"><span class="num">02</span>The three layers</a>
+  <a data-go="cn3"><span class="num">03</span>Why CRDTs change everything</a>
+
+  <div class="grp">The toolkit</div>
+  <a data-go="cn4"><span class="num">04</span>Transports as a PACE ladder</a>
+  <a data-go="cn5"><span class="num">05</span>Dialects + the interpreter</a>
+  <a data-go="cn6"><span class="num">06</span>One message an hour</a>
+
+  <div class="grp">Topology &amp; trust</div>
+  <a data-go="cn7"><span class="num">07</span>Router, not broker</a>
+  <a data-go="cn8"><span class="num">08</span>Two graphs, one system</a>
+  <a data-go="cn9"><span class="num">09</span>One node, three dials</a>
+
+  <div class="grp">Designing a deployment</div>
+  <a data-go="cn10"><span class="num">10</span>Match coordination to cost</a>
+  <a data-go="cn11"><span class="num">11</span>Configuring both</a>
+  <a data-go="cn12"><span class="num">12</span>Gaps &amp; where to go next</a>
+</nav>
+
+<main>
+
+<!-- ============================================ cn0 HERO -->
+<section id="cn0" class="active">
+  <div class="hero">
+    <h2>When the network won't cooperate</h2>
+    <p class="lead">PEAT normally rides on QUIC, a modern internet protocol that quietly assumes three luxuries: every device has a network address, bandwidth runs into the millions of bits per second, and a reply comes back within a few thousandths of a second.</p>
+    <p>A great deal of the work PEAT is built for, though, happens where none of those luxuries are on offer — a ridgeline with no cell signal, a vessel far past the last tower, a disaster zone where the infrastructure is rubble. This track follows the mesh as its link thins out rung by rung, from roughly hundred-megabit Wi-Fi down toward a single satellite burst of fewer than two thousand bytes that a device might only get to send once an hour.</p>
+    <div class="actorrow">
+      <span class="actor"><span class="g">📡</span>Sensor</span>
+      <span class="actor"><span class="g">📱</span>Handset</span>
+      <span class="actor"><span class="g">🗼</span>Relay / hub node</span>
+      <span class="actor"><span class="g">📻</span>LoRa radio</span>
+      <span class="actor"><span class="g">🛰️</span>Iridium satellite</span>
+      <span class="actor"><span class="g">✉️</span>CRDT delta</span>
+    </div>
+  </div>
+
+  <div class="statuslegend">
+    <b style="color:var(--ink);text-transform:none;letter-spacing:0;font-size:13px">Read every claim with its label:</b>
+    <span><span class="st st-ship">Shipped</span> in code, tested</span>
+    <span><span class="st st-flight">In flight</span> open issue/PR/epic</span>
+    <span><span class="st st-prop">Proposed</span> ADR exists, no code</span>
+    <span><span class="st st-spec">Speculative</span> teaching design, not in any repo</span>
+  </div>
+  <div class="warn"><b>One thing to fix in your head before you start.</b> Most of this track is a <em>design</em> for constrained operation, not a tour of shipped features. The two long-range links it leans on — satellite (Iridium SBD) and LoRa — <b>do not exist in code yet</b>; they are <span class="st st-prop">Proposed</span> ADRs (ADR-051, ADR-052) with no crate behind them. What ships today is the part that runs over QUIC, Bluetooth Low Energy, and the peat-lite UDP bridge. The labels above appear on every claim so you always know which is which; where a number comes from a radio's datasheet rather than a PEAT measurement, the source line says so.</div>
+
+  <div class="fig">
+    <svg viewBox="0 0 640 230" role="img" aria-label="A node losing link tiers and falling back through transports">
+      <circle cx="100" cy="115" r="32" fill="#10222a" stroke="var(--accent)" stroke-width="2"/>
+      <text x="100" y="122" text-anchor="middle" font-size="24">📡</text>
+      <text x="100" y="172" text-anchor="middle" fill="var(--muted)" font-size="12">field node</text>
+      <g transform="translate(158,82)">
+        <rect x="0"  y="40" width="12" height="20" rx="2" fill="var(--accent)"><animate attributeName="opacity" values="1;0.12;1" dur="4s" begin="0s"   repeatCount="indefinite"/></rect>
+        <rect x="17" y="28" width="12" height="32" rx="2" fill="var(--accent)"><animate attributeName="opacity" values="1;0.12;1" dur="4s" begin="0.5s" repeatCount="indefinite"/></rect>
+        <rect x="34" y="14" width="12" height="46" rx="2" fill="var(--accent)"><animate attributeName="opacity" values="1;0.12;1" dur="4s" begin="1s"   repeatCount="indefinite"/></rect>
+        <rect x="51" y="0"  width="12" height="60" rx="2" fill="var(--accent)"><animate attributeName="opacity" values="1;0.12;1" dur="4s" begin="1.5s" repeatCount="indefinite"/></rect>
+      </g>
+      <g font-size="11.5" transform="translate(290,40)">
+        <g><rect x="0" y="0"   width="320" height="28" rx="8" fill="#10202a" stroke="var(--L-trans)"/><text x="13" y="18" fill="var(--ink)">Wi-Fi / QUIC · ~100 Mbps</text>
+           <animate attributeName="opacity" values="1;1;0.25;0.25" dur="8s" keyTimes="0;0.2;0.35;1" repeatCount="indefinite"/></g>
+        <g transform="translate(0,38)"><rect width="320" height="28" rx="8" fill="#10202a" stroke="var(--L-trans)"/><text x="13" y="18" fill="var(--ink)">Cellular / Starlink · Mbps</text>
+           <animate attributeName="opacity" values="0.25;0.25;1;1;0.25;0.25" dur="8s" keyTimes="0;0.2;0.35;0.5;0.6;1" repeatCount="indefinite"/></g>
+        <g transform="translate(0,76)"><rect width="320" height="28" rx="8" fill="#10202a" stroke="var(--L-trans)"/><text x="13" y="18" fill="var(--ink)">LoRa · kB/s · 7–87 km</text>
+           <animate attributeName="opacity" values="0.25;0.25;1;1;0.25" dur="8s" keyTimes="0;0.5;0.62;0.78;1" repeatCount="indefinite"/></g>
+        <g transform="translate(0,114)"><rect width="320" height="28" rx="8" fill="#10202a" stroke="var(--L-trans)"/><text x="13" y="18" fill="var(--ink)">🛰️ Iridium · 1 msg / hour</text>
+           <animate attributeName="opacity" values="0.25;0.25;1;1" dur="8s" keyTimes="0;0.78;0.9;1" repeatCount="indefinite"/></g>
+      </g>
+    </svg>
+    <div class="cap">The design goal: as bandwidth collapses, PEAT keeps working by stepping down the ladder — swapping the transport beneath an unchanged mesh, rather than failing. <b>Today the top two rungs are real</b> (Wi-Fi/QUIC and Bluetooth/peat-lite); the LoRa and Iridium rungs are <span class="st st-prop">Proposed</span> transports (ADR-052, ADR-051) with no code yet, and the rates shown on them are radio datasheet figures, not PEAT measurements.</div>
+    <div class="legend" style="margin-top:12px">
+      <span><i style="background:var(--accent)"></i>fading bars = signal weakening</span>
+      <span><i style="background:#10202a;border:1px solid var(--L-trans)"></i>highlighted rung = transport in use</span>
+    </div>
+  </div>
+
+  <div class="note">This track assumes you've met the basics in the hub — the modules on peat-mesh, peat-btle/lite, and the gateway. From here on, we go where the internet stops. Keep one distinction handy throughout: a <b>relay/hub node</b> is an ordinary peat-mesh node that happens to sit on a busy link and merge traffic; the <b>peat-gateway</b> product is a separate control plane that observes and manages but never sits in the peer-to-peer data path. This track is about relay <em>nodes</em>.</div>
+  <div class="crumbs"><span class="muted">Start here</span><button class="btn" data-go="cn1">Next: QUIC is not your address →</button></div>
+</section>
+
+<!-- ============================================ cn1 -->
+<section id="cn1">
+  <h2>01 · QUIC is not your address</h2>
+  <p class="lead">The whole problem looks enormous until you separate two ideas that most networking quietly merges together: who a device <em>is</em>, and how you happen to <em>reach</em> it today.</p>
+
+  <p>In PEAT a device's stable identity comes from a key only that device holds — an Ed25519 signing key. The richer tiers of the stack name a device by its <code>DeviceId</code>: the SHA-256 hash of that public key, kept to its <b>first 16 bytes</b> (128 bits, 32 hex characters). Because it derives from a private key, the name is effectively impossible to forge, and it stays the same no matter how the device connects. QUIC only looks like it owns "addressing" because the library PEAT uses for it, Iroh, builds its own identity from that very same kind of key, so on an ordinary internet connection several layers stack neatly onto one piece of software. <span class="st st-ship">Shipped</span></p>
+
+  <p>One honest wrinkle worth knowing up front: there is no single 256-bit name used everywhere. The constrained tiers economize. A peat-lite or peat-btle node is named by a 4-byte (32-bit) <code>NodeId</code> — small enough to fit a tiny header, derived from the key or a radio MAC — and the transport layer carries its own string-form address as well. So "identity" is really a small family of names that bridge into one another at the boundaries, not one number stamped on every packet. <span class="st st-ship">Shipped</span></p>
+
+  <div class="src">Source: <code>peat-mesh/src/security/device_id.rs:39-47</code> (16-byte DeviceId); <code>peat-lite/src/node_id.rs</code>, <code>peat-btle/src/security/identity.rs:141</code> (u32 NodeId). The earlier draft of this track said "256-bit NodeId" — no such value exists in code.</div>
+
+  <p>Pull those layers apart and a simple rule appears: the <em>name</em> never changes, while the <em>delivery address</em> is whatever a given radio happens to use today.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 560 190" role="img" aria-label="An envelope whose name stays fixed while the address swaps">
+      <rect x="60" y="36" width="440" height="118" rx="10" fill="#0f1620" stroke="var(--line)"/>
+      <path d="M60 36 L280 116 L500 36" fill="none" stroke="var(--line)"/>
+      <text x="86" y="86" fill="var(--muted)" font-size="11">name — never changes</text>
+      <text x="86" y="108" fill="var(--L-addr)" font-size="14" font-family="monospace">DeviceId 3f9c1a7e…bb01 (16 B)</text>
+      <text x="300" y="132" fill="var(--muted)" font-size="11">address — swaps per transport</text>
+      <g font-family="monospace" font-size="13.5">
+        <text x="300" y="152" fill="var(--L-trans)">QUIC iroh-endpoint a3f9…<animate attributeName="opacity" values="1;1;0;0;0;1" dur="6s" repeatCount="indefinite"/></text>
+        <text x="300" y="152" fill="var(--L-trans)" opacity="0">BLE node 0xA1B2C3D4<animate attributeName="opacity" values="0;0;1;1;0;0" dur="6s" repeatCount="indefinite"/></text>
+        <text x="300" y="152" fill="var(--L-trans)" opacity="0">sat IMEI 30043… (proposed)<animate attributeName="opacity" values="0;0;0;0;1;1" dur="6s" repeatCount="indefinite"/></text>
+      </g>
+      <text x="474" y="56" font-size="20">✉️</text>
+    </svg>
+    <div class="cap">Move house, keep your name. Each transport maps the stable identity to its own kind of address — for the shipped radios that means an iroh endpoint string (QUIC) or a short BLE id; for the proposed radios it would mean a satellite modem's IMEI or a LoRa endpoint. The QUIC and BLE rows are <span class="st st-ship">Shipped</span>; the satellite row is <span class="st st-prop">Proposed</span>.</div>
+    <div class="legend" style="margin-top:12px">
+      <span><i style="background:var(--L-addr)"></i>name — the stable identity (never changes)</span>
+      <span><i style="background:var(--L-trans)"></i>address — per transport (changes)</span>
+    </div>
+  </div>
+
+  <div class="ok"><b>What this buys you:</b> moving PEAT onto a new, non-internet radio never means reinventing identity. The transport interface that makes this possible — the <code>MeshTransport</code> trait seam — already ships <span class="st st-ship">Shipped</span>, and ADR-032 describes the pattern (the ADR itself is <span class="st st-prop">Proposed</span>). Bringing up a new radio is real work, not a one-liner, though: the <code>LoRa</code> and <code>Satellite</code> values already exist in the transport enum yet resolve to "no transport registered" precisely because the implementation behind them hasn't been written.</div>
+  <div class="src">Source: <code>peat-mesh/src/transport/mod.rs:375</code> (trait seam, shipped); ADR-032 (Proposed); <code>peat-mesh/src/transport/manager.rs:1317</code> (LoRa/Satellite → None).</div>
+  <div class="crumbs"><button class="btn" data-go="cn0">← Back</button><button class="btn" data-go="cn2">Next: the three layers →</button></div>
+</section>
+
+<!-- ============================================ cn2 -->
+<section id="cn2">
+  <h2>02 · The three layers</h2>
+  <p class="lead">QUIC does three separate jobs at once, and on a normal network you never notice the seams. Off-grid, those jobs come apart, and each one needs a different replacement. This stack is the map for everything that follows.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 600 210" role="img" aria-label="Three-layer stack: addressing, transport, sync">
+      <rect x="30" y="18" width="540" height="54" rx="10" fill="#0f1a2b" stroke="var(--L-addr)" stroke-width="2"/>
+      <text x="50" y="42" fill="var(--L-addr)" font-size="15" font-weight="700">① Addressing &amp; identity</text>
+      <text x="50" y="62" fill="var(--muted)" font-size="12">who a device is — the NodeId</text>
+      <rect x="30" y="80" width="540" height="54" rx="10" fill="#0c1f24" stroke="var(--L-trans)" stroke-width="2"/>
+      <text x="50" y="104" fill="var(--L-trans)" font-size="15" font-weight="700">② Transport — reachability</text>
+      <text x="50" y="124" fill="var(--muted)" font-size="12">moving bytes, finding peers, securing the link</text>
+      <rect x="30" y="142" width="540" height="54" rx="10" fill="#1a142b" stroke="var(--L-sync)" stroke-width="2"/>
+      <text x="50" y="166" fill="var(--L-sync)" font-size="15" font-weight="700">③ Sync — making copies agree <tspan fill="var(--warn)" font-size="11">· the hard one</tspan></text>
+      <text x="50" y="186" fill="var(--muted)" font-size="12">the layer where QUIC's assumptions actually bite</text>
+    </svg>
+    <div class="legend"><span><i class="dot-addr"></i>Addressing</span><span><i class="dot-trans"></i>Transport</span><span><i class="dot-sync"></i>Sync</span></div>
+  </div>
+
+  <p>The first two layers are mostly plumbing. They take real engineering, but the shape of the work is well understood, and PEAT already has the seams for it — a transport interface and a separate code crate for each radio. The third layer is where the genuine design problem lives, because making independent copies of data agree is exactly the thing that QUIC's behaviour was quietly helping with. The table below shows what each QUIC job becomes once you leave the internet behind.</p>
+
+  <table>
+    <tr><th>What QUIC was doing</th><th>On the internet</th><th>Off-grid replacement</th><th>Status</th></tr>
+    <tr><td>Finding peers (discovery)</td><td>mDNS / hole-punching</td><td>BLE advertising today; a LoRa beacon or satellite registry would come with those radios</td><td><span class="st st-ship">Shipped</span> (BLE, mDNS, static, k8s) · <span class="st st-prop">Proposed</span> (LoRa/sat)</td></tr>
+    <tr><td>Reliable, in-order delivery</td><td>QUIC streams</td><td>usually not needed — see section 03</td><td><span class="st st-ship">Shipped</span></td></tr>
+    <tr><td>Encrypting the link</td><td>TLS 1.3, hop by hop</td><td>per-link / per-session AES-256-GCM today; per-message object security is the goal for untrusted relays</td><td><span class="st st-ship">Shipped</span> (link AEAD) · <span class="st st-prop">Proposed</span> (object security)</td></tr>
+  </table>
+  <div class="src">Shipped discovery: mDNS, Kubernetes EndpointSlice, static peering (peat-mesh / peat-node), plus BLE advertising (peat-btle). Shipped encryption is link/session AES-256-GCM per transport; end-to-end <em>object</em> security (an OSCORE-style per-document wrapper) is a proposal — peat-lite's <code>DOC_FLAG_ENCRYPTED</code> is a reserved flag the encoder currently rejects (<code>peat-lite/src/protocol/document.rs:228-230</code>).</div>
+  <div class="crumbs"><button class="btn" data-go="cn1">← Back</button><button class="btn" data-go="cn3">Next: why CRDTs change everything →</button></div>
+</section>
+
+<!-- ============================================ cn3 -->
+<section id="cn3">
+  <h2>03 · Why CRDTs change everything</h2>
+  <p class="lead">QUIC spends a lot of effort guaranteeing that every byte arrives exactly once, in the right order, with nothing lost. The data PEAT carries mostly doesn't need that guarantee, and understanding why is the key that opens the whole constrained world.</p>
+
+  <p>PEAT stores its shared state in CRDTs — Conflict-free Replicated Data Types. The mouthful matters less than one plain property: a CRDT update can be applied in any order, and applying the same update twice does nothing extra. Picture two people each keeping a copy of a shopping list and mailing postcards back and forth — "add milk," "cross off eggs." It makes no difference if a postcard shows up late, shows up twice, or arrives before one written earlier. Fold them all in, and both lists end up identical.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 600 210" role="img" aria-label="Postcards arriving out of order, both lists converge">
+      <text x="20" y="22" fill="var(--ok)" font-size="13" font-weight="700">CRDT = postcards</text>
+      <circle cx="56" cy="110" r="24" fill="#10222a" stroke="var(--accent)"/><text x="56" y="116" text-anchor="middle" font-size="18">📡</text>
+      <circle cx="544" cy="110" r="24" fill="#10222a" stroke="var(--accent)"/><text x="544" y="116" text-anchor="middle" font-size="18">📱</text>
+      <g font-size="17">
+        <text x="0" y="74">✉️<animateTransform attributeName="transform" type="translate" from="96 0" to="430 0" dur="3.1s" repeatCount="indefinite"/></text>
+        <text x="0" y="110">✉️<animateTransform attributeName="transform" type="translate" from="96 0" to="430 0" dur="2.2s" repeatCount="indefinite"/></text>
+        <text x="0" y="146">✉️<animateTransform attributeName="transform" type="translate" from="96 0" to="430 0" dur="3.8s" repeatCount="indefinite"/></text>
+      </g>
+      <g font-size="12" fill="var(--muted)">
+        <text x="34" y="178">milk · eggs · bread</text>
+        <text x="470" y="178">milk · eggs · bread</text>
+      </g>
+      <text x="300" y="200" text-anchor="middle" fill="var(--ok)" font-size="12">same result, any order</text>
+    </svg>
+    <div class="cap">Late, duplicated, out of order — it all converges to the same state. The reliable, in-order delivery QUIC works so hard for turns out to be machinery this data never required.</div>
+    <div class="legend" style="margin-top:12px">
+      <span>✉️ = one CRDT update (a delta)</span>
+      <span><i style="background:#10222a;border:1px solid var(--accent)"></i>a device holding its own copy</span>
+    </div>
+  </div>
+
+  <p>Compare that to reading a recipe aloud over a crackly phone line, where a single dropped or swapped word ruins the dish — that is the kind of protocol that genuinely breaks on a twenty-second satellite hop. Because PEAT behaves like the postcards instead, it can shed QUIC's delivery guarantees and lean on the mathematics of the data itself, which holds up even when the link loses, repeats, and delays messages.</p>
+
+  <p>There is a practical bonus on the thinnest links. For last-writer-wins values you can send the <em>current</em> value of something rather than its whole history. If a sensor reading changed fifty times while a device was out of contact, you transmit one number and one timestamp, not fifty updates — and peat-lite's data types are designed as small, bounded values precisely so this collapse is cheap. (Counters behave a little differently — they merge by taking the maximum per source — but they are bounded too.) <span class="st st-ship">Shipped</span></p>
+  <div class="src">Source: Automerge sync (<code>peat-mesh</code>, default <code>automerge-backend</code>) and the peat-lite CRDTs that actually ship — <code>LwwRegister</code> and <code>GCounter</code> (<code>peat-lite/src/{lww,counter}.rs</code>). <code>PnCounter</code> is firmware-only and <code>OrSet</code> is a reserved wire byte with no implementation.</div>
+  <div class="crumbs"><button class="btn" data-go="cn2">← Back</button><button class="btn" data-go="cn4">Next: the PACE ladder →</button></div>
+</section>
+
+<!-- ============================================ cn4 -->
+<section id="cn4">
+  <h2>04 · Transports as a PACE ladder</h2>
+  <p class="lead">Every radio strikes a different bargain between reach, speed, power, delay, and cost. The design intent is that PEAT registers all the ones a device carries and falls back among them with a planning method borrowed from the military: Primary, Alternate, Contingency, Emergency.</p>
+
+  <div class="warn"><b>Status, plainly.</b> The PACE <em>ladder</em> in this section is a design for how fallback should work, not a shipped state machine. Transport selection today is a simpler <code>preference_order</code> list in the <code>TransportManager</code>; multi-transport PACE failover is roadmap Phase 2 <span class="st st-flight">In flight</span>/<span class="st st-prop">Proposed</span>. And of the four rungs below, only the top two ride a transport that exists in code: <b>Wi-Fi/QUIC and Bluetooth Low Energy are</b> <span class="st st-ship">Shipped</span>; <b>LoRa and Iridium are</b> <span class="st st-prop">Proposed</span> (ADR-052, ADR-051) — no crate, no module. A <code>min_pace_level</code> floor is a teaching idea <span class="st st-spec">Speculative</span>, not a field in the code.</div>
+
+  <p>The pattern across radios is consistent — the farther a signal needs to travel, the less data it can carry. Bluetooth Low Energy reaches a few hundred metres at roughly a couple of megabits per second on the radio (PHY) level. LoRa stretches from seven to nearly ninety kilometres, paid for by dropping to mere kilobytes per second. Iridium's satellite service reaches anywhere on Earth, pole to pole, but a single Short Burst Data message is capped near 1,960 bytes, takes five to twenty seconds to land, and costs roughly four to thirteen cents to send. The numbers below come from each radio's specifications — not from PEAT measurements — and for LoRa and Iridium there is no PEAT transport behind them yet.</p>
+
+  <div class="statline">
+    <span><b>100–400 m</b><br>BLE · ~2 Mb/s PHY <span class="st st-ship">Shipped</span></span>
+    <span><b>7–87 km</b><br>LoRa · 1.5–9.1 kB/s <span class="st st-prop">Proposed</span></span>
+    <span><b>global</b><br>satellite · ~1,960 B/msg <span class="st st-prop">Proposed</span></span>
+  </div>
+  <div class="src">BLE figures are declared capability constants (250 kB/s base, 125 kB/s Coded-S8 at 400 m, 500 kB/s LE-2M; 100 m base range) in <code>peat-btle/src/transport.rs:61-107</code> — radio-spec ceilings, not measured goodput; "2 Mb/s" is the LE-2M PHY symbol rate, not app throughput. LoRa range/rate are external LoRa hardware specs. Iridium SBD ~1,960 B MO / ~1,890 B MT, 5–20 s, ~$0.04–0.13/msg are Iridium hardware limits (gbrain <code>research/quic-iridium-sbd-feasibility</code>), not PEAT facts.</div>
+
+  <div class="fig">
+    <svg viewBox="0 0 560 190" role="img" aria-label="PACE ladder from primary to emergency with a marker stepping down">
+      <g font-size="13">
+        <rect x="40" y="18"  width="470" height="32" rx="8" fill="#0f1c20" stroke="var(--L-trans)"/><text x="56" y="39" fill="var(--ink)"><tspan fill="var(--accent)" font-weight="700">P</tspan>rimary — Wi-Fi / QUIC</text>
+        <rect x="40" y="56"  width="470" height="32" rx="8" fill="#0f1c20" stroke="var(--L-trans)"/><text x="56" y="77" fill="var(--ink)"><tspan fill="var(--accent)" font-weight="700">A</tspan>lternate — BLE / Starlink</text>
+        <rect x="40" y="94"  width="470" height="32" rx="8" fill="#0f1c20" stroke="var(--L-trans)"/><text x="56" y="115" fill="var(--ink)"><tspan fill="var(--accent)" font-weight="700">C</tspan>ontingency — LoRa</text>
+        <rect x="40" y="132" width="470" height="32" rx="8" fill="#0f1c20" stroke="var(--L-trans)"/><text x="56" y="153" fill="var(--ink)"><tspan fill="var(--accent)" font-weight="700">E</tspan>mergency — 🛰️ Iridium</text>
+      </g>
+      <circle cx="490" cy="34" r="8" fill="var(--warn)">
+        <animate attributeName="cy" values="34;34;72;110;148;148;34" dur="9s" keyTimes="0;0.1;0.35;0.6;0.85;0.95;1" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+    <div class="cap">The intended behaviour: when the primary link dies, selection steps down a rung — the same mesh on a worse-but-working radio. A natural extension would let a data type set a floor so urgent commands ride even the bottom rung while routine telemetry waits for something better — but that floor is a teaching idea, not a shipped field. <span class="st st-spec">Speculative</span> design over a <span class="st st-ship">Shipped</span> <code>preference_order</code> mechanism.</div>
+    <div class="legend" style="margin-top:12px">
+      <span><i style="background:var(--warn)"></i>marker = the link in use right now</span>
+      <span>P → A → C → E = fallback order, best to last resort</span>
+    </div>
+  </div>
+  <div class="src">Source: <code>peat-mesh/src/transport/manager.rs:147-149</code> (preference_order, shipped — but WiFiDirect/LoRa entries resolve to no transport); README marks full PACE failover as Phase 2 Planned. No <code>min_pace_level</code> field exists in code.</div>
+  <div class="crumbs"><button class="btn" data-go="cn3">← Back</button><button class="btn" data-go="cn5">Next: dialects + the interpreter →</button></div>
+</section>
+
+<!-- ============================================ cn5 -->
+<section id="cn5">
+  <h2>05 · Dialects + the interpreter</h2>
+  <p class="lead">The same software cannot run everywhere. PEAT's full sync engine, Automerge, expects a real operating system and a working-set measured in megabytes. A typical sensor microcontroller has about 256 kilobytes of RAM and no operating system at all. The gap is large enough — roughly two orders of magnitude — that the edge needs a leaner dialect.</p>
+
+  <div class="src">A note on the numbers: peat-lite's 256 KB is a stated <em>design target</em> (ADR-035), not a budget any code enforces — there is no allocator cap or static-RAM assertion. The "Automerge needs ~10 MB" figure that earlier drafts cited does not appear as a measurement anywhere in the source, so the often-quoted "~40× smaller" ratio rests on two soft inputs and is best read as "much smaller," not a measured multiple.</div>
+
+  <p>The answer is two dialects of the same family of conflict-free data types, with a translator in the middle. Tiny devices speak peat-lite, whose messages ride a compact 16-byte fixed header. A better-resourced device — a phone, a Raspberry Pi, a small Linux box running peat-mesh with the <code>lite-bridge</code> feature — sits at the boundary and is fluent in both, translating the lightweight edge dialect into full Automerge for the richer mesh and back again. <span class="st st-ship">Shipped</span> (the lite↔Automerge bridge; the cross-transport <code>Translator</code> codec ships under ADR-059, which is itself <span class="st st-prop">Proposed</span>).</p>
+
+  <div class="warn"><b>This bilingual device is a relay <em>node</em>, not the peat-gateway.</b> The translation and merging happen in a peat-mesh node (the <code>LiteMeshTransport</code> bridge). The peat-gateway product is a separate control plane that implements no mesh transports and never sits in the sync path — it observes and manages. When this track draws a 🗼, read it as "a capable bridge node," not "the gateway product."</div>
+
+  <div class="fig">
+    <svg viewBox="0 0 620 200" role="img" aria-label="Edge speaks lite dialect, bridge node translates to full Automerge">
+      <circle cx="76" cy="96" r="30" fill="#10222a" stroke="var(--accent)"/><text x="76" y="102" text-anchor="middle" font-size="22">📡</text>
+      <text x="76" y="146" text-anchor="middle" fill="var(--muted)" font-size="11">sensor · 256 KB</text>
+      <rect x="32" y="158" width="88" height="20" rx="6" fill="#0f1c20" stroke="var(--L-sync)"/><text x="76" y="172" text-anchor="middle" font-size="10.5" fill="var(--L-sync)">peat-lite</text>
+      <rect x="258" y="66" width="104" height="76" rx="12" fill="#10222a" stroke="var(--accent)" stroke-width="2"/><text x="310" y="106" text-anchor="middle" font-size="24">🗼</text>
+      <text x="310" y="158" text-anchor="middle" fill="var(--ink)" font-size="11">bridge node · bilingual</text>
+      <circle cx="544" cy="96" r="30" fill="#10222a" stroke="var(--accent2)"/><text x="544" y="102" text-anchor="middle" font-size="22">📱</text>
+      <text x="544" y="146" text-anchor="middle" fill="var(--muted)" font-size="11">full mesh · Automerge</text>
+      <rect x="496" y="158" width="96" height="20" rx="6" fill="#0f1620" stroke="var(--accent2)"/><text x="544" y="172" text-anchor="middle" font-size="10.5" fill="var(--accent2)">Automerge</text>
+      <g stroke="var(--L-trans)" stroke-width="2" fill="none" marker-end="url(#a5)"><path d="M110 96 H250"/><path d="M370 96 H510"/></g>
+      <text x="180" y="86" text-anchor="middle" fill="var(--muted)" font-size="11">BLE / LoRa / sat</text>
+      <text x="440" y="86" text-anchor="middle" fill="var(--muted)" font-size="11">QUIC</text>
+      <defs><marker id="a5" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 Z" fill="var(--L-trans)"/></marker></defs>
+    </svg>
+    <div class="cap">No constrained radio ever has to make the full engine survive a slow link. The edge sends a small update; the bridge node does the heavy merging on its behalf. (The BLE leg ships today; LoRa and satellite legs await those proposed transports.)</div>
+    <div class="legend" style="margin-top:12px">
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--L-trans)" stroke-width="2.5"/></svg> constrained radio link</span>
+      <span><i style="background:#0f1c20;border:1px solid var(--L-sync)"></i>peat-lite dialect (edge)</span>
+      <span><i style="background:#0f1620;border:1px solid var(--accent2)"></i>Automerge dialect (rich mesh)</span>
+    </div>
+  </div>
+  <div class="crumbs"><button class="btn" data-go="cn4">← Back</button><button class="btn" data-go="cn6">Next: one message an hour →</button></div>
+</section>
+
+<!-- ============================================ cn6 -->
+<section id="cn6">
+  <h2>06 · Anti-entropy: one message an hour</h2>
+  <p class="lead">Left alone, two copies of shared data drift apart as each picks up changes the other hasn't seen. "Anti-entropy" is the periodic ritual that pulls them back together: the two copies compare notes and trade whatever is missing. On a satellite link, where one exchange costs cents, takes up to twenty seconds, and may be the only one you get that hour, every byte of that comparison has to earn its place.</p>
+
+  <div class="warn"><b>This whole section is a design, not a feature.</b> The single-burst, digest-over-satellite reconciliation described here is <span class="st st-spec">Speculative</span> — it exists nowhere in code, and it depends on the satellite transport that is itself <span class="st st-prop">Proposed</span>. What PEAT actually ships for reconciliation is <b>negentropy set reconciliation over Iroh QUIC</b> <span class="st st-ship">Shipped</span> — an interactive, multi-round-trip protocol that assumes a real QUIC channel, the opposite of a once-an-hour one-shot frame. The designs below are what a satellite or LoRa link <em>would</em> need; treat them as a sketch of unbuilt work, not a description of how PEAT behaves today.</div>
+  <div class="src">Shipped reconciliation: <code>peat-mesh/src/storage/negentropy_sync.rs</code> + <code>automerge_sync.rs</code> (negentropy 0.5, ADR-040, issue #435), re-exported as <code>NegentropySync</code> in peat-protocol. Version-vector, snapshot-since-T, hierarchical-digest, and IBLT schemes are not implemented anywhere; peat-lite has no sync engine at all.</div>
+
+  <p>If a satellite transport did exist, Iridium's hardware would offer a useful property. By design, a single Iridium Short Burst Data session can both send a mobile-originated message and deliver a mobile-terminated one waiting at the Iridium ground station in the same exchange (the <code>+SBDIX</code> command) — a complete, if slow, round trip for the price of one. A reconciliation protocol built for that link would put a full exchange in one session: the outgoing burst carries recent changes plus a compact summary of what the device holds, and the reply carries back exactly what was missing.</p>
+  <div class="src">The MO+MT-in-one-pass behaviour is an <b>Iridium hardware fact</b> (the <code>+SBDIX</code> AT command), not a PEAT capability — cited from Iridium SBD developer documentation / gbrain <code>research/quic-iridium-sbd-feasibility</code>. PEAT has no SBD code.</div>
+
+  <div class="fig">
+    <svg viewBox="0 0 600 200" role="img" aria-label="One satellite pass carries data up and the missing data down">
+      <text x="300" y="26" text-anchor="middle" font-size="24">🛰️</text>
+      <text x="300" y="44" text-anchor="middle" fill="var(--muted)" font-size="11">one pass = one round trip</text>
+      <circle cx="120" cy="168" r="26" fill="#10222a" stroke="var(--accent)"/><text x="120" y="174" text-anchor="middle" font-size="18">📡</text>
+      <rect x="430" y="142" width="110" height="50" rx="10" fill="#10222a" stroke="var(--accent2)"/><text x="485" y="172" text-anchor="middle" font-size="18">🗼</text>
+      <path d="M142 150 Q280 60 296 52" fill="none" stroke="var(--L-sync)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#up6)"/>
+      <text x="168" y="104" fill="var(--L-sync)" font-size="11">↑ my changes + summary<animate attributeName="opacity" values="1;1;0.2;0.2" dur="6s" repeatCount="indefinite"/></text>
+      <path d="M320 52 Q360 110 466 142" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#dn6)"/>
+      <text x="350" y="120" fill="var(--accent)" font-size="11">↓ what I was missing<animate attributeName="opacity" values="0.2;0.2;1;1" dur="6s" repeatCount="indefinite"/></text>
+      <defs>
+        <marker id="up6" markerWidth="9" markerHeight="9" refX="4" refY="4.5" orient="auto"><path d="M0 9 L4.5 0 L9 9 Z" fill="var(--L-sync)"/></marker>
+        <marker id="dn6" markerWidth="9" markerHeight="9" refX="4.5" refY="7" orient="auto"><path d="M0 0 L9 0 L4.5 9 Z" fill="var(--accent)"/></marker>
+      </defs>
+    </svg>
+    <div class="cap">The summary is the clever part of the design: a device would describe what it has compactly enough that the relay node can work out what to send back, all within a single ~1,960-byte budget. <span class="st st-spec">Speculative</span> — no such digest format is built.</div>
+    <div class="legend" style="margin-top:12px">
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--L-sync)" stroke-width="2.5" stroke-dasharray="5 3"/></svg> up: your changes + summary</span>
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="5 3"/></svg> down: what you were missing</span>
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top:18px">Four candidate digest designs — every one of these is <span class="st st-spec">Speculative</span> (teaching-only); none is implemented, and the byte budgets are illustrative arithmetic, not wire formats.</p>
+  <div class="grid">
+    <div class="card"><h4>If the device remembers <span class="st st-spec">Speculative</span></h4><p>It could keep a small "reading log" — the latest update number it has seen from each peer, on the order of 8 bytes apiece. A cell of up to a hundred devices would then fit in one satellite message with room left for real data. (Illustrative math — PEAT does not keep per-peer version vectors today.)</p></div>
+    <div class="card"><h4>If it forgets on reboot <span class="st st-spec">Speculative</span></h4><p>Many tiny devices keep nothing across a restart, so a device could instead send its own latest number and the time it last made contact, and the relay would reply with everything that changed since then, newest values first. (A "snapshot-since-T" scheme — also unbuilt.)</p></div>
+    <div class="card"><h4>At larger scale <span class="st st-spec">Speculative</span></h4><p>A summary for a thousand devices would be too big, so a device could carry a full log only for its own small group and a single fingerprint for each tier above it, reusing the roll-up summaries the hierarchy produces. (A hierarchical digest — design only.)</p></div>
+    <div class="card"><h4>On faster radios <span class="st st-spec">Speculative</span></h4><p>A LoRa link could afford a couple of exchanges and use a compact "difference sketch" (IBLT-style) sized to the expected gap, letting both sides find what differs without listing everything they share. (Note: LoRa itself is a proposed transport; the shipped reconciliation, negentropy, runs over QUIC, not LoRa.)</p></div>
+  </div>
+
+  <div class="warn"><b>The hard part is deletion.</b> If you only send current values, "this was deleted" looks the same as "I never heard of it." The fix is a small marker (a tombstone) that records a deletion, kept around at least as long as the slowest device might stay out of contact, with a relay node as the keeper of record. Tombstones themselves <em>do</em> ship — peat-node has tombstone GC with a 168-hour (7-day) default retention <span class="st st-ship">Shipped</span> — but per-collection deletion-policy enforcement through the mesh, and the related sync-reliability work, is <span class="st st-flight">In flight</span>.</div>
+  <div class="src">Source: peat-node tombstone GC knobs (<code>--tombstone-ttl-hours</code>, 168h default, 300s GC interval) — issue peat-node#136; sync-reliability bugs #850/#829/#873. (An earlier draft cited "#857" here; #857 is actually the ADR-046 Phase-4 selectors epic, unrelated to deletion GC.)</div>
+  <div class="crumbs"><button class="btn" data-go="cn5">← Back</button><button class="btn" data-go="cn7">Next: router, not broker →</button></div>
+</section>
+
+<!-- ============================================ cn7 -->
+<section id="cn7">
+  <h2>07 · Router, not broker</h2>
+  <p class="lead">A design where many sensors all sync through one busy relay sits dangerously close to the kind of central broker PEAT was built to avoid. The distinction that keeps it honest is the difference between a place where roads meet and a seat of government.</p>
+
+  <p>The relay node is a meeting point, not a ruler. It holds the most complete copy of the data simply because that is where the long-range traffic happens to land — the same way a mountain town ends up busy because it sits on the only pass. As long as the relay only <em>merges</em> data (a deterministic step that any device with the same updates would arrive at identically) and <em>passes it along</em>, it holds no special authority. The danger line is crossed only if it starts deciding disputes by its own judgment instead of by the shared merge rule. (This node is a peat-mesh relay, not the peat-gateway control plane, which never sits in the data path at all.) <span class="st st-ship">Shipped</span> — Automerge merge is deterministic.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 600 210" role="img" aria-label="The yank-the-hub test: a broker goes dark, PEAT re-homes">
+      <text x="150" y="22" text-anchor="middle" fill="var(--warn)" font-size="13" font-weight="700">A broker</text>
+      <text x="450" y="22" text-anchor="middle" fill="var(--ok)" font-size="13" font-weight="700">PEAT done right</text>
+      <g opacity="0.45">
+        <circle cx="150" cy="58" r="17" fill="#241e10" stroke="var(--warn)"/><text x="150" y="63" text-anchor="middle" font-size="13">✖</text>
+        <line x1="150" y1="75" x2="96" y2="146" stroke="var(--line)"/><line x1="150" y1="75" x2="150" y2="146" stroke="var(--line)"/><line x1="150" y1="75" x2="204" y2="146" stroke="var(--line)"/>
+        <circle cx="96" cy="156" r="13" fill="#1a1a1a" stroke="var(--line)"/><circle cx="150" cy="156" r="13" fill="#1a1a1a" stroke="var(--line)"/><circle cx="204" cy="156" r="13" fill="#1a1a1a" stroke="var(--line)"/>
+      </g>
+      <text x="150" y="194" text-anchor="middle" fill="var(--warn)" font-size="11">station gone → everything goes dark</text>
+      <circle cx="410" cy="58" r="15" fill="#1a1a1a" stroke="var(--line)"/><text x="410" y="63" text-anchor="middle" font-size="11">✖</text>
+      <circle cx="510" cy="58" r="17" fill="#0f1f14" stroke="var(--ok)"/><text x="510" y="63" text-anchor="middle" font-size="13">🗼</text>
+      <line x1="510" y1="75" x2="410" y2="146" stroke="var(--ok)"/><line x1="510" y1="75" x2="470" y2="146" stroke="var(--ok)"/><line x1="510" y1="75" x2="540" y2="146" stroke="var(--ok)"/>
+      <circle cx="410" cy="156" r="13" fill="#10222a" stroke="var(--accent)"/><circle cx="470" cy="156" r="13" fill="#10222a" stroke="var(--accent)"/><circle cx="540" cy="156" r="13" fill="#10222a" stroke="var(--accent)"/>
+      <text x="475" y="194" text-anchor="middle" fill="var(--ok)" font-size="11">a new relay node takes over</text>
+    </svg>
+    <div class="cap">The test is simple: remove the busy relay and watch. A broker <em>was</em> the network, so the network dies with it. In PEAT the data already lives, copied, across the devices — the cell deterministically re-elects a leader (no votes, no quorum) and a capable node takes over the relay job. The local re-election and reconnect are <span class="st st-ship">Shipped</span>; automatic failover <em>across</em> transports (e.g. onto a satellite uplink) is not a demonstrated path.</div>
+    <div class="legend" style="margin-top:12px">
+      <span>✖ = removed / failed relay</span>
+      <span><i style="background:#1a1a1a;border:1px solid var(--line)"></i>device gone dark</span>
+      <span><i style="background:#0f1f14;border:1px solid var(--ok)"></i>new relay node taking over</span>
+    </div>
+  </div>
+  <div class="src">Source: deterministic leader election (<code>peat-mesh/src/hierarchy/dynamic_strategy.rs:190-224</code>, shipped) + peat-node auto-reconnect watchdog (5 s→120 s backoff). Cross-transport uplink failover is undemonstrated.</div>
+  <div class="crumbs"><button class="btn" data-go="cn6">← Back</button><button class="btn" data-go="cn8">Next: two graphs, one system →</button></div>
+</section>
+
+<!-- ============================================ cn8 (reworked) -->
+<section id="cn8">
+  <h2>08 · Two graphs, one system</h2>
+  <p class="lead">It helps to see that any deployment really has two different maps drawn over the same devices. One map shows which devices <em>can</em> physically reach each other. The other shows which devices actually <em>exchange state</em> with each other. They are not the same map, and the gap between them is a deliberate choice driven by what each link costs.</p>
+
+  <p>Use the buttons to switch between the two maps for one small system — three sensors near each other, a relay node with a satellite dish, and a command post on the far side of the satellite. (The local links are <span class="st st-ship">Shipped</span> transports; the satellite hop is the <span class="st st-prop">Proposed</span> one, drawn dashed.)</p>
+
+  <div style="text-align:center;margin:14px 0">
+    <button class="btn sel" id="t-phys" onclick="setTopo('phys')">What can reach what</button>
+    <button class="btn" id="t-logi" onclick="setTopo('logi')">What syncs with what</button>
+  </div>
+  <div class="fig">
+    <svg viewBox="0 0 560 300" role="img" aria-label="Toggle between physical reachability and actual sync over the same devices">
+      <!-- satellite -->
+      <text x="280" y="48" text-anchor="middle" font-size="22">🛰️</text>
+      <text x="280" y="68" text-anchor="middle" fill="var(--muted)" font-size="10.5">satellite</text>
+      <!-- command post -->
+      <rect x="450" y="150" width="98" height="46" rx="9" fill="#10222a" stroke="var(--accent2)"/><text x="499" y="178" text-anchor="middle" font-size="11" fill="var(--ink)">command post</text>
+      <!-- gateway -->
+      <circle cx="300" cy="208" r="22" fill="#10222a" stroke="var(--accent)" stroke-width="2"/><text x="300" y="214" text-anchor="middle" font-size="15">🗼</text><text x="300" y="244" text-anchor="middle" fill="var(--muted)" font-size="10.5">relay node</text>
+      <!-- local cell -->
+      <text x="108" y="116" text-anchor="middle" fill="var(--muted)" font-size="10.5">local cell</text>
+      <circle cx="88"  cy="150" r="18" fill="#10222a" stroke="var(--accent)"/><text x="88"  y="155" text-anchor="middle" font-size="13">📡</text>
+      <circle cx="72"  cy="232" r="16" fill="#10222a" stroke="var(--accent)"/><text x="72"  y="237" text-anchor="middle" font-size="12">📡</text>
+      <circle cx="168" cy="224" r="16" fill="#10222a" stroke="var(--accent)"/><text x="168" y="229" text-anchor="middle" font-size="12">📡</text>
+
+      <!-- PHYSICAL: who can reach whom -->
+      <g id="edges-phys">
+        <g stroke="var(--L-trans)" stroke-width="2.5">
+          <line x1="88" y1="150" x2="72" y2="232"/>
+          <line x1="88" y1="150" x2="168" y2="224"/>
+          <line x1="72" y1="232" x2="168" y2="224"/>
+          <line x1="106" y1="156" x2="280" y2="202"/>
+          <line x1="184" y1="222" x2="280" y2="208"/>
+        </g>
+        <g stroke="var(--L-trans)" stroke-width="2.5" stroke-dasharray="5 4">
+          <line x1="300" y1="186" x2="284" y2="60"/>
+          <line x1="294" y1="58" x2="450" y2="166"/>
+        </g>
+      </g>
+
+      <!-- LOGICAL: who actually syncs -->
+      <g id="edges-logi" style="display:none">
+        <g stroke="var(--L-sync)" stroke-width="2.5">
+          <line x1="88" y1="150" x2="72" y2="232"/>
+          <line x1="88" y1="150" x2="168" y2="224"/>
+          <line x1="72" y1="232" x2="168" y2="224"/>
+          <line x1="106" y1="156" x2="280" y2="202"/>
+          <line x1="184" y1="222" x2="280" y2="208"/>
+        </g>
+        <g stroke="var(--warn)" stroke-width="2.5" stroke-dasharray="6 4">
+          <line x1="300" y1="186" x2="284" y2="60"/>
+          <line x1="294" y1="58" x2="450" y2="166"/>
+        </g>
+        <text x="356" y="98" fill="var(--warn)" font-size="11">summary only</text>
+      </g>
+    </svg>
+    <div class="cap" id="topo-cap">What can reach what: the three sensors are in radio range of each other and of the relay node, and the relay can reach the command post only by way of the satellite.</div>
+    <div class="legend" style="margin-top:14px">
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--L-trans)" stroke-width="2.5"/></svg> local radio link — cheap</span>
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--L-trans)" stroke-width="2.5" stroke-dasharray="5 3"/></svg> satellite hop — slow &amp; paid</span>
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--L-sync)" stroke-width="2.5"/></svg> full two-way sync</span>
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--warn)" stroke-width="2.5" stroke-dasharray="5 3"/></svg> summary only</span>
+    </div>
+  </div>
+
+  <div class="warn"><b>The point you'd miss otherwise:</b> you <em>could</em> have all five devices sync with each other as one flat mesh across the satellite — nothing stops you. You wouldn't, though, because every peer-to-peer exchange would then cost two satellite hops — on the order of forty seconds and two paid messages, using the Iridium ~20 s / per-message figures from section 04. So the dense, everyone-with-everyone syncing stays on the cheap local links, and the satellite carries only a compact summary up and commands down. "Decentralized" describes who holds authority over the data, not a promise that every device chats with every other. <span class="st st-spec">Speculative</span> — the summary-up/commands-down satellite topology assumes the proposed SBD transport and the unbuilt digest of section 06; the local-mesh half is real.</div>
+  <div class="crumbs"><button class="btn" data-go="cn7">← Back</button><button class="btn" data-go="cn9">Next: one node, three dials →</button></div>
+</section>
+
+<!-- ============================================ cn9 (reworked: real system + dials + data flow) -->
+<section id="cn9">
+  <h2>09 · One node, three dials</h2>
+  <p class="lead">A mute telemetry sensor and a fully coordinating peer run the same software — they differ only in how three independent dials are set. Here is one real system; click a role to see where that device sits, how its dials are turned, and how data flows around it. The three "dials" are a teaching abstraction, not three fields in the code — but each maps onto something real: reachability to the registered transports, participation to which collections a node syncs, and authority to its RBAC <code>Role</code> (<span class="st st-ship">Shipped</span>: Leader / Member / Observer / Commander / Admin).</p>
+
+  <div class="presetrow">
+    <button class="btn sel" onclick="setPreset(0)">Mute sensor</button>
+    <button class="btn" onclick="setPreset(1)">Coordinating peer</button>
+    <button class="btn" onclick="setPreset(2)">Forwarding relay</button>
+  </div>
+
+  <div class="fig">
+    <svg viewBox="0 0 600 290" role="img" aria-label="A real system layout; the selected role is ringed and lit">
+      <!-- satellite -->
+      <text x="300" y="42" text-anchor="middle" font-size="22">🛰️</text>
+      <!-- command post -->
+      <rect x="458" y="46" width="106" height="42" rx="10" fill="#10222a" stroke="var(--accent2)"/><text x="511" y="72" text-anchor="middle" font-size="11.5" fill="var(--ink)">command post</text>
+      <!-- local cell -->
+      <text x="120" y="118" text-anchor="middle" fill="var(--muted)" font-size="10.5">local cell — cheap links</text>
+      <circle id="n-A" cx="95"  cy="150" r="20" fill="#10222a" stroke="var(--accent)" stroke-width="2"/><text x="95"  y="156" text-anchor="middle" font-size="14">📡</text><text x="95"  y="185" text-anchor="middle" fill="var(--muted)" font-size="10.5">sensor A</text>
+      <circle id="n-B" cx="180" cy="210" r="20" fill="#10222a" stroke="var(--accent)" stroke-width="2"/><text x="180" y="216" text-anchor="middle" font-size="14">📡</text><text x="180" y="245" text-anchor="middle" fill="var(--muted)" font-size="10.5">peer B</text>
+      <circle cx="100" cy="238" r="15" fill="#10222a" stroke="var(--accent)" stroke-width="2"/><text x="100" y="243" text-anchor="middle" font-size="11">📡</text>
+      <!-- gateway -->
+      <circle id="n-H" cx="335" cy="195" r="24" fill="#10222a" stroke="var(--accent)" stroke-width="2"/><text x="335" y="201" text-anchor="middle" font-size="16">🗼</text><text x="335" y="232" text-anchor="middle" fill="var(--muted)" font-size="10.5">relay node</text>
+
+      <!-- local sync (cheap), centers aligned -->
+      <g stroke="var(--L-trans)" stroke-width="2">
+        <line x1="95" y1="150" x2="180" y2="210"/>
+        <line x1="95" y1="150" x2="100" y2="238"/>
+        <line x1="180" y1="210" x2="100" y2="238"/>
+        <line x1="200" y1="207" x2="312" y2="193"/>
+      </g>
+      <text x="150" y="202" fill="var(--L-trans)" font-size="10.5">local sync</text>
+
+      <!-- satellite link: summary up + commands down (paid) -->
+      <g stroke="var(--L-sync)" stroke-width="2" stroke-dasharray="5 4">
+        <line x1="335" y1="171" x2="312" y2="56"/>
+        <line x1="318" y1="54" x2="456" y2="64"/>
+      </g>
+      <text x="352" y="104" fill="var(--L-sync)" font-size="10.5">summary ↑ · commands ↓</text>
+      <text x="352" y="120" fill="var(--muted)" font-size="10">via satellite — paid</text>
+
+      <!-- highlight ring (drawn last = on top) -->
+      <circle id="hl" cx="95" cy="150" r="29" fill="none" stroke="var(--warn)" stroke-width="3"><animate attributeName="opacity" values="1;0.4;1" dur="1.8s" repeatCount="indefinite"/></circle>
+    </svg>
+
+    <div class="dialwrap">
+      <div class="dialrow"><span class="nm2" style="color:var(--L-trans)">Reachability</span><span class="dialbar"><i id="b-reach" style="background:var(--L-trans)"></i></span><span class="val" id="v-reach">short-range only (BLE)</span></div>
+      <div class="dialrow"><span class="nm2" style="color:var(--L-sync)">Participation</span><span class="dialbar"><i id="b-part" style="background:var(--L-sync)"></i></span><span class="val" id="v-part">publish only</span></div>
+      <div class="dialrow"><span class="nm2" style="color:var(--accent2)">Authority</span><span class="dialbar"><i id="b-auth" style="background:var(--accent2)"></i></span><span class="val" id="v-auth">Member</span></div>
+    </div>
+    <p class="muted" style="text-align:center;font-size:12.5px;margin:8px 0 0">Each dial runs low → high. <b style="color:var(--L-trans)">Reachability</b>: how many links, how far · <b style="color:var(--L-sync)">Participation</b>: how much shared state it reads &amp; writes · <b style="color:var(--accent2)">Authority</b>: its command rights.</p>
+    <div class="cap" id="preset-cap"><b>Sensor A — mute sensor.</b> It sits inside the local cell on short-range radio (BLE or similar) with no uplink of its own. It publishes its own readings and never coordinates with its peers, at the lowest authority; any command for it arrives down through the relay node. The wider mesh effectively begins there.</div>
+    <div class="legend" style="margin-top:12px">
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--L-trans)" stroke-width="2.5"/></svg> local sync — cheap</span>
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--L-sync)" stroke-width="2.5" stroke-dasharray="5 3"/></svg> satellite path — paid</span>
+      <span><i style="background:var(--warn)"></i>amber ring = selected device</span>
+    </div>
+  </div>
+
+  <div class="note">Notice that the everyday, high-volume coordination all happens on the cheap local links among A, B and their neighbours, while the (proposed) satellite would carry only the summary up and commands back down — exactly the choice section&nbsp;08 was pointing at. Changing a device's job is a matter of turning these three dials, never swapping its software. <span class="st st-ship">Shipped</span> for the local-link behaviour and the role/collection model; <span class="st st-prop">Proposed</span> for the satellite uplink.</div>
+  <div class="crumbs"><button class="btn" data-go="cn8">← Back</button><button class="btn" data-go="cn10">Next: match coordination to cost →</button></div>
+</section>
+
+<!-- ============================================ cn10 -->
+<section id="cn10">
+  <h2>10 · Match coordination to cost</h2>
+  <p class="lead">The single most useful design rule for these systems follows directly from the last two sections: put the boundaries of your hierarchy wherever a link gets expensive.</p>
+
+  <p>Coordination that is almost free over a local Bluetooth link becomes punishing over satellite. Each back-and-forth between two peers turns into two satellite hops — on the order of forty seconds of delay and two paid messages, using the Iridium figures from section 04 — so a chatty exchange that would finish instantly nearby could take many minutes and real money across the sky. The way out is to let devices that are physically close form a tight local group and coordinate freely there, and to let the expensive long-range link carry only the distilled result upward and commands downward. <span class="st st-spec">Speculative</span> as stated — the satellite math assumes the proposed SBD transport; the principle (keep dense traffic on cheap links) applies to any real long-range link too.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 600 230" role="img" aria-label="Dense cheap local coordination, only a summary crosses the metered satellite line">
+      <text x="150" y="26" text-anchor="middle" fill="var(--accent)" font-size="12.5" font-weight="700">local group — cheap, chatty</text>
+      <circle cx="80"  cy="84"  r="15" fill="#10222a" stroke="var(--accent)"/><text x="80"  y="89"  text-anchor="middle" font-size="12">📡</text>
+      <circle cx="190" cy="66"  r="15" fill="#10222a" stroke="var(--accent)"/><text x="190" y="71"  text-anchor="middle" font-size="12">📡</text>
+      <circle cx="140" cy="158" r="15" fill="#10222a" stroke="var(--accent)"/><text x="140" y="163" text-anchor="middle" font-size="12">📡</text>
+      <circle cx="245" cy="135" r="18" fill="#10222a" stroke="var(--accent)" stroke-width="2"/><text x="245" y="140" text-anchor="middle" font-size="13">🗼</text>
+      <g stroke="var(--accent)" stroke-width="1.5" opacity="0.8">
+        <line x1="80" y1="84" x2="190" y2="66"/><line x1="80" y1="84" x2="140" y2="158"/><line x1="190" y1="66" x2="140" y2="158"/>
+        <line x1="190" y1="66" x2="245" y2="135"/><line x1="140" y1="158" x2="245" y2="135"/>
+      </g>
+      <line x1="340" y1="20" x2="340" y2="210" stroke="var(--warn)" stroke-dasharray="6 5"/>
+      <text x="340" y="226" text-anchor="middle" fill="var(--warn)" font-size="11">the cost cliff</text>
+      <text x="300" y="60" font-size="18">🛰️</text>
+      <path d="M263 132 H468" stroke="var(--L-sync)" stroke-width="2" marker-end="url(#a10)"/>
+      <text x="372" y="122" text-anchor="middle" fill="var(--L-sync)" font-size="11">summary only ↑</text>
+      <rect x="468" y="112" width="110" height="42" rx="10" fill="#10222a" stroke="var(--accent2)"/><text x="523" y="138" text-anchor="middle" font-size="12">command post</text>
+      <defs><marker id="a10" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 Z" fill="var(--L-sync)"/></marker></defs>
+    </svg>
+    <div class="cap">Keep the dense traffic on the cheap side of the cliff; send only the aggregate across it. The satellite link should sit <em>between</em> groups, never inside one.</div>
+    <div class="legend" style="margin-top:12px">
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--L-trans)" stroke-width="2.5"/></svg> cheap local links</span>
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--L-sync)" stroke-width="2.5"/></svg> summary across the cliff</span>
+      <span><svg width="26" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--warn)" stroke-width="2.5" stroke-dasharray="5 3"/></svg> cost cliff (tier boundary)</span>
+    </div>
+  </div>
+  <div class="ok"><b>The rule of thumb:</b> place each tier boundary at a jump in link cost. That one decision often decides whether the satellite bill is survivable. (PEAT's hierarchy sizing — a cell of ~4–13 nodes, a cohort of a few cells — is design-intent guidance in the code's comments, not a limit any code enforces, so this placement is a deployment judgement, not an automatic one.)</div>
+  <div class="crumbs"><button class="btn" data-go="cn9">← Back</button><button class="btn" data-go="cn11">Next: configuring both →</button></div>
+</section>
+
+<!-- ============================================ cn11 -->
+<section id="cn11">
+  <h2>11 · Configuring both</h2>
+  <p class="lead">Most real deployments need both kinds of coordination at once: a shared picture that everyone agrees on, and direct orders aimed at specific devices. The good news is that this choice lives on each <em>collection</em> of data, not on the device, so a single system runs both side by side.</p>
+
+  <p>You define each collection with the profile its data deserves. Positions and sensor readings want a "shared picture" profile — broadcast to the whole group, merged by everyone. Orders want a "directed tasking" profile — sent only to chosen recipients, writable only by an authorized commander, and acknowledged on receipt.</p>
+
+  <div class="note">The YAML below is <b>illustrative</b>, not a copy of a shipped schema. The shared-picture profile is close to what ships: peat-node collection config (ADR-016, peat-node#55) persists per-collection TTL and deletion policy, QoS priority is real, and <code>lww</code> maps to a shipped CRDT. The directed-tasking profile is mostly <span class="st st-prop">Proposed</span>/<span class="st st-spec">Speculative</span>: targeted delivery is the ADR-046 epic <span class="st st-flight">In flight</span> (#853), and <code>command_log</code> is a CRDT that <b>does not exist anywhere yet</b>.</div>
+
+  <div class="grid">
+    <div class="card">
+      <h4 style="color:var(--L-sync)">Shared-picture profile <span class="st st-ship">Shipped</span></h4>
+      <p class="muted">positions · tracks · readings</p>
+<pre><code><span class="nm">tracks</span>:
+  <span class="ty">delivery</span>: <span class="str">broadcast</span>   <span class="cm"># all members merge</span>
+  <span class="ty">crdt</span>: <span class="str">lww</span>         <span class="cm"># or gcounter</span>
+  <span class="ty">priority</span>: <span class="str">normal</span>
+  <span class="ty">ttl_secs</span>: <span class="str">300</span>       <span class="cm"># per-type, in seconds</span></code></pre>
+    </div>
+    <div class="card">
+      <h4 style="color:var(--accent2)">Directed-tasking profile <span class="st st-prop">Proposed</span></h4>
+      <p class="muted">orders · tasking</p>
+<pre><code><span class="nm">orders</span>:
+  <span class="ty">delivery</span>: <span class="str">targeted</span>    <span class="cm"># ADR-046, in flight</span>
+  <span class="ty">target</span>: <span class="str">"role:strike"</span>
+  <span class="ty">crdt</span>: <span class="str">command_log</span>  <span class="cm"># SPECULATIVE — no impl</span>
+  <span class="ty">write_role</span>: <span class="str">Commander</span>
+  <span class="ty">priority</span>: <span class="str">critical</span>
+  <span class="ty">require_ack</span>: <span class="kw">true</span></code></pre>
+    </div>
+  </div>
+  <div class="src">Real wire CRDT codes: <code>lww=0x01, gcounter=0x02, pncounter=0x03, orset=0x04</code> (<code>peat-lite/src/protocol/crdt_type.rs</code>) — but <code>orset</code> is a reserved byte with no implementation, and TTLs are defined per CRDT type in seconds, not as a collection-level <code>5m</code> field. <code>write_role</code> must be a real RBAC role (Leader/Member/Observer/Commander/Admin) — there is no <code>operator</code> role. <code>min_pace</code> and a string <code>ttl</code> are not fields in the code.</div>
+
+  <p>The mute sensor from section 09 needs no third profile. It simply uses each of these in one direction only: it publishes into a shared-picture collection it never reads back, and it listens to a tasking collection it never writes to.</p>
+
+  <div class="warn"><b>One real gap remains, and it matters for autonomy under human authority.</b> peat-lite's current data types are safe for facts and counts, but none is safe for orders. Today a command is an ordinary JSON document in a <code>commands</code> collection; settling two conflicting commands by "newest wins" could quietly fire the wrong one. A tasking collection needs a <code>command_log</code> type that records orders in sequence, marks superseded ones plainly, and is write-gated to an authorized commander — so a person can always see the chain and a machine never acts outside it. The shared-picture half works today <span class="st st-ship">Shipped</span>; the targeted-delivery half is the ADR-046 work already underway <span class="st st-flight">In flight</span> (#853); the command-log type itself still has to be designed <span class="st st-spec">Speculative</span>.</div>
+  <div class="crumbs"><button class="btn" data-go="cn10">← Back</button><button class="btn" data-go="cn12">Next: gaps &amp; where to go →</button></div>
+</section>
+
+<!-- ============================================ cn12 -->
+<section id="cn12">
+  <h2>12 · Gaps &amp; where to go next</h2>
+  <p class="lead">A quick honest map of what is solid, what is being built, and what still needs design — plus the doors out of this track.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 600 120" role="img" aria-label="Roadmap: built, in flight, to design">
+      <rect x="20"  y="26" width="170" height="68" rx="10" fill="#0f1f14" stroke="var(--ok)"/><text x="105" y="48" text-anchor="middle" fill="var(--ok)" font-size="13" font-weight="700">Built</text><text x="105" y="68" text-anchor="middle" fill="var(--muted)" font-size="10">broadcast sync (negentropy</text><text x="105" y="82" text-anchor="middle" fill="var(--muted)" font-size="10">+ Automerge) · QUIC/BLE/lite</text>
+      <rect x="215" y="26" width="170" height="68" rx="10" fill="#241e10" stroke="var(--warn)"/><text x="300" y="48" text-anchor="middle" fill="var(--warn)" font-size="13" font-weight="700">In flight</text><text x="300" y="68" text-anchor="middle" fill="var(--muted)" font-size="10">targeted delivery (#853)</text><text x="300" y="82" text-anchor="middle" fill="var(--muted)" font-size="10">· deletion-policy GC (#136)</text>
+      <rect x="410" y="26" width="170" height="68" rx="10" fill="#0f1a2b" stroke="var(--accent2)"/><text x="495" y="44" text-anchor="middle" fill="var(--accent2)" font-size="13" font-weight="700">Proposed / to design</text><text x="495" y="64" text-anchor="middle" fill="var(--muted)" font-size="10">SBD &amp; LoRa transports ·</text><text x="495" y="78" text-anchor="middle" fill="var(--muted)" font-size="10">command-log · digest format</text>
+    </svg>
+    <div class="legend" style="margin-top:12px">
+      <span><i style="background:var(--ok)"></i>built — works today</span>
+      <span><i style="background:var(--warn)"></i>in flight — being built</span>
+      <span><i style="background:var(--accent2)"></i>proposed / to design — open</span>
+    </div>
+  </div>
+
+  <p class="muted">Reminder: the broadcast-sync backbone (Automerge + negentropy over QUIC) and the QUIC/BLE/peat-lite transports are real and tested. The long-range transports this track leans on — SBD and LoRa — are <span class="st st-prop">Proposed</span> ADRs with no code. The honest contribution map below is where a new engineer can move the needle.</p>
+
+  <h4>Open questions worth your attention</h4>
+  <ul>
+    <li><b>The SBD and LoRa transport crates <span class="st st-prop">Proposed</span></b> — the whole premise of this track. Implement the shipped <code>MeshTransport</code> trait for each radio (ADR-051, ADR-052). Largest greenfield, highest leverage.</li>
+    <li><b>The command-log data type <span class="st st-spec">Speculative</span></b> — recording orders in sequence and marking superseded ones, write-gated and acknowledged, safe for real-world action under human authority. Does not exist yet.</li>
+    <li><b>The single-burst digest format <span class="st st-spec">Speculative</span></b> — how a "reading log" and an "everything since this time" form share one compact message over a non-interactive link (negentropy assumes interactive QUIC).</li>
+    <li><b>Deletion-policy enforcement <span class="st st-flight">In flight</span></b> — tombstones ship with a 7-day default, but per-collection deletion-policy enforcement through the mesh, and the related sync-reliability bugs, are open (peat-node#136; #850/#829/#873).</li>
+    <li><b>Encryption for the proposed radios <span class="st st-prop">Proposed</span></b> — the residual FIPS conflict is confined to <b>ADR-052 (LoRa), which specifies ChaCha20-Poly1305</b> and is unbuilt. The <em>shipped</em> constrained transports are already FIPS-clean: peat-btle uses AES-256-GCM + ECDH-P256, and peat-lite has no symmetric crypto of its own. Fixing ADR-052's cipher to AES-256-GCM, and designing an object-security (OSCORE/AES-CCM-style) per-message wrapper so data stays protected through an untrusted relay, are the open items.</li>
+  </ul>
+  <div class="src">FIPS posture (ground truth §6): shipped crypto migrated off ChaCha20/X25519 to AES-256-GCM + ECDH-P256 on 2026-05-18 (peat-mesh rc.12, ADR-060 §5). Stale READMEs still mention ChaCha20 — a doc bug, not shipped behaviour. Algorithms are FIPS-<em>approved</em>; the pure-Rust modules are not CMVP-validated (peat-btle#75, in flight).</div>
+
+  <div class="grid">
+    <div class="card"><h4>Design note</h4><p><span class="file">peat-addressing-transport-sync.md</span> — the layering this track is built on, a candidate to become a formal decision record.</p></div>
+    <div class="card"><h4>Relevant decision records</h4><p>All of these are <b>Proposed</b>: 032 transport · 035 lite · 039 BLE · 046 targeted · 051 satellite · 052 LoRa · 066 hierarchy. <span class="st st-prop">Proposed</span></p><p class="muted" style="font-size:12.5px">In this set only <b>ADR-041</b> (multi-transport embedded integration) is Accepted. "Proposed" means the decision record is filed but not formally accepted — in several cases the code already ships the decision anyway.</p></div>
+    <div class="card"><h4>Back to the hub</h4><p><a href="peat-learning-hub.html">PEAT Learning Hub</a> — peat-mesh, BLE &amp; lite, the gateway, and data flows.</p></div>
+  </div>
+
+  <div class="chk"><b>The whole track in one breath:</b> keep the <span style="color:var(--L-addr)">name</span> fixed and swap the <span style="color:var(--L-trans)">radio</span> beneath it; lean on conflict-free data so the <span style="color:var(--L-sync)">sync</span> survives a link that loses and delays; let relay nodes gather without governing; coordinate densely where it's cheap and summarize across the costly links; and give each collection of data the profile that suits it. The backbone is real today over QUIC, BLE, and peat-lite; the satellite and LoRa rungs are the proposed work that turns this design into the full off-grid story.</div>
+  <div class="crumbs"><button class="btn" data-go="cn0">↑ Back to start</button><a class="btn" href="peat-learning-hub.html">Return to Hub →</a></div>
+</section>
+
+</main>
+</div>
+
+<script>
+  const sections = [...document.querySelectorAll('section')];
+  const navlinks = [...document.querySelectorAll('nav.side a[data-go]')];
+  function go(id){
+    sections.forEach(s=>s.classList.toggle('active', s.id===id));
+    navlinks.forEach(a=>a.classList.toggle('active', a.dataset.go===id));
+    if(history.replaceState) history.replaceState(null,'','#'+id);
+    window.scrollTo(0,0);
+  }
+  document.body.addEventListener('click', e=>{
+    const t = e.target.closest('[data-go]');
+    if(t){ e.preventDefault(); go(t.dataset.go); }
+  });
+  const start = location.hash.replace('#','');
+  if(start && document.getElementById(start)) go(start);
+
+  // cn8 toggle
+  function setTopo(mode){
+    const phys=document.getElementById('edges-phys'), logi=document.getElementById('edges-logi');
+    const cap=document.getElementById('topo-cap');
+    const bp=document.getElementById('t-phys'), bl=document.getElementById('t-logi');
+    if(mode==='phys'){
+      phys.style.display=''; logi.style.display='none'; bp.classList.add('sel'); bl.classList.remove('sel');
+      cap.innerHTML='What can reach what: the three sensors are in range of each other and the relay node, and the relay reaches the command post only through the satellite.';
+    } else {
+      phys.style.display='none'; logi.style.display=''; bl.classList.add('sel'); bp.classList.remove('sel');
+      cap.innerHTML='What syncs with what: the sensors sync densely among themselves over cheap local links, and only one compact summary crosses the satellite — not a full peer mesh.';
+    }
+  }
+
+  // cn9 presets — move ring, light selected node, set dial bars + caption
+  const NODE = { A:{x:95,y:150}, B:{x:180,y:210}, H:{x:335,y:195} };
+  const presets = [
+    { node:'A', reach:18, part:10, auth:30,
+      v:{reach:'short-range only (BLE)', part:'publish only', auth:'Member'},
+      cap:'<b>Sensor A — mute sensor.</b> It sits inside the local cell on short-range radio (BLE or similar) with no uplink of its own. It publishes its own readings and never coordinates with its peers, at the lowest authority; any command for it arrives down through the relay node. The wider mesh effectively begins there.' },
+    { node:'B', reach:55, part:90, auth:65,
+      v:{reach:'several local links', part:'reads · merges · acts', auth:'Commander'},
+      cap:'<b>Peer B — coordinating peer.</b> Several cheap local links; it reads its neighbours’ state, merges it, acts on it, and can issue tasking. A full member of the local mesh. (Authority shown is the RBAC <code>Commander</code> role — the real enum is Leader / Member / Observer / Commander / Admin.)' },
+    { node:'H', reach:95, part:80, auth:88,
+      v:{reach:'local links + satellite uplink', part:'merges & forwards', auth:'Leader'},
+      cap:'<b>Relay node — forwarding role.</b> Bridges the local radios and the (proposed) satellite and relays others’ updates onward (a routing job, not authority), while usually also leading the local group. This is a peat-mesh relay node, not the peat-gateway control plane.' }
+  ];
+  function setPreset(i){
+    const p=presets[i], n=NODE[p.node];
+    ['n-A','n-B','n-H'].forEach(id=>{const el=document.getElementById(id);el.setAttribute('stroke','var(--accent)');el.setAttribute('stroke-width','2');});
+    const sel=document.getElementById('n-'+p.node);
+    sel.setAttribute('stroke','var(--warn)'); sel.setAttribute('stroke-width','4');
+    const hl=document.getElementById('hl'); hl.setAttribute('cx', n.x); hl.setAttribute('cy', n.y);
+    document.getElementById('b-reach').style.width=p.reach+'%';
+    document.getElementById('b-part').style.width=p.part+'%';
+    document.getElementById('b-auth').style.width=p.auth+'%';
+    document.getElementById('v-reach').textContent=p.v.reach;
+    document.getElementById('v-part').textContent=p.v.part;
+    document.getElementById('v-auth').textContent=p.v.auth;
+    document.getElementById('preset-cap').innerHTML=p.cap;
+    [...document.querySelectorAll('.presetrow .btn')].forEach((b,bi)=>b.classList.toggle('sel', bi===i));
+  }
+  setPreset(0);
+</script>
+</body>
+</html>
+</content>
