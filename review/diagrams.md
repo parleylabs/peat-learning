@@ -103,6 +103,24 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 
 ---
 
+## Interactivity (HTML)
+
+The hub (`index.html`) and constrained track render diagrams as **interactive inline SVG**, still
+fully self-contained (no external renderer/CDN — inline CSS + one delegated `<script>`). The
+pattern, to preserve when editing or adding diagrams:
+
+- Each diagram node is `<g class="node" data-st="ship|flight|prop|spec"><title>tooltip</title> …
+  shape + text … </g>`. The `<title>` is a hover/focus tooltip; the script also copies it to
+  `aria-label` and makes the node keyboard-focusable (`tabindex`).
+- `data-st` carries the node's delivery status and drives both the status stroke color and the
+  filter. **Tooltips must only restate facts already on the page** — never invent provenance.
+- Diagrams with **mixed** status get a `.figbar` toolbar (placed immediately before the `.fig`,
+  so it is the toolbar's `nextElementSibling`) with an "All" reset plus one button per status
+  present. Single-status diagrams get tooltips only — no toolbar (an empty filter is confusing).
+- The framework lives once per file: the `/* ---- interactive figures ---- */` CSS block and the
+  `/* ---- interactive figures: keyboard focus + status filtering ---- */` script block. New
+  diagrams just need the node/`figbar` markup; no new JS.
+
 ## Maintenance notes
 
 - **Status colors are mandatory on diagram nodes**, not just legends — a Proposed transport
