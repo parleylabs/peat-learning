@@ -206,7 +206,17 @@ the markdown modules — keeping hub and modules consistent. Constraints:
   captions; existing accent system intact; single-page nav intact; every interactive
   element's coordinates and labels must match its diagram.
 - **Markdown modules**: keep numbering and learning order; cite ADRs/issues; keep code
-  snippets compilable against latest.
+  snippets compilable against latest. Use ```mermaid for structural/flow diagrams (diffable,
+  GitHub-rendered); reserve plain-fence ASCII art for tiny inline sketches only.
+- **Diagrams are derived artifacts, not decoration.** A diagram encodes the most drift-prone
+  facts (layer model, transport set, role/enum lists, hierarchy vocabulary per ADR-066,
+  versions, ports), so treat each one as a claim: it must be traceable to code and carry the
+  same **shipped / in-flight / proposed / speculative** status on its nodes (color + legend),
+  not just in the surrounding prose. **Re-derive** any diagram whose depicted facts changed —
+  do not merely preserve its legend. The same concept drawn in two places (e.g. the layer
+  model as hub SVG and as module ASCII) must agree; keep them consistent. Record every diagram
+  in the diagram registry (`learning/review/diagrams.md`): id, file, concept, the `path:line`/
+  ADR it derives from, and the commit it was last verified against.
 - **House rules (hard):** FIPS-approved primitives only (flag, don't propagate, ChaCha20);
   **no consumer/vendor names** in generic protocol material (use "consumer", "CoT consumer";
   protocol names like CoT are fine, vendor names are not); preserve the "autonomy under human
@@ -241,6 +251,8 @@ the markdown modules — keeping hub and modules consistent. Constraints:
 7. **gbrain update summary** (pages created/updated, with slugs).
 8. A short **change log** of what was corrected and why, plus a list of any claims that
    remain **unverifiable** (so a human can chase them).
+9. **Diagram registry** (`review/diagrams.md`): every diagram with id, file, concept, the
+   `path:line`/ADR it derives from, and the commit it was last verified against.
 
 ## 11 · Definition of done
 
@@ -248,7 +260,11 @@ the markdown modules — keeping hub and modules consistent. Constraints:
 - Every quantitative figure is cited or flagged.
 - Hub and markdown modules agree with each other and with the code.
 - No FIPS or vendor-name house-rule violations introduced; existing ones called out.
-- Every diagram has a legend; every interactive element matches its labels.
+- Every diagram has a legend; every interactive element matches its labels; every diagram's
+  depicted facts are traceable to code and carry the correct shipped/in-flight/proposed/
+  speculative status on their nodes; the same concept drawn in two places (hub SVG vs module
+  ASCII) agrees. The diagram registry (`review/diagrams.md`) lists every diagram with its code
+  provenance and last-verified commit.
 - The design note's discrepancies are listed; gbrain reflects current verified state.
 - A skeptical staff engineer with the code open finds nothing materially wrong or misleading.
 

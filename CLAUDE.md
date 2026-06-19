@@ -85,6 +85,28 @@ These come from the PEAT repos and the review prompts. Violating them is the mai
   `<tr>` immediately after `<!-- CHANGELOG-ROWS-START -->`. Never invent a date — use the date the
   scheduler passes.
 
+## Diagrams
+
+Diagrams are **code-derived claims, not decoration** — they encode the most drift-prone facts
+(layer model, transport set, role/enum lists, hierarchy vocabulary per ADR-066, versions,
+ports). That drift is invisible to a prose diff because the facts live inside SVG coordinates
+and ASCII box-art, so diagrams get the same discipline as text.
+
+- **Formats.** Markdown structural/flow diagrams use ```mermaid (diffable, GitHub-rendered);
+  plain-fence ASCII art is for tiny inline sketches only. HTML diagrams are hand-authored
+  inline SVG and must stay **self-contained** — no mermaid.js, CDN, or runtime fetch. To use a
+  mermaid source in the HTML, pre-render it to static SVG and inline the result.
+- **Re-derive, don't just preserve.** When the code a diagram depicts changes, regenerate the
+  diagram's facts — updating the surrounding prose while leaving the old SVG/ASCII is the
+  common silent bug. Diagram nodes carry the **shipped/in-flight/proposed/speculative** status
+  (color + legend), not only the prose around them.
+- **Watch the dual-copy hazard.** The same concept is sometimes drawn twice — as hub SVG and
+  as module ASCII (e.g. the layer model, the dependency graph). Those twins must agree.
+- **The registry is the source of record.** `review/diagrams.md` lists every diagram with its
+  id, location, concept, code provenance (`path:line`/ADR), twin, and last-verified commit.
+  The refresh prompts route through it: changed code → affected diagrams → re-derive → advance
+  the row. Add a row whenever you author a new diagram.
+
 ## When running a refresh / making code-driven edits
 
 - Read `REVIEW-STATE.json` first: `audited_commits` (the baseline to diff against), `open_todos`,

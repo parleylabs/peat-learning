@@ -55,6 +55,13 @@ Map changed paths to curriculum docs (use judgment; this is a default routing, n
 Always also reconcile: `learning/index.html` (the hub; it mirrors the modules) and
 `07-repo-links-and-gaps.md`. Build the **affected-docs set** from the union.
 
+**Include diagrams in the scope.** A diagram encodes the most drift-prone facts (layer model,
+transport set, role/enum lists, hierarchy vocabulary, versions, ports), so for each affected
+doc, consult `learning/review/diagrams.md` and pull in every diagram whose `path:line`/ADR
+provenance falls in the changed area. Those diagrams join the affected set and must be
+re-derived (§4), not just left alone — diagram drift is invisible to a prose diff because the
+facts live inside SVG coordinates and ASCII box-art.
+
 ## 3 · Phase 2 — Targeted ground-truth refresh
 
 For each **changed repo only**: re-establish reality for the parts that moved (read the changed
@@ -70,6 +77,14 @@ For each doc in the affected-docs set: re-audit only the claims touching the cha
 (visible shipped/in-flight/proposed/speculative labels; FIPS-only; no vendor names; legends on
 every diagram for HTML; numbering/order for markdown). Do not rewrite untouched sections.
 Keep the hub consistent with any module it mirrors.
+
+**Re-derive affected diagrams (don't just preserve them).** For each diagram pulled in above,
+treat it as a claim: update its depicted facts to match the changed code, keep its node status
+colors (shipped/in-flight/proposed/speculative) correct, and verify SVG label/coordinate
+consistency. The same concept drawn twice (hub SVG vs module ASCII) must stay in agreement.
+Then update that diagram's row in `learning/review/diagrams.md` with the new last-verified
+commit. New ```mermaid for structural diagrams in markdown; hand-SVG stays self-contained in
+HTML (no external renderer/CDN).
 
 ## 5 · Phase 4 — gbrain refresh (local mode only)
 
@@ -113,6 +128,9 @@ Mode comes from `args.mode` (default `local`).
 
 - Either a clean "no drift" log entry, or: only affected docs changed, each correctly relabeled
   shipped/in-flight/proposed/speculative, no house-rule violations, hub consistent with modules.
+- Every diagram whose code provenance changed is re-derived (not just preserved), its node
+  status colors are correct, hub SVG and module ASCII for the same concept agree, and its row
+  in `review/diagrams.md` is advanced to the new last-verified commit.
 - `REVIEW-STATE.json` advanced to the new commits with a run-log entry.
 - `CHANGELOG-review.md` has a new dated delta section; nothing silently overwritten.
 - Anything that couldn't be verified is logged, not hidden.
