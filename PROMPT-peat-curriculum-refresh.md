@@ -89,6 +89,16 @@ Update `learning/REVIEW-STATE.json`:
 Append (do not overwrite) a dated delta section to `learning/review/CHANGELOG-review.md`
 summarizing what changed this run and any new unverifiable claims.
 
+**Update the reader-facing freshness surfaces** (these are inline so the pages stay
+self-contained — never make them fetch a manifest at runtime):
+- In `learning/index.html` AND `learning/peat-constrained-networking.html`, replace the
+  contents between `<!--SYNC-->` and `<!--/SYNC-->` in the footer stamp with the new date,
+  run type (full sweep / incremental / no drift), and the per-repo short commits.
+- In `learning/changelog.html`: update the same `<!--SYNC-->…<!--/SYNC-->` block and the
+  per-repo commit `tag`s in the "Current sync" card, and **prepend one `<tr>`** immediately
+  after `<!-- CHANGELOG-ROWS-START -->` (Date · Type pill [`full`/`incr`/`man`] · Scope ·
+  Summary). Use the same date from `args.now`; never invent a date.
+
 ## 7 · Output mode
 
 - **`local` (default):** rewrite docs in place, update gbrain, update state files. Requires the
