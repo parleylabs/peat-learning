@@ -52,7 +52,7 @@ Map changed paths to curriculum docs (use judgment; this is a default routing, n
 | `peat-node/**` | `06-data-flows.md`, `08-running-and-operating.md`, `09-protocol-specs.md` |
 | any `README.md`/`CHANGELOG.md`/`ROADMAP.md`/`Cargo.toml` | `00-START-HERE.md`, `00b-the-big-idea.md`, `01-architecture-overview.md`, `07-repo-links-and-gaps.md` |
 
-Always also reconcile: `learning/peat-learning-hub.html` (it mirrors the modules) and
+Always also reconcile: `learning/index.html` (the hub; it mirrors the modules) and
 `07-repo-links-and-gaps.md`. Build the **affected-docs set** from the union.
 
 ## 3 · Phase 2 — Targeted ground-truth refresh

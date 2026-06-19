@@ -20,7 +20,7 @@ genuinely instructive** for that audience, anchored line-by-line in the latest P
 
 **Primary documents to improve (the curriculum):**
 
-1. `learning/peat-learning-hub.html` — the single-page learning hub.
+1. `learning/index.html` — the single-page learning hub.
 2. `learning/peat-constrained-networking.html` — the "Off the Grid" constrained/non-IP track.
 3. The numbered markdown modules in `learning/` — `00-START-HERE.md`, `00b-the-big-idea.md`,
    `01-architecture-overview.md`, `02-peat-protocol.md`, `02b-formation-and-leadership.md`,
@@ -261,7 +261,7 @@ the markdown modules — keeping hub and modules consistent. Constraints:
   059 (cross-transport bridging), 060 (FIPS posture), 063 (persistent sync), 066 (hierarchy).
 - House rules: `peat/CLAUDE.md` (FIPS-only crypto; no consumer-specific references),
   per-repo `SKILL.md` verification checklists.
-- Curriculum: `learning/peat-learning-hub.html`, `learning/peat-constrained-networking.html`,
+- Curriculum: `learning/index.html`, `learning/peat-constrained-networking.html`,
   and `learning/0*.md` modules.
 - Reference docs & gbrain: `peat-hierarchy-vocabulary.md`, `peat-open-issues-snapshot.md`,
   `peat-addressing-transport-sync.md`, gbrain `research/quic-iridium-sbd-feasibility`.

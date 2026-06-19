@@ -259,4 +259,4 @@ suggest, and it is exactly what a defense-prime security auditor will probe:
 ---
 
 That's the track. Loop back to [Module 0](00-START-HERE.md) any time, or open the interactive
-[`peat-learning-hub.html`](peat-learning-hub.html) for the navigable version.
+[`index.html`](index.html) for the navigable version.

@@ -383,4 +383,4 @@ not part of the README's mapping.
 ---
 
 Back to [Module 0 — Start Here](00-START-HERE.md) · or the interactive
-[`peat-learning-hub.html`](peat-learning-hub.html).
+[`index.html`](index.html).

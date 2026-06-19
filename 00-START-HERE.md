@@ -67,10 +67,9 @@ Read the modules **in order**. Each one builds on the last. Every module has:
 - **Checkpoint** — questions you should be able to answer before moving on.
 
 There is also an interactive HTML version of all this — open
-[`peat-learning-hub.html`](peat-learning-hub.html) in a browser for a navigable version
-with diagrams. (Note: if you are on an air-gapped machine, render the hub's diagrams
-ahead of time — the live version pulls a diagram library from a CDN, which a denied
-network will block.)
+[`index.html`](index.html) in a browser for a navigable version
+with diagrams. It is fully self-contained — every diagram is inline SVG and no external
+resources are loaded, so it works offline and on air-gapped machines.
 
 ---
 

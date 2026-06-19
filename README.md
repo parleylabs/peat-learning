@@ -5,7 +5,7 @@ machinery that keeps it honest against the code.
 
 ## What's here
 
-- **`peat-learning-hub.html`** — single-page learning hub (mirrors the numbered modules).
+- **`index.html`** — single-page learning hub and site landing page (mirrors the numbered modules).
 - **`peat-constrained-networking.html`** — advanced "Off the Grid" track (running PEAT where QUIC can't).
 - **`00`–`09` markdown modules** — the ordered curriculum (start at `00-START-HERE.md`).
 - **`PROMPT-peat-training-doc-improvement.md`** — the full, code-anchored adversarial review prompt.
