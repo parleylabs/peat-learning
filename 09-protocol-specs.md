@@ -22,6 +22,31 @@ IETF Informational RFC).
 > trust the source. Recommended reading order (per the spec README): **003 schema → 001 transport →
 > 002 sync → 004 coordination → 005 security**.
 
+### The five specs at a glance — reading order & freshness
+
+```mermaid
+graph LR
+  s3["003 · schema<br/>Draft 2025-01-07"] --> s1["001 · transport<br/>Draft 2025-01-07"]
+  s1 --> s2["002 · sync<br/>Draft 2025-01-07"]
+  s2 --> s4["004 · coordination<br/>Draft 2025-01-07"]
+  s4 --> s5["005 · security<br/>Amended 2026-05-18 · current"]
+```
+
+*Arrows are the recommended reading order (per the spec README). All five are drafts dated
+**2025-01-07** except `005-security`, **amended 2026-05-18** to the FIPS-approved suite — so `005` is
+current and the rest are older. The specs describe the protocol's **shape**; where they disagree with
+shipped code, the code is the contract.*
+
+### Spec vs. shipped reality — the divergences to know before you trust a value
+
+| Contract | The spec says | Shipped code | Trust |
+|---|---|---|---|
+| **Device-ID width** | 32 bytes — first 32 B of `SHA-256(Ed25519 pubkey)` (`001-transport.md:95-101`) | **16 bytes** — `DeviceId = [u8; 16]` from `SHA-256(key)[0..16]` (`device_id.rs:39-47`) | code |
+| **RBAC role enum** | one set of names | code and spec list **different** names (Module 5) | code |
+| **peat-lite & BLE wire formats** | spec framing | shipped framing **differs** | code |
+| **Leader-election scoring** | spec formula | runtime uses a **different** formula (Module 2b) | code |
+| **Cipher suite** | `005` (amended) = AES-256-GCM · ECDH-P256 · Ed25519 · HKDF/HMAC-SHA-256 | matches (peat-mesh rc.12) | **[Shipped]** |
+
 ---
 
 ## 9.1 `001-transport` — wire formats & connection lifecycle [Shipped, with spec/code drift noted]

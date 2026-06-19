@@ -114,6 +114,36 @@ cannot handle the alternative. In that sense, hierarchy *is* compression.
 - **Mesh:** O(n²) — every node talks to every node.
 - **Hierarchy:** O(n log n) — every node talks mainly to its parent and children.
 
+```mermaid
+graph TB
+  subgraph mesh["FLAT MESH — O(n²): everyone talks to everyone"]
+    direction LR
+    m1((•)) --- m2((•))
+    m1 --- m3((•))
+    m1 --- m4((•))
+    m1 --- m5((•))
+    m2 --- m3
+    m2 --- m4
+    m2 --- m5
+    m3 --- m4
+    m3 --- m5
+    m4 --- m5
+  end
+  subgraph hier["HIERARCHY — O(n log n): mostly parent ↔ child"]
+    direction TB
+    h0(["leader"]) --- h1(["cell leader"])
+    h0 --- h2(["cell leader"])
+    h1 --- h1a((•))
+    h1 --- h1b((•))
+    h2 --- h2a((•))
+    h2 --- h2b((•))
+  end
+```
+
+*Same five-to-seven nodes, far fewer links once they organize into tiers. The shape is the
+argument; the exact link counts are **[Analytical]**, not benchmarked (see the caution below). The
+routing rule that **enforces** the tiered shape is **Shipped** (`hierarchy/router.rs:19-20,90-91,140`).*
+
 **[Analytical]** This complexity comparison is structurally sound and is the design rationale for the
 whole system, but it is a formula, not a benchmark — `peat`'s ground-truth model is explicit that
 O(n log n) is "structurally supported … a design/analytical claim, not a runtime benchmark."
