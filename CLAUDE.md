@@ -43,9 +43,12 @@ The curriculum is kept in sync with the code by a **scheduled, delta-driven revi
    paths in the prompts and `REVIEW-STATE.json` are written `learning/...` for this reason.
 2. `PROMPT-peat-curriculum-refresh.md` runs in **`ci` mode**: it reads `REVIEW-STATE.json`, diffs
    each code repo against the last audited commit, and re-audits + rewrites **only** the documents
-   the changed code affects (see the routing table in that prompt's §2). No drift → no-op log entry.
+   the changed code affects (see the routing table in that prompt's §2), **including the diagrams in
+   those docs** (resolved through the diagram registry). No drift → no-op log entry.
 3. Every ~30 days the refresh auto-escalates to a **full** sweep
-   (`PROMPT-peat-training-doc-improvement.md`).
+   (`PROMPT-peat-training-doc-improvement.md`), which includes **Phase 6b — a diagram verification
+   sweep** that re-derives *every* diagram in the registry against current code and advances its
+   last-verified commit, exactly as Phase 2 re-audits every prose claim.
 4. Changes land as a **pull request** with a run-log summary. Work happens on a branch, never on `main`.
 
 When you edit the curriculum, treat these prompts as the spec for *how* edits are supposed to be
@@ -106,9 +109,12 @@ and ASCII box-art, so diagrams get the same discipline as text.
 - **Watch the dual-copy hazard.** The same concept is sometimes drawn twice — as hub SVG and
   as module ASCII (e.g. the layer model, the dependency graph). Those twins must agree.
 - **The registry is the source of record.** `review/diagrams.md` lists every diagram with its
-  id, location, concept, code provenance (`path:line`/ADR), twin, and last-verified commit.
-  The refresh prompts route through it: changed code → affected diagrams → re-derive → advance
-  the row. Add a row whenever you author a new diagram.
+  id, location, concept, code provenance (`path:line`/ADR), twin, and last-verified commit, plus a
+  prioritized **Proposed diagrams (backlog)**. The refresh prompts route through it: changed code →
+  affected diagrams → re-derive → advance the row. Add a row whenever you author a new diagram. A
+  **full sweep re-verifies every row** against current code (Phase 6b), not only diagrams whose
+  prose changed, and advances each last-verified commit; unconfirmable diagram facts go to
+  `unverifiable_claims`.
 
 ## When running a refresh / making code-driven edits
 
@@ -117,6 +123,11 @@ and ASCII box-art, so diagrams get the same discipline as text.
 - After changes, **advance state**: update `audited_commits[repo].head` for changed repos, append a
   `run_log` entry, and append (never overwrite) a dated section to `review/CHANGELOG-review.md`.
 - Anything you couldn't verify against code goes into `unverifiable_claims` — logged, not hidden.
+- **Diagrams are audited like claims:** re-derive every affected diagram (every diagram on a full
+  sweep), advance its row in `review/diagrams.md`, keep the canonical status palette, and log any
+  unconfirmable diagram fact.
 - Rewrite only the sections the changed code touches; leave untouched modules alone.
-</content>
-</invoke>
+- **Run the impact lens before finishing** (see both prompts' impact/blast-radius check): an edit to
+  one section must not silently break another. Check hub↔module mirroring, diagram twins,
+  cross-references and internal links/anchors, module numbering/order, the `<!--SYNC-->` stamps, and
+  that the HTML stays self-contained with valid SVG/mermaid. Fix or flag every impact you create.

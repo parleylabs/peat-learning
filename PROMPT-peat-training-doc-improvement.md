@@ -100,6 +100,15 @@ Apply each lens; in a workflow, assign one agent each.
   most embarrassing error a customer could catch.
 - **Technical educator** — is it learnable, correctly sequenced module-to-module, and
   visually clear (legends on every diagram, accessible language)?
+- **Regression / impact reviewer (blast-radius lens)** — does any edit break or contradict
+  another section? Before declaring done, trace the blast radius of every change: hub ↔ module
+  mirroring (a module edit reflected in `index.html` and vice versa); diagram twins (hub SVG ↔
+  module ASCII agree); cross-references and internal links/anchors still resolve (no dangling
+  "see Module N §x", no broken `#id`/`data-go` targets); module numbering and learning order
+  intact; a corrected fact updated **everywhere** it appears, not just its first occurrence (grep
+  the term across all docs); the `<!--SYNC-->` stamps and registry rows consistent; HTML still
+  self-contained and offline (no new external fetch) with well-formed SVG and valid ```mermaid.
+  Nothing changes in one place that silently invalidates another.
 
 ## 3 · Phase 1 — Establish ground truth (do this before touching the docs)
 
@@ -224,6 +233,34 @@ the markdown modules — keeping hub and modules consistent. Constraints:
 - Make the **shipped / in-flight / proposed / speculative** label visible in the material
   itself, so a reader always knows what's real.
 
+## 8b · Phase 6b — Diagram verification & update sweep
+
+Treat the diagram registry like the claim ledger: in a **full sweep every diagram is re-verified**,
+not only those whose surrounding prose changed. Walk `learning/review/diagrams.md` row by row and for
+each diagram (markdown M-###, hub H-###, constrained C-###):
+
+1. **Re-derive its facts from current code.** Open the `path:line`/ADR in its provenance and confirm
+   the diagram still matches (layer model, transport set, role/enum lists, hierarchy vocabulary per
+   ADR-066, versions, ports, message bytes, scoring weights). If the code moved, regenerate the
+   diagram's facts — don't just edit the prose around it.
+2. **Check status + legend.** Every node carries the correct shipped/in-flight/proposed/speculative
+   status in the **canonical palette** (Shipped = green, In-flight = amber, Proposed = blue,
+   Speculative = purple; error/rejected red is *not* a status); every HTML diagram has a legend;
+   interactive labels/coordinates match; status colors are identical across `index.html` and
+   `peat-constrained-networking.html`.
+3. **Check twins.** Where the same concept is drawn twice (hub SVG ↔ module ASCII; the registry's
+   *Twin* column), confirm the copies agree after any re-derivation.
+4. **Advance the row.** Update the `Last verified` commit/date for every diagram confirmed this
+   sweep. A diagram fact that cannot be confirmed against code is **logged, not left** (see outputs).
+5. **Triage the backlog.** Re-check the "Proposed diagrams (backlog)" table: author any now-unblocked
+   high-value entries, drop ones a new diagram already covers, and re-flag build-here-safe vs
+   needs-code. Add a registry row for any diagram authored.
+
+**Outputs:** every registry row advanced (or flagged); new/changed diagrams reflected in both the
+module and any hub twin; any diagram fact that couldn't be traced to code appended to the run's
+**unverifiable** list (`REVIEW-STATE.json` `unverifiable_claims`) exactly like an unverifiable prose
+claim; the `run_log` entry records how many diagrams were verified.
+
 ## 9 · Phase 7 — Validate the design note & update gbrain
 
 1. **Cross-check `peat-addressing-transport-sync.md`** against the Ground-Truth Appendix.
@@ -265,7 +302,14 @@ the markdown modules — keeping hub and modules consistent. Constraints:
   speculative status on their nodes; the same concept drawn in two places (hub SVG vs module
   ASCII) agrees. The diagram registry (`review/diagrams.md`) lists every diagram with its code
   provenance and last-verified commit.
+- **The diagram verification sweep (Phase 6b) is complete:** every row in the registry was
+  re-derived against current code this run and its last-verified commit advanced, or the diagram
+  fact was logged as unverifiable; the backlog was triaged. No diagram is left at a stale commit.
 - The design note's discrepancies are listed; gbrain reflects current verified state.
+- **Impact lens passed:** no edit broke another section — hub ↔ modules and diagram twins agree,
+  every cross-reference/internal link still resolves, numbering/order is intact, each corrected fact
+  was updated everywhere it appears, the SYNC stamps and registry are consistent, and the HTML is
+  still self-contained with well-formed SVG/mermaid.
 - A skeptical staff engineer with the code open finds nothing materially wrong or misleading.
 
 ## Appendix · Anchors to start from
@@ -281,4 +325,3 @@ the markdown modules — keeping hub and modules consistent. Constraints:
   and `learning/0*.md` modules.
 - Reference docs & gbrain: `peat-hierarchy-vocabulary.md`, `peat-open-issues-snapshot.md`,
   `peat-addressing-transport-sync.md`, gbrain `research/quic-iridium-sbd-feasibility`.
-</content>

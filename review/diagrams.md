@@ -172,4 +172,3 @@ pattern, to preserve when editing or adding diagrams:
   gateway-observes-from-the-side picture (gateway is NOT in the data path), the
   sensor→command-post end-to-end trace labeled shipped-vs-proposed leg by leg, and the
   negentropy reconcile round-trip. Add to this registry when authored.
-</content>
