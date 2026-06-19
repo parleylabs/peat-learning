@@ -250,6 +250,29 @@ machinery above ships, but "tell only `role:strike`" does not yet: today a comma
 cell and the receiver filters. Human authority remains in the loop at formation (the mission-critical
 approval gate in Trace B) regardless of how tasking evolves.
 
+```mermaid
+graph TB
+  subgraph today["TODAY — Shipped"]
+    direction LR
+    c1["command"] --> c2["JSON doc in<br/>commands collection"]
+    c2 --> c3["LWW merge"]
+    c3 --> c4["propagates to whole cell;<br/>receiver filters by role"]
+    c3 -. hazard .-> c5["conflicting orders<br/>settle by newest-wins"]
+  end
+  subgraph wanted["WANTED — In-flight / Speculative"]
+    direction LR
+    f1["command"] --> f2["authority write-gate"]
+    f2 --> f3["command_log CRDT<br/>append-only · causally ordered ·<br/>superseded marked"]
+    f3 --> f4["targeted delivery to role:strike"]
+  end
+```
+
+*Today's path is **Shipped** (`peat-node/proto/sidecar.proto:342-373`): a command is an ordinary
+JSON document, merged last-writer-wins, delivered cell-wide and filtered at the receiver. The safer
+path needs two things that do not ship: a **`command_log` CRDT** (append-only, causally ordered,
+authority-gated — **Speculative**, has to be designed) and **targeted delivery** to a specific role
+(**In-flight**, ADR-046 / epic #853). Human authority stays in the loop at formation either way.*
+
 **The invariant that makes this scale.** The `HierarchicalRouter` only ever allows same-cell
 messaging or leader-mediated up/down routing — never cross-cell direct messages
 (`peat-protocol/src/hierarchy/router.rs`). Adding more nodes does not create more direct links;

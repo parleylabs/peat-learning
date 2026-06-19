@@ -12,7 +12,7 @@
     --line:#2a323c; --accent:#3fb950; --accent2:#58a6ff; --warn:#d29922; --code:#0b0f14;
     --pill:#21303f;
     /* status accents */
-    --st-ship:#3fb950; --st-flight:#58a6ff; --st-prop:#d29922; --st-spec:#db6d6d;
+    --st-ship:#3fb950; --st-flight:#d29922; --st-prop:#58a6ff; --st-spec:#a371f7; --err:#db6d6d;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -54,15 +54,15 @@
   .note{border-left:3px solid var(--accent2);background:var(--panel2);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
   .warn{border-left:3px solid var(--warn);background:#241e10;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
   .ok{border-left:3px solid var(--accent);background:#0f1f14;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
-  .bad{border-left:3px solid var(--st-spec);background:#231414;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  .bad{border-left:3px solid var(--err);background:#231414;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
   .pill{display:inline-block;background:var(--pill);color:#cfe3ff;font-size:12px;padding:2px 9px;border-radius:20px;margin:0 4px 4px 0}
   /* status badges */
   .st{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.3px;padding:1px 8px;border-radius:20px;
       margin:0 5px 2px 0;text-transform:uppercase;vertical-align:middle;border:1px solid transparent}
   .st.ship{background:rgba(63,185,80,.16);color:#5fd97a;border-color:rgba(63,185,80,.4)}
-  .st.flight{background:rgba(88,166,255,.16);color:#79b8ff;border-color:rgba(88,166,255,.4)}
-  .st.prop{background:rgba(210,153,34,.16);color:#e0b250;border-color:rgba(210,153,34,.4)}
-  .st.spec{background:rgba(219,109,109,.16);color:#e88;border-color:rgba(219,109,109,.4)}
+  .st.flight{background:rgba(210,153,34,.16);color:#e0b250;border-color:rgba(210,153,34,.4)}
+  .st.prop{background:rgba(88,166,255,.16);color:#79b8ff;border-color:rgba(88,166,255,.4)}
+  .st.spec{background:rgba(163,113,247,.16);color:#c8a9fb;border-color:rgba(163,113,247,.4)}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
   .grid .card{margin:0}
   .grid .card h4{margin-top:0}
@@ -84,6 +84,30 @@
   .legend b{color:var(--ink)}
   .legend .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin:0 4px 0 8px}
   .keytable{font-size:12.5px}
+  /* ---- interactive figures ---- */
+  .figbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:14px 0 -4px;font-size:12px}
+  .figbar .lbl{color:var(--muted);margin-right:2px}
+  .figbar .fb{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--muted);
+       border-radius:20px;padding:2px 11px;font-weight:600;letter-spacing:.3px;font-family:inherit;font-size:11px}
+  .figbar .fb:hover{color:var(--ink)}
+  .figbar .fb:focus-visible{outline:2px solid var(--accent2);outline-offset:1px}
+  .figbar .fb.reset[aria-pressed="true"]{background:var(--pill);color:#fff;border-color:var(--accent2)}
+  .figbar .fb[data-st="ship"][aria-pressed="true"]{background:rgba(63,185,80,.22);border-color:var(--st-ship);color:#5fd97a}
+  .figbar .fb[data-st="flight"][aria-pressed="true"]{background:rgba(210,153,34,.22);border-color:var(--st-flight);color:#e0b250}
+  .figbar .fb[data-st="prop"][aria-pressed="true"]{background:rgba(88,166,255,.22);border-color:var(--st-prop);color:#79b8ff}
+  .figbar .fb[data-st="spec"][aria-pressed="true"]{background:rgba(163,113,247,.22);border-color:var(--st-spec);color:#c8a9fb}
+  .fig .node{cursor:default;transition:opacity .15s ease}
+  .fig .node rect,.fig .node circle,.fig .node ellipse{transition:stroke-width .12s ease,filter .12s ease}
+  .fig .node:focus{outline:none}
+  .fig .node:hover rect,.fig .node:focus rect,.fig .node:hover circle,.fig .node:focus circle,.fig .node:hover ellipse,.fig .node:focus ellipse{filter:brightness(1.4);stroke-width:2.4px}
+  .fig .node:focus rect,.fig .node:focus circle,.fig .node:focus ellipse{stroke:var(--accent2)}
+  .fig.filtering .node.match[data-st="ship"] rect,.fig.filtering .node.match[data-st="ship"] circle,.fig.filtering .node.match[data-st="ship"] polygon{stroke:var(--st-ship);stroke-width:2.4px}
+  .fig.filtering .node.match[data-st="flight"] rect,.fig.filtering .node.match[data-st="flight"] circle,.fig.filtering .node.match[data-st="flight"] polygon{stroke:var(--st-flight);stroke-width:2.4px}
+  .fig.filtering .node.match[data-st="prop"] rect,.fig.filtering .node.match[data-st="prop"] circle,.fig.filtering .node.match[data-st="prop"] polygon{stroke:var(--st-prop);stroke-width:2.4px}
+  .fig.filtering .node.match[data-st="spec"] rect,.fig.filtering .node.match[data-st="spec"] circle,.fig.filtering .node.match[data-st="spec"] polygon{stroke:var(--st-spec);stroke-width:2.4px}
+  .fig.filtering .node{opacity:.16}
+  .fig.filtering .node.match{opacity:1}
+  .fig .node title{pointer-events:none}
   @media(max-width:880px){nav.side{display:none}main{padding:26px 18px}}
   /* ---- Parley Labs brand ---- */
   h1,h2,h3,h4,nav.side h1,.brandword,.brandfoot .fw{font-family:"Montserrat","Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
@@ -381,17 +405,23 @@ NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
     its specifics against code (it is wrong on, e.g., RBAC role names and crypto).</div>
 
     <h4>Lens B in motion — one local change becomes peer state</h4>
+    <div class="figbar" role="group" aria-label="Filter diagram by delivery status">
+      <span class="lbl">Show:</span>
+      <button class="fb reset" data-st="" aria-pressed="true">All</button>
+      <button class="fb" data-st="ship" aria-pressed="false">Shipped</button>
+      <button class="fb" data-st="flight" aria-pressed="false">In&nbsp;flight</button>
+    </div>
     <div class="fig">
       <svg viewBox="0 0 740 96" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="12">
         <defs>
           <marker id="a1" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/></marker>
         </defs>
         <g>
-          <rect x="6"   y="30" width="118" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="65"  y="48" fill="#e6edf3" text-anchor="middle">Local change</text><text x="65"  y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">node state, CRDT</text>
-          <rect x="158" y="30" width="100" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="208" y="48" fill="#e6edf3" text-anchor="middle">Delta</text><text x="208" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">generator</text>
-          <rect x="292" y="30" width="104" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="344" y="48" fill="#e6edf3" text-anchor="middle">QoS class</text><text x="344" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">P1–P5</text>
-          <rect x="430" y="30" width="104" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="482" y="48" fill="#e6edf3" text-anchor="middle">Sync engine</text><text x="482" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">Automerge</text>
-          <rect x="568" y="30" width="104" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="620" y="48" fill="#e6edf3" text-anchor="middle">Hierarchical</text><text x="620" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">router</text>
+          <g class="node" data-st="ship"><title>Your local change — a CRDT edit to node state (Automerge). This is where your code touches the stack.</title><rect x="6"   y="30" width="118" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="65"  y="48" fill="#e6edf3" text-anchor="middle">Local change</text><text x="65"  y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">node state, CRDT</text></g>
+          <g class="node" data-st="ship"><title>Delta generator — produces the minimal change to send to peers.</title><rect x="158" y="30" width="100" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="208" y="48" fill="#e6edf3" text-anchor="middle">Delta</text><text x="208" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">generator</text></g>
+          <g class="node" data-st="flight"><title>QoS class P1–P5 — assigned here, but cross-class wire-level preemption is not yet enforced (In flight).</title><rect x="292" y="30" width="104" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="344" y="48" fill="#e6edf3" text-anchor="middle">QoS class</text><text x="344" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">P1–P5</text></g>
+          <g class="node" data-st="ship"><title>Sync engine — Automerge merge plus negentropy reconciliation move the delta to peers.</title><rect x="430" y="30" width="104" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="482" y="48" fill="#e6edf3" text-anchor="middle">Sync engine</text><text x="482" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">Automerge</text></g>
+          <g class="node" data-st="ship"><title>Hierarchical router — forwards state toward peers and the parent cell.</title><rect x="568" y="30" width="104" height="40" rx="7" fill="#161b22" stroke="#2a323c"/><text x="620" y="48" fill="#e6edf3" text-anchor="middle">Hierarchical</text><text x="620" y="62" fill="#9aa7b4" text-anchor="middle" font-size="10">router</text></g>
           <rect x="568" y="0"  width="104" height="0"/>
         </g>
         <g stroke="#9aa7b4" stroke-width="1.5" fill="none" marker-end="url(#a1)">
@@ -401,7 +431,8 @@ NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
       </svg>
       <div class="legend"><b>Legend.</b> <span class="sw" style="background:#21303f;border:1px solid #58a6ff"></span>where your code touches it ·
       <span class="sw" style="background:#161b22;border:1px solid #2a323c"></span>internal stage · arrow = data flows toward.
-      The QoS stage assigns a class but does not yet enforce cross-class preemption (<span class="st flight">In flight</span>).</div>
+      The QoS stage assigns a class but does not yet enforce cross-class preemption (<span class="st flight">In flight</span>).
+      <br><em>Tip: hover or tab to any box in the diagrams for detail; where a <b>Show:</b> filter appears, use it to isolate a delivery status.</em></div>
     </div>
     <div class="warn"><b>Name trivia:</b> the developer guide expands the name as “Peat (Hierarchical
     Intelligence for Versatile Entities)” — which spells <b>HIVE</b>, the project's former name (ADR-049,
@@ -444,40 +475,49 @@ NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
         </marker>
       </defs>
       <g>
+        <g class="node" data-st="ship"><title>peat-gateway — the control plane: tenant enrollment, change-data-capture, identity federation. It observes the mesh and is NOT in the data path.</title>
         <rect x="300" y="20" width="170" height="44" rx="8" fill="#21303f" stroke="#3fb950"/>
         <text x="385" y="40" fill="#e6edf3" text-anchor="middle">peat-gateway</text>
-        <text x="385" y="56" fill="#9aa7b4" text-anchor="middle" font-size="10">control plane</text>
+        <text x="385" y="56" fill="#9aa7b4" text-anchor="middle" font-size="10">control plane</text></g>
 
+        <g class="node" data-st="ship"><title>peat-transport — HTTP/REST plus the TAK/CoT TCP bridge.</title>
         <rect x="60" y="150" width="160" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
         <text x="140" y="170" fill="#e6edf3" text-anchor="middle">peat-transport</text>
-        <text x="140" y="186" fill="#9aa7b4" text-anchor="middle" font-size="10">HTTP / CoT-TAK</text>
+        <text x="140" y="186" fill="#9aa7b4" text-anchor="middle" font-size="10">HTTP / CoT-TAK</text></g>
 
+        <g class="node" data-st="ship"><title>peat-ffi — Kotlin/Swift mobile bindings via UniFFI.</title>
         <rect x="60" y="240" width="160" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
         <text x="140" y="260" fill="#e6edf3" text-anchor="middle">peat-ffi</text>
-        <text x="140" y="276" fill="#9aa7b4" text-anchor="middle" font-size="10">Kotlin / Swift</text>
+        <text x="140" y="276" fill="#9aa7b4" text-anchor="middle" font-size="10">Kotlin / Swift</text></g>
 
+        <g class="node" data-st="ship"><title>peat-protocol — the SDK facade you depend on; it re-exports peat-mesh and peat-schema, so the whole stack comes along.</title>
         <rect x="280" y="150" width="210" height="56" rx="8" fill="#21303f" stroke="#58a6ff"/>
         <text x="385" y="172" fill="#e6edf3" text-anchor="middle" font-weight="bold">peat-protocol</text>
-        <text x="385" y="190" fill="#9aa7b4" text-anchor="middle" font-size="10">SDK facade · re-exports mesh+schema</text>
+        <text x="385" y="190" fill="#9aa7b4" text-anchor="middle" font-size="10">SDK facade · re-exports mesh+schema</text></g>
 
+        <g class="node" data-st="ship"><title>peat-persistence — local document storage.</title>
         <rect x="560" y="150" width="150" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
-        <text x="635" y="170" fill="#e6edf3" text-anchor="middle">peat-persistence</text>
+        <text x="635" y="170" fill="#e6edf3" text-anchor="middle">peat-persistence</text></g>
 
+        <g class="node" data-st="ship"><title>peat-mesh — the network layer: QUIC/Iroh transport, Automerge CRDT sync, negentropy reconciliation. A library, not a deployable binary.</title>
         <rect x="300" y="250" width="170" height="48" rx="8" fill="#21303f" stroke="#58a6ff"/>
         <text x="385" y="270" fill="#e6edf3" text-anchor="middle" font-weight="bold">peat-mesh</text>
-        <text x="385" y="286" fill="#9aa7b4" text-anchor="middle" font-size="10">QUIC/Iroh · Automerge</text>
+        <text x="385" y="286" fill="#9aa7b4" text-anchor="middle" font-size="10">QUIC/Iroh · Automerge</text></g>
 
+        <g class="node" data-st="ship"><title>peat-btle — cross-platform BLE mesh. Pulled in via the opt-in 'bluetooth' Cargo feature.</title>
         <rect x="540" y="250" width="150" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
         <text x="615" y="270" fill="#e6edf3" text-anchor="middle">peat-btle</text>
-        <text x="615" y="286" fill="#9aa7b4" text-anchor="middle" font-size="10">BLE (opt)</text>
+        <text x="615" y="286" fill="#9aa7b4" text-anchor="middle" font-size="10">BLE (opt)</text></g>
 
+        <g class="node" data-st="ship"><title>peat-lite — no_std codec + CRDT for microcontrollers. Opt-in feature.</title>
         <rect x="540" y="330" width="150" height="44" rx="8" fill="#161b22" stroke="#2a323c"/>
         <text x="615" y="350" fill="#e6edf3" text-anchor="middle">peat-lite</text>
-        <text x="615" y="366" fill="#9aa7b4" text-anchor="middle" font-size="10">no_std (opt)</text>
+        <text x="615" y="366" fill="#9aa7b4" text-anchor="middle" font-size="10">no_std (opt)</text></g>
 
+        <g class="node" data-st="ship"><title>peat-schema — Protobuf wire definitions. A dependency-free leaf crate.</title>
         <rect x="280" y="360" width="210" height="48" rx="8" fill="#0f1f14" stroke="#3fb950"/>
         <text x="385" y="380" fill="#e6edf3" text-anchor="middle">peat-schema</text>
-        <text x="385" y="396" fill="#9aa7b4" text-anchor="middle" font-size="10">Protobuf · leaf, no PEAT deps</text>
+        <text x="385" y="396" fill="#9aa7b4" text-anchor="middle" font-size="10">Protobuf · leaf, no PEAT deps</text></g>
       </g>
       <!-- arrows: each verified against manifests -->
       <g stroke="#9aa7b4" stroke-width="1.5" fill="none" marker-end="url(#ar)">
@@ -547,9 +587,9 @@ NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
     <div class="fig">
       <svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="12">
         <defs><marker id="a2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
-        <rect x="10"  y="20" width="190" height="52" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="105" y="42" fill="#e6edf3" text-anchor="middle">Phase 1 · DISCOVERY</text><text x="105" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">mDNS / static / k8s</text>
-        <rect x="265" y="20" width="190" height="52" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="360" y="42" fill="#e6edf3" text-anchor="middle">Phase 2 · FORMATION</text><text x="360" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">authenticate · elect · roles</text>
-        <rect x="520" y="20" width="190" height="52" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="615" y="42" fill="#e6edf3" text-anchor="middle">Phase 3 · HIER. OPS</text><text x="615" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">aggregate up · command down</text>
+        <g class="node" data-st="ship"><title>Phase 1 · Discovery — nodes find each other via mDNS, static peering, or Kubernetes.</title><rect x="10"  y="20" width="190" height="52" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="105" y="42" fill="#e6edf3" text-anchor="middle">Phase 1 · DISCOVERY</text><text x="105" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">mDNS / static / k8s</text></g>
+        <g class="node" data-st="ship"><title>Phase 2 · Cell formation — authenticate via the formation key, elect a leader, assign roles.</title><rect x="265" y="20" width="190" height="52" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="360" y="42" fill="#e6edf3" text-anchor="middle">Phase 2 · FORMATION</text><text x="360" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">authenticate · elect · roles</text></g>
+        <g class="node" data-st="ship"><title>Phase 3 · Hierarchical ops — state aggregates up the hierarchy, commands flow down, without flooding.</title><rect x="520" y="20" width="190" height="52" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="615" y="42" fill="#e6edf3" text-anchor="middle">Phase 3 · HIER. OPS</text><text x="615" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">aggregate up · command down</text></g>
         <g stroke="#9aa7b4" stroke-width="1.5" fill="none" marker-end="url(#a2)">
           <path d="M200,46 L263,46"/><text x="232" y="38" fill="#9aa7b4" text-anchor="middle" font-size="9">peers</text>
           <path d="M455,46 L518,46"/><text x="487" y="38" fill="#9aa7b4" text-anchor="middle" font-size="9">Ready</text>
@@ -669,15 +709,15 @@ NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
     <div class="fig">
       <svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11.5">
         <defs><marker id="a3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
-        <rect x="250" y="6"   width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="24" fill="#e6edf3" text-anchor="middle">Discovery</text><text x="360" y="38" fill="#9aa7b4" text-anchor="middle" font-size="10">mDNS / static / k8s</text>
-        <rect x="250" y="66"  width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="84" fill="#e6edf3" text-anchor="middle">Formation handshake</text><text x="360" y="98" fill="#9aa7b4" text-anchor="middle" font-size="10">HMAC challenge-response</text>
-        <rect x="250" y="126" width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="144" fill="#e6edf3" text-anchor="middle">Leader election</text><text x="360" y="158" fill="#9aa7b4" text-anchor="middle" font-size="10">deterministic score</text>
-        <rect x="250" y="186" width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="204" fill="#e6edf3" text-anchor="middle">Role assignment</text><text x="360" y="218" fill="#9aa7b4" text-anchor="middle" font-size="10">RoleScorer fitness</text>
-        <polygon points="360,246 480,278 360,310 240,278" fill="#241e10" stroke="#d29922"/><text x="360" y="276" fill="#e6edf3" text-anchor="middle">check_formation_complete</text><text x="360" y="290" fill="#9aa7b4" text-anchor="middle" font-size="9">size·leader·roles·coverage·≥0.7</text>
-        <rect x="500" y="120" width="120" height="36" rx="7" fill="#231414" stroke="#db6d6d"/><text x="560" y="142" fill="#e6edf3" text-anchor="middle">Forming</text>
-        <rect x="40"  y="260" width="150" height="36" rx="7" fill="#241e10" stroke="#d29922"/><text x="115" y="282" fill="#e6edf3" text-anchor="middle">human approval?</text>
-        <rect x="40"  y="330" width="150" height="26" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="115" y="347" fill="#e6edf3" text-anchor="middle">Ready</text>
-        <rect x="540" y="320" width="150" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="615" y="339" fill="#e6edf3" text-anchor="middle">Ready (no approval)</text>
+        <g class="node" data-st="ship"><title>Discovery — nodes find each other via mDNS, static peering, or Kubernetes EndpointSlice.</title><rect x="250" y="6"   width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="24" fill="#e6edf3" text-anchor="middle">Discovery</text><text x="360" y="38" fill="#9aa7b4" text-anchor="middle" font-size="10">mDNS / static / k8s</text></g>
+        <g class="node" data-st="ship"><title>Formation handshake — HMAC-SHA-256 challenge-response proves the shared formation key without sending it.</title><rect x="250" y="66"  width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="84" fill="#e6edf3" text-anchor="middle">Formation handshake</text><text x="360" y="98" fill="#9aa7b4" text-anchor="middle" font-size="10">HMAC challenge-response</text></g>
+        <g class="node" data-st="ship"><title>Leader election — every node computes the same winner from advertised capabilities; no vote round.</title><rect x="250" y="126" width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="144" fill="#e6edf3" text-anchor="middle">Leader election</text><text x="360" y="158" fill="#9aa7b4" text-anchor="middle" font-size="10">deterministic score</text></g>
+        <g class="node" data-st="ship"><title>Role assignment — RoleScorer picks a role per node by capability fitness.</title><rect x="250" y="186" width="220" height="40" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="360" y="204" fill="#e6edf3" text-anchor="middle">Role assignment</text><text x="360" y="218" fill="#9aa7b4" text-anchor="middle" font-size="10">RoleScorer fitness</text></g>
+        <g class="node" data-st="ship"><title>check_formation_complete — gate on size, leader, roles, and coverage reaching ≥ 0.7.</title><polygon points="360,246 480,278 360,310 240,278" fill="#241e10" stroke="#d29922"/><text x="360" y="276" fill="#e6edf3" text-anchor="middle">check_formation_complete</text><text x="360" y="290" fill="#9aa7b4" text-anchor="middle" font-size="9">size·leader·roles·coverage·≥0.7</text></g>
+        <g class="node" data-st="ship"><title>Forming — retry state when the gate fails; loops back to role assignment.</title><rect x="500" y="120" width="120" height="36" rx="7" fill="#231414" stroke="#db6d6d"/><text x="560" y="142" fill="#e6edf3" text-anchor="middle">Forming</text></g>
+        <g class="node" data-st="ship"><title>Human approval gate — a mission-critical capability requires human approval before Ready (autonomy under human authority).</title><rect x="40"  y="260" width="150" height="36" rx="7" fill="#241e10" stroke="#d29922"/><text x="115" y="282" fill="#e6edf3" text-anchor="middle">human approval?</text></g>
+        <g class="node" data-st="ship"><title>Ready — the cell is operational after human approval.</title><rect x="40"  y="330" width="150" height="26" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="115" y="347" fill="#e6edf3" text-anchor="middle">Ready</text></g>
+        <g class="node" data-st="ship"><title>Ready (no approval) — the cell is operational directly when no mission-critical capability is involved.</title><rect x="540" y="320" width="150" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="615" y="339" fill="#e6edf3" text-anchor="middle">Ready (no approval)</text></g>
         <g stroke="#9aa7b4" stroke-width="1.4" fill="none" marker-end="url(#a3)">
           <path d="M360,46 L360,64"/><path d="M360,106 L360,124"/><path d="M360,166 L360,184"/><path d="M360,226 L360,244"/>
           <path d="M480,278 L500,150" stroke="#db6d6d"/><text x="520" y="200" fill="#db6d6d" font-size="9">gate fails</text>
@@ -706,8 +746,8 @@ NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
     <div class="fig">
       <svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11.5">
         <defs><marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
-        <rect x="40"  y="10" width="200" height="34" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="140" y="32" fill="#e6edf3" text-anchor="middle">Initiator (dialing node)</text>
-        <rect x="400" y="10" width="200" height="34" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="500" y="32" fill="#e6edf3" text-anchor="middle">Responder (member)</text>
+        <g class="node" data-st="ship"><title>Initiator — the dialing node trying to join; it must prove the formation key.</title><rect x="40"  y="10" width="200" height="34" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="140" y="32" fill="#e6edf3" text-anchor="middle">Initiator (dialing node)</text></g>
+        <g class="node" data-st="ship"><title>Responder — an existing member; it issues the nonce challenge and verifies the MAC in constant time.</title><rect x="400" y="10" width="200" height="34" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="500" y="32" fill="#e6edf3" text-anchor="middle">Responder (member)</text></g>
         <line x1="140" y1="44" x2="140" y2="240" stroke="#2a323c"/><line x1="500" y1="44" x2="500" y2="240" stroke="#2a323c"/>
         <text x="320" y="60" fill="#9aa7b4" text-anchor="middle" font-size="10">QUIC stream · ALPN "peat/formation-auth/1"</text>
         <g stroke="#9aa7b4" stroke-width="1.3" marker-end="url(#a4)">
@@ -826,8 +866,8 @@ ties → lexicographic node id</code></pre>
     <div class="fig">
       <svg viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
         <defs><marker id="a5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
-        <rect x="40" y="10" width="160" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="120" y="31" fill="#e6edf3" text-anchor="middle">Node A</text>
-        <rect x="400" y="10" width="160" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="480" y="31" fill="#e6edf3" text-anchor="middle">Node B</text>
+        <g class="node" data-st="ship"><title>Node A — exchanges range fingerprints with B, then pulls only the docs it is missing.</title><rect x="40" y="10" width="160" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="120" y="31" fill="#e6edf3" text-anchor="middle">Node A</text></g>
+        <g class="node" data-st="ship"><title>Node B — the sync peer; the same negentropy exchange runs symmetrically.</title><rect x="400" y="10" width="160" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="480" y="31" fill="#e6edf3" text-anchor="middle">Node B</text></g>
         <line x1="120" y1="42" x2="120" y2="270" stroke="#2a323c"/><line x1="480" y1="42" x2="480" y2="270" stroke="#2a323c"/>
         <text x="300" y="58" fill="#9aa7b4" text-anchor="middle" font-size="10">Iroh QUIC stream (formation-gated)</text>
         <g stroke="#9aa7b4" stroke-width="1.3" marker-end="url(#a5)">
@@ -853,15 +893,15 @@ ties → lexicographic node id</code></pre>
     <div class="fig">
       <svg viewBox="0 0 720 170" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
         <defs><marker id="a6" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
-        <rect x="10"  y="10" width="140" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="80" y="29" fill="#e6edf3" text-anchor="middle">MdnsDiscovery</text>
-        <rect x="10"  y="52" width="140" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="80" y="71" fill="#e6edf3" text-anchor="middle">KubernetesDiscovery</text>
-        <rect x="10"  y="94" width="140" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="80" y="113" fill="#e6edf3" text-anchor="middle">StaticDiscovery</text>
-        <rect x="200" y="52" width="150" height="28" rx="6" fill="#21303f" stroke="#58a6ff"/><text x="275" y="71" fill="#e6edf3" text-anchor="middle">PeerFound event</text>
-        <rect x="400" y="52" width="120" height="28" rx="6" fill="#21303f" stroke="#58a6ff"/><text x="460" y="71" fill="#e6edf3" text-anchor="middle">PeerConnector</text>
-        <rect x="400" y="110" width="120" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="460" y="129" fill="#e6edf3" text-anchor="middle">IrohTransport</text>
-        <polygon points="595,66 660,90 595,114 530,90" fill="#241e10" stroke="#d29922"/><text x="595" y="86" fill="#e6edf3" text-anchor="middle" font-size="9">formation</text><text x="595" y="98" fill="#e6edf3" text-anchor="middle" font-size="9">auth?</text>
-        <rect x="560" y="10" width="150" height="28" rx="6" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="29" fill="#e6edf3" text-anchor="middle">sync begins</text>
-        <rect x="560" y="130" width="150" height="28" rx="6" fill="#231414" stroke="#db6d6d"/><text x="635" y="149" fill="#e6edf3" text-anchor="middle">rejected</text>
+        <g class="node" data-st="ship"><title>MdnsDiscovery — finds peers on the local link via mDNS.</title><rect x="10"  y="10" width="140" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="80" y="29" fill="#e6edf3" text-anchor="middle">MdnsDiscovery</text></g>
+        <g class="node" data-st="ship"><title>KubernetesDiscovery — finds peers from EndpointSlice in a cluster.</title><rect x="10"  y="52" width="140" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="80" y="71" fill="#e6edf3" text-anchor="middle">KubernetesDiscovery</text></g>
+        <g class="node" data-st="ship"><title>StaticDiscovery — peers from static configuration.</title><rect x="10"  y="94" width="140" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="80" y="113" fill="#e6edf3" text-anchor="middle">StaticDiscovery</text></g>
+        <g class="node" data-st="ship"><title>PeerFound event — emitted by any discovery source when a candidate appears.</title><rect x="200" y="52" width="150" height="28" rx="6" fill="#21303f" stroke="#58a6ff"/><text x="275" y="71" fill="#e6edf3" text-anchor="middle">PeerFound event</text></g>
+        <g class="node" data-st="ship"><title>PeerConnector — dials the candidate and drives the connection.</title><rect x="400" y="52" width="120" height="28" rx="6" fill="#21303f" stroke="#58a6ff"/><text x="460" y="71" fill="#e6edf3" text-anchor="middle">PeerConnector</text></g>
+        <g class="node" data-st="ship"><title>IrohTransport — the QUIC transport carrying the connection.</title><rect x="400" y="110" width="120" height="28" rx="6" fill="#161b22" stroke="#2a323c"/><text x="460" y="129" fill="#e6edf3" text-anchor="middle">IrohTransport</text></g>
+        <g class="node" data-st="ship"><title>Formation-auth gate — the HMAC handshake must pass before any sync.</title><polygon points="595,66 660,90 595,114 530,90" fill="#241e10" stroke="#d29922"/><text x="595" y="86" fill="#e6edf3" text-anchor="middle" font-size="9">formation</text><text x="595" y="98" fill="#e6edf3" text-anchor="middle" font-size="9">auth?</text></g>
+        <g class="node" data-st="ship"><title>Sync begins — auth passed; documents reconcile.</title><rect x="560" y="10" width="150" height="28" rx="6" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="29" fill="#e6edf3" text-anchor="middle">sync begins</text></g>
+        <g class="node" data-st="ship"><title>Rejected — auth failed; the peer is not admitted.</title><rect x="560" y="130" width="150" height="28" rx="6" fill="#231414" stroke="#db6d6d"/><text x="635" y="149" fill="#e6edf3" text-anchor="middle">rejected</text></g>
         <g stroke="#9aa7b4" stroke-width="1.3" fill="none" marker-end="url(#a6)">
           <path d="M150,24 L198,60"/><path d="M150,66 L198,66"/><path d="M150,108 L198,72"/>
           <path d="M350,66 L398,66"/><path d="M460,80 L460,108"/><path d="M520,100 L545,95"/>
@@ -935,8 +975,8 @@ ties → lexicographic node id</code></pre>
     <div class="fig">
       <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
         <defs><marker id="a7" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
-        <rect x="40" y="10" width="180" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="130" y="31" fill="#e6edf3" text-anchor="middle">Central (initiator)</text>
-        <rect x="380" y="10" width="180" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="470" y="31" fill="#e6edf3" text-anchor="middle">Peripheral (responder)</text>
+        <g class="node" data-st="ship"><title>Central (initiator) — writes its SyncVector, then receives the document chunks it lacks.</title><rect x="40" y="10" width="180" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="130" y="31" fill="#e6edf3" text-anchor="middle">Central (initiator)</text></g>
+        <g class="node" data-st="ship"><title>Peripheral (responder) — indicates back the chunks the Central is missing; reassembled with a 30 s timeout.</title><rect x="380" y="10" width="180" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="470" y="31" fill="#e6edf3" text-anchor="middle">Peripheral (responder)</text></g>
         <line x1="130" y1="42" x2="130" y2="190" stroke="#2a323c"/><line x1="470" y1="42" x2="470" y2="190" stroke="#2a323c"/>
         <g stroke="#9aa7b4" stroke-width="1.3" marker-end="url(#a7)">
           <line x1="130" y1="64" x2="468" y2="64"/><line x1="470" y1="96" x2="132" y2="96"/><line x1="130" y1="150" x2="468" y2="150"/>
@@ -1050,27 +1090,34 @@ ties → lexicographic node id</code></pre>
     <p>Change Data Capture streams CRDT mutations to enterprise systems by <em>watching</em> the mesh's
     document store. The <code>CdcEngine</code> fans <code>CdcEvent</code>s out per-org. <b>Only NATS and
     Webhook actually deliver.</b></p>
+    <div class="figbar" role="group" aria-label="Filter diagram by delivery status">
+      <span class="lbl">Show:</span>
+      <button class="fb reset" data-st="" aria-pressed="true">All</button>
+      <button class="fb" data-st="ship" aria-pressed="false">Shipped</button>
+      <button class="fb" data-st="flight" aria-pressed="false">In&nbsp;flight</button>
+      <button class="fb" data-st="spec" aria-pressed="false">Absent</button>
+    </div>
     <div class="fig">
       <svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
         <defs><marker id="a8" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
-        <rect x="10"  y="60" width="150" height="44" rx="8" fill="#0e1f12" stroke="#3fb950"/><text x="85" y="80" fill="#e6edf3" text-anchor="middle">peat-mesh</text><text x="85" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">DocumentStore</text>
-        <rect x="210" y="60" width="130" height="44" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="275" y="80" fill="#e6edf3" text-anchor="middle">cdc/watcher</text><text x="275" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">observe()</text>
-        <rect x="390" y="60" width="140" height="44" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="460" y="80" fill="#e6edf3" text-anchor="middle">CdcEngine</text><text x="460" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">per-org fan-out</text>
-        <rect x="580" y="6"   width="110" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="25" fill="#e6edf3" text-anchor="middle">NATS JetStream</text>
-        <rect x="580" y="46"  width="110" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="65" fill="#e6edf3" text-anchor="middle">Webhook</text>
-        <rect x="580" y="92"  width="110" height="30" rx="7" fill="#1a2233" stroke="#58a6ff"/><text x="635" y="108" fill="#e6edf3" text-anchor="middle" font-size="10">Kafka (TODO)</text>
-        <rect x="580" y="130" width="110" height="30" rx="7" fill="#231414" stroke="#db6d6d"/><text x="635" y="148" fill="#e6edf3" text-anchor="middle" font-size="10">Redis (absent)</text>
+        <g class="node" data-st="ship"><title>peat-mesh DocumentStore — the observed source; CDC watches it but never carries documents.</title><rect x="10"  y="60" width="150" height="44" rx="8" fill="#0e1f12" stroke="#3fb950"/><text x="85" y="80" fill="#e6edf3" text-anchor="middle">peat-mesh</text><text x="85" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">DocumentStore</text></g>
+        <g class="node" data-st="ship"><title>cdc/watcher — observe() emits a ChangeEvent for each CRDT mutation.</title><rect x="210" y="60" width="130" height="44" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="275" y="80" fill="#e6edf3" text-anchor="middle">cdc/watcher</text><text x="275" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">observe()</text></g>
+        <g class="node" data-st="ship"><title>CdcEngine — fans CdcEvents out per organization to the configured sinks.</title><rect x="390" y="60" width="140" height="44" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="460" y="80" fill="#e6edf3" text-anchor="middle">CdcEngine</text><text x="460" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">per-org fan-out</text></g>
+        <g class="node" data-st="ship"><title>NATS JetStream sink — delivers, at-least-once. Shipped.</title><rect x="580" y="6"   width="110" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="25" fill="#e6edf3" text-anchor="middle">NATS JetStream</text></g>
+        <g class="node" data-st="ship"><title>Webhook sink — delivers, at-least-once. Shipped.</title><rect x="580" y="46"  width="110" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="65" fill="#e6edf3" text-anchor="middle">Webhook</text></g>
+        <g class="node" data-st="flight"><title>Kafka — the dispatcher branch is an empty TODO; it does NOT deliver yet. In flight.</title><rect x="580" y="92"  width="110" height="30" rx="7" fill="#241e10" stroke="#d29922"/><text x="635" y="108" fill="#e6edf3" text-anchor="middle" font-size="10">Kafka (TODO)</text></g>
+        <g class="node" data-st="spec"><title>Redis Streams — does not exist; there is no sink variant for it.</title><rect x="580" y="130" width="110" height="30" rx="7" fill="#1a142b" stroke="#a371f7"/><text x="635" y="148" fill="#e6edf3" text-anchor="middle" font-size="10">Redis (absent)</text></g>
         <g stroke="#9aa7b4" stroke-width="1.3" fill="none" marker-end="url(#a8)">
           <path d="M160,82 L208,82"/><text x="184" y="74" fill="#9aa7b4" text-anchor="middle" font-size="8">ChangeEvent</text>
           <path d="M340,82 L388,82"/><text x="364" y="74" fill="#9aa7b4" text-anchor="middle" font-size="8">CdcEvent</text>
           <path d="M530,76 L578,24" stroke="#3fb950"/><path d="M530,80 L578,60" stroke="#3fb950"/>
-          <path d="M530,90 L578,106" stroke="#58a6ff" stroke-dasharray="4 3"/><path d="M530,96 L578,144" stroke="#db6d6d" stroke-dasharray="4 3"/>
+          <path d="M530,90 L578,106" stroke="#d29922" stroke-dasharray="4 3"/><path d="M530,96 L578,144" stroke="#a371f7" stroke-dasharray="4 3"/>
         </g>
       </svg>
       <div class="legend"><b>Legend.</b>
         <span class="sw" style="background:#0f1f14;border:1px solid #3fb950"></span><span class="st ship">Shipped</span> sink (delivers) ·
-        <span class="sw" style="background:#1a2233;border:1px solid #58a6ff"></span><span class="st flight">In flight</span> — Kafka dispatcher branch is an empty TODO, does <b>not</b> deliver ·
-        <span class="sw" style="background:#231414;border:1px solid #db6d6d"></span>Redis Streams does not exist (no sink variant). At-least-once delivery on the two shipped sinks.</div>
+        <span class="sw" style="background:#241e10;border:1px solid #d29922"></span><span class="st flight">In flight</span> — Kafka dispatcher branch is an empty TODO, does <b>not</b> deliver ·
+        <span class="sw" style="background:#1a142b;border:1px solid #a371f7"></span>Redis Streams does not exist (no sink variant). At-least-once delivery on the two shipped sinks.</div>
     </div>
 
     <h3>The rest at a glance</h3>
@@ -1112,10 +1159,10 @@ ties → lexicographic node id</code></pre>
     <div class="fig">
       <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
         <defs><marker id="a9" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
-        <rect x="20"  y="10" width="150" height="32" rx="7" fill="#0e1f12" stroke="#3fb950"/><text x="95"  y="31" fill="#e6edf3" text-anchor="middle" font-size="10">ESP32 sensor (lite)</text>
-        <rect x="200" y="10" width="160" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="280" y="31" fill="#e6edf3" text-anchor="middle" font-size="10">Cell leader (mesh)</text>
-        <rect x="400" y="10" width="140" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="470" y="31" fill="#e6edf3" text-anchor="middle" font-size="10">Zone / parent</text>
-        <rect x="580" y="10" width="110" height="32" rx="7" fill="#1a2233" stroke="#58a6ff"/><text x="635" y="31" fill="#e6edf3" text-anchor="middle" font-size="10">CoT consumer</text>
+        <g class="node" data-st="ship"><title>ESP32 sensor (peat-lite) — emits a reading as a 16-byte lite frame over UDP or BLE.</title><rect x="20"  y="10" width="150" height="32" rx="7" fill="#0e1f12" stroke="#3fb950"/><text x="95"  y="31" fill="#e6edf3" text-anchor="middle" font-size="10">ESP32 sensor (lite)</text></g>
+        <g class="node" data-st="ship"><title>Cell leader (peat-mesh) — bridges the reading into the DocumentStore; Automerge commits locally first.</title><rect x="200" y="10" width="160" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="280" y="31" fill="#e6edf3" text-anchor="middle" font-size="10">Cell leader (mesh)</text></g>
+        <g class="node" data-st="ship"><title>Zone / parent — HierarchicalAggregator folds the CellDelta into a cell summary, synced over QUIC.</title><rect x="400" y="10" width="140" height="32" rx="7" fill="#21303f" stroke="#58a6ff"/><text x="470" y="31" fill="#e6edf3" text-anchor="middle" font-size="10">Zone / parent</text></g>
+        <g class="node" data-st="ship"><title>CoT consumer — receives Cursor-on-Target XML from the TAK bridge (vendor-neutral external client).</title><rect x="580" y="10" width="110" height="32" rx="7" fill="#1a2233" stroke="#58a6ff"/><text x="635" y="31" fill="#e6edf3" text-anchor="middle" font-size="10">CoT consumer</text></g>
         <line x1="95" y1="42" x2="95" y2="200" stroke="#2a323c"/><line x1="280" y1="42" x2="280" y2="200" stroke="#2a323c"/><line x1="470" y1="42" x2="470" y2="200" stroke="#2a323c"/><line x1="635" y1="42" x2="635" y2="200" stroke="#2a323c"/>
         <g stroke="#9aa7b4" stroke-width="1.3" marker-end="url(#a9)">
           <line x1="95" y1="64" x2="278" y2="64"/><line x1="280" y1="120" x2="468" y2="120"/><line x1="470" y1="170" x2="633" y2="170"/>
@@ -1392,9 +1439,9 @@ cargo build -p peat-quickstart --release   <span class="cm"># binary/crate name 
     <div class="fig">
       <svg viewBox="0 0 560 150" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
         <defs><marker id="aq" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
-        <rect x="200" y="10" width="160" height="40" rx="8" fill="#0f1f14" stroke="#3fb950"/><text x="280" y="30" fill="#e6edf3" text-anchor="middle">alpha (hub) :39001</text><text x="280" y="44" fill="#9aa7b4" text-anchor="middle" font-size="9">peers = 2</text>
-        <rect x="20"  y="100" width="160" height="36" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="100" y="122" fill="#e6edf3" text-anchor="middle">bravo :39002</text>
-        <rect x="380" y="100" width="160" height="36" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="460" y="122" fill="#e6edf3" text-anchor="middle">charlie :39003</text>
+        <g class="node" data-st="ship"><title>alpha — the seed/hub node; bravo and charlie peer to it (peers = 2).</title><rect x="200" y="10" width="160" height="40" rx="8" fill="#0f1f14" stroke="#3fb950"/><text x="280" y="30" fill="#e6edf3" text-anchor="middle">alpha (hub) :39001</text><text x="280" y="44" fill="#9aa7b4" text-anchor="middle" font-size="9">peers = 2</text></g>
+        <g class="node" data-st="ship"><title>bravo — a joiner started with --peer alpha.</title><rect x="20"  y="100" width="160" height="36" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="100" y="122" fill="#e6edf3" text-anchor="middle">bravo :39002</text></g>
+        <g class="node" data-st="ship"><title>charlie — a joiner started with --peer alpha; it sees bravo transitively via gossip through alpha.</title><rect x="380" y="100" width="160" height="36" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="460" y="122" fill="#e6edf3" text-anchor="middle">charlie :39003</text></g>
         <g stroke="#9aa7b4" stroke-width="1.4" fill="none" marker-end="url(#aq)">
           <path d="M120,100 L250,52"/><path d="M440,100 L310,52"/>
         </g>
@@ -1536,6 +1583,36 @@ cargo build -p peat-quickstart --release   <span class="cm"># binary/crate name 
     const id=el.getAttribute('data-go'); if(id){e.preventDefault(); go(id);}
   }));
   go('m0');
+
+  /* ---- interactive figures: keyboard focus + status filtering ---- */
+  document.querySelectorAll('.fig .node').forEach(n=>{
+    if(!n.hasAttribute('tabindex')) n.setAttribute('tabindex','0');
+    if(!n.getAttribute('role')) n.setAttribute('role','img');
+    const t=n.querySelector('title');
+    if(t && !n.getAttribute('aria-label')) n.setAttribute('aria-label',t.textContent);
+  });
+  document.querySelectorAll('.figbar').forEach(bar=>{
+    const fig=bar.nextElementSibling;            // the .fig this toolbar drives
+    if(!fig||!fig.classList.contains('fig')) return;
+    const nodes=fig.querySelectorAll('.node');
+    const apply=()=>{
+      const on=[...bar.querySelectorAll('.fb[data-st][aria-pressed="true"]')].map(b=>b.dataset.st);
+      if(!on.length){fig.classList.remove('filtering');nodes.forEach(n=>n.classList.remove('match'));return;}
+      fig.classList.add('filtering');
+      nodes.forEach(n=>n.classList.toggle('match', on.includes(n.dataset.st)));
+    };
+    bar.addEventListener('click',e=>{
+      const b=e.target.closest('.fb'); if(!b) return;
+      if(!b.dataset.st){                          // "All" reset
+        bar.querySelectorAll('.fb').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
+        apply(); return;
+      }
+      b.setAttribute('aria-pressed', b.getAttribute('aria-pressed')==='true'?'false':'true');
+      const any=bar.querySelector('.fb[data-st][aria-pressed="true"]');
+      bar.querySelector('.fb.reset').setAttribute('aria-pressed', any?'false':'true');
+      apply();
+    });
+  });
 </script>
 </body>
 </html>

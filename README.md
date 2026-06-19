@@ -45,4 +45,3 @@ for the history of corrections.
 - FIPS-approved cryptographic primitives only.
 - No vendor/consumer names in generic protocol prose ("consumer", "CoT consumer" — protocol names like CoT are fine).
 - "Autonomy under human authority" framing preserved for any tasking/command content.
-</content>

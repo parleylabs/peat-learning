@@ -50,5 +50,3 @@ Verdicts: **Verified · Outdated · Misleading · Oversimplified · Wrong · Unv
 4. **Claim #28 (Unverifiable/Misleading):** the six-level "Root→Cluster→Formation→Group→Team→Node" authority model has no code basis; the real `AuthorityLevel` is a 5-value ladder (OBSERVER/ADVISOR/SUPERVISOR/COMMANDER).
 5. **Claims #22, #30 (label gaps):** QoS figures are configured *targets* not enforced SLAs (enforcement in-flight); "trust as data" revocation propagation is design intent (ADR-048 Proposed, authorization deferred #941). Per the prompt, neither carries a shipped/proposed label in the doc.
 6. **Bright spots:** the deterministic-leader-election (#8), formation-handshake (#25), FIPS crypto (#26 — correctly AES-256-GCM/ECDH-P256, not the stale ChaCha20), and the negentropy-is-the-real-anti-entropy framing (#19) are all accurate and current — the doc avoids the worst README traps in these areas.
-</content>
-</invoke>
