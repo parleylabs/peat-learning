@@ -513,6 +513,16 @@
     </div>
   </div>
   <div class="src">Source: deterministic leader election (<code>peat-mesh/src/hierarchy/dynamic_strategy.rs:190-224</code>, shipped) + peat-node auto-reconnect watchdog (5 s→120 s backoff). Cross-transport uplink failover is undemonstrated.</div>
+  <div class="note"><b>New: a blob can now reach a node beyond its direct peers.</b> Until rc.43, a large
+  payload (a model, a file) could only be fetched from a peer you had directly dialed — fine when the
+  relay holds everything, but a needing node off to the side could be stranded. <b>Provider gossip</b>
+  (<span class="st st-ship">Shipped</span>, peat-mesh rc.43, peat-mesh#262) propagates "who holds blob X"
+  across the mesh on a dedicated <code>peat/blob-announce/1</code> channel, bounded to three relay hops,
+  so a node can locate and dial a holder it was never peered with — and acquiring the blob re-announces
+  it, so holdings spread outward hop by hop. Document <em>sync</em> already converged transitively; this
+  extends the same reach to opaque blob delivery. (Choosing recipients by durable <em>interest</em>
+  rather than a relay's peer list — ADR-071 — is <span class="st st-prop">Proposed</span>: the seam is in
+  code but inert.)</div>
   <div class="crumbs"><button class="btn" data-go="cn6">← Back</button><button class="btn" data-go="cn8">Next: two graphs, one system →</button></div>
 </section>
 
@@ -797,7 +807,7 @@
       <span class="fw">PARLEY<b>LABS</b></span> &nbsp; <span class="beep">beep · boop · beep</span>
       <svg class="squig" width="54" height="9" viewBox="0 0 54 9" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5 q4.5 -4 9 0 t9 0 t9 0 t9 0 t9 0 t9 0"/></svg>
       <br><span class="ft">PEAT onboarding curriculum · styled per the Parley Labs Brand Guide · © Parley Labs</span>
-      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-06-18</b> · full sweep · peat <code>35d0f11</code> · mesh <code>rc.42</code> · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>0.1.0</code> · node <code>0.4.3</code><!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
+      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-06-19</b> · incremental · peat <code>68e9c3c</code> · mesh <code>rc.43</code> · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>0.1.0</code> · node <code>0.4.7</code><!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
     </span>
   </footer>
 </main>

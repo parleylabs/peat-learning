@@ -44,16 +44,16 @@
 
   <div class="card">
     <div style="font-weight:700;color:var(--brand-green);font-family:'Montserrat',sans-serif">Current sync</div>
-    <div id="sync-current" style="margin-top:4px"><!--SYNC-->Last synced <b>2026-06-18</b> &nbsp;<span class="pill full">full sweep</span><!--/SYNC--></div>
+    <div id="sync-current" style="margin-top:4px"><!--SYNC-->Last synced <b>2026-06-19</b> &nbsp;<span class="pill incr">incremental</span><!--/SYNC--></div>
     <div class="tags">
-      <span class="tag">peat <b>35d0f11</b> · 0.9.0-rc.25</span>
-      <span class="tag">peat-mesh <b>00ab0c9</b> · rc.42</span>
+      <span class="tag">peat <b>68e9c3c</b> · 0.9.0-rc.26</span>
+      <span class="tag">peat-mesh <b>71fc3d5</b> · rc.43</span>
       <span class="tag">peat-btle <b>3d70f48</b> · 0.4.0</span>
       <span class="tag">peat-lite <b>7a8a8fb</b> · 0.2.5</span>
       <span class="tag">peat-gateway <b>8d16824</b> · 0.1.0</span>
-      <span class="tag">peat-node <b>4e1b5c8</b> · 0.4.3</span>
+      <span class="tag">peat-node <b>bbe3b68</b> · 0.4.7</span>
     </div>
-    <p class="muted" style="font-size:13px;margin:12px 0 0">Known-unverified at this sync: peat-node is 5 commits ahead of the audited HEAD (v0.4.4/v0.4.5, untested); several datasheet/target figures are flagged rather than asserted. Full list in <a href="review/CHANGELOG-review.md">review/CHANGELOG-review.md</a>.</p>
+    <p class="muted" style="font-size:13px;margin:12px 0 0">Known-unverified at this sync: the ADR-071 interest-driven-convergence seam is present in code but inert (publish writes <code>collection: None</code>); provider-gossip convergence behaviour (TTL=3 epidemic spread) is not independently benchmarked; several datasheet/target figures remain flagged rather than asserted. Full list in <a href="review/CHANGELOG-review.md">review/CHANGELOG-review.md</a>.</p>
   </div>
 
   <h2>History</h2>
@@ -61,6 +61,7 @@
     <thead><tr><th>Date</th><th>Type</th><th>Scope</th><th>Summary</th></tr></thead>
     <tbody>
     <!-- CHANGELOG-ROWS-START -->
+    <tr><td>2026-06-19</td><td><span class="pill incr">incremental</span></td><td>3 repos · modules 2/3/8/9, both HTML tracks</td><td>Drift refresh: peat <code>35d0f11→68e9c3c</code> (rc.25→rc.26), peat-mesh <code>00ab0c9→71fc3d5</code> (rc.42→rc.43), peat-node <code>4e1b5c8→bbe3b68</code> (v0.4.3→v0.4.7). Documented the rc.43 relocation of blob/file distribution from <code>peat-protocol</code> into <code>peat-mesh</code> (peat#992); added <b>provider gossip</b> (<span class="pill" style="background:#0f1f14;color:var(--brand-green);border:1px solid var(--brand-green)">Shipped</span>, <code>peat/blob-announce/1</code>, peat-mesh#262) and the <b>ADR-071 interest-driven-convergence</b> seam (Proposed; inert by default) in Module 3 §3.4b + hub; added peat-node v0.4.7 ops notes (attachment outbox watcher, 30 s peer-status heartbeat, sync-stack logging) to Module 8. Resolved the peat-node "5 commits ahead" open item.</td></tr>
     <tr><td>2026-06-19</td><td><span class="pill man">manual</span></td><td>Presentation</td><td>Applied Parley Labs branding (reversed patch logo, brand palette, Montserrat/Roboto); published to GitHub Pages; renamed the hub to <code>index.html</code> and cross-linked the tracks; added this change-log page and a "last synced" footer stamp.</td></tr>
     <tr><td>2026-06-18</td><td><span class="pill full">full sweep</span></td><td>6 repos · 14 docs</td><td>Initial code-anchored adversarial review. ~73 of ~85 audited claims corrected (16 wrong, 26 misleading, plus outdated/oversimplified). Relabeled SBD/LoRa, the anti-entropy/digest family, and <code>command_log</code> as proposed/speculative; corrected the hierarchy leaf to <code>Node</code> (ADR-066 Proposed), the NodeId identity model, RBAC roles, and gateway/CDC scope; confirmed FIPS-clean AES-256-GCM / ECDH-P256. Per-document detail in <a href="review/CHANGELOG-review.md">review/CHANGELOG-review.md</a>.</td></tr>
     <!-- CHANGELOG-ROWS-END -->

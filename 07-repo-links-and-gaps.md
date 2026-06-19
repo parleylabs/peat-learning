@@ -14,8 +14,8 @@ download list; the capability map is what tells you whether the system does what
 - **Speculative** — design discussed for teaching, not even an ADR-complete proposal anywhere.
 
 Everything below was checked against the audited HEADs in
-[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `35d0f11`, `peat-mesh` rc.42,
-`peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` 0.1.0, `peat-node` 0.4.3. The operating
+[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `68e9c3c`, `peat-mesh` rc.43,
+`peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` 0.1.0, `peat-node` 0.4.7. The operating
 principle is **code over everything**: where a README, a spec, or a months-old guide disagrees with
 the source on the audited HEAD, the source wins.
 
@@ -38,7 +38,7 @@ each one's role in a sentence so you know why you'd open it.
 > **Note on registries.** Whether `peat-protocol`, `peat-schema`, `peat-btle`, and `peat-lite` are
 > *published* to crates.io, and `peat-ffi` to Maven Central, is **not verified in this audit**. The
 > crates exist and carry versions, but the peat-mesh README advertises stale versions (0.3.2 against
-> a shipped rc.42), so registry-version trust is shaky. Check the actual registry before relying on a
+> a shipped rc.43), so registry-version trust is shaky. Check the actual registry before relying on a
 > published version; do not assume the README is current.
 
 ---
@@ -65,7 +65,7 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 >
 > - **`peat-mesh-node`** (inside peat-mesh) is a small demo / reference binary for bringing up a mesh
 >   by hand.
-> - **`peat-node`** (its own repo, audited at v0.4.3) is the **production sidecar**: it embeds
+> - **`peat-node`** (its own repo, audited at v0.4.7) is the **production sidecar**: it embeds
 >   peat-mesh + peat-protocol and exposes them as a gRPC / Connect / gRPC-Web API on a single port. It
 >   is the Kubernetes sidecar pattern's node, it ships a Helm chart plus Zarf and UDS bundles, and it
 >   is the UDS Remote Agent integration target. The proto defines **28 RPCs** and `service.rs`
@@ -136,7 +136,7 @@ open.
 - **[`peat/docs/guides/developer/DEVELOPER_GUIDE.md`](../peat/docs/guides/developer/DEVELOPER_GUIDE.md)**
   — the onboarding guide: environment setup, runtime architecture, core concepts, crate reference,
   testing, mobile, edge AI, and "Extending Peat." This learning track is a guided path through it.
-  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.42, the
+  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.43, the
   rc.12 FIPS crypto swap dated 2026-05-18, the ADR-066 hierarchy rename still in flight). Where the
   guide and the code differ, **the code wins** — quoting the guide without checking the source is how
   the known stale-doc errors (wrong RBAC role names, ChaCha20 crypto, legacy hierarchy terms) get
