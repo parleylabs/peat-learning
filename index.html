@@ -12,7 +12,7 @@
     --line:#2a323c; --accent:#3fb950; --accent2:#58a6ff; --warn:#d29922; --code:#0b0f14;
     --pill:#21303f;
     /* status accents */
-    --st-ship:#3fb950; --st-flight:#58a6ff; --st-prop:#d29922; --st-spec:#db6d6d;
+    --st-ship:#3fb950; --st-flight:#d29922; --st-prop:#58a6ff; --st-spec:#a371f7; --err:#db6d6d;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -54,15 +54,15 @@
   .note{border-left:3px solid var(--accent2);background:var(--panel2);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
   .warn{border-left:3px solid var(--warn);background:#241e10;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
   .ok{border-left:3px solid var(--accent);background:#0f1f14;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
-  .bad{border-left:3px solid var(--st-spec);background:#231414;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  .bad{border-left:3px solid var(--err);background:#231414;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
   .pill{display:inline-block;background:var(--pill);color:#cfe3ff;font-size:12px;padding:2px 9px;border-radius:20px;margin:0 4px 4px 0}
   /* status badges */
   .st{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.3px;padding:1px 8px;border-radius:20px;
       margin:0 5px 2px 0;text-transform:uppercase;vertical-align:middle;border:1px solid transparent}
   .st.ship{background:rgba(63,185,80,.16);color:#5fd97a;border-color:rgba(63,185,80,.4)}
-  .st.flight{background:rgba(88,166,255,.16);color:#79b8ff;border-color:rgba(88,166,255,.4)}
-  .st.prop{background:rgba(210,153,34,.16);color:#e0b250;border-color:rgba(210,153,34,.4)}
-  .st.spec{background:rgba(219,109,109,.16);color:#e88;border-color:rgba(219,109,109,.4)}
+  .st.flight{background:rgba(210,153,34,.16);color:#e0b250;border-color:rgba(210,153,34,.4)}
+  .st.prop{background:rgba(88,166,255,.16);color:#79b8ff;border-color:rgba(88,166,255,.4)}
+  .st.spec{background:rgba(163,113,247,.16);color:#c8a9fb;border-color:rgba(163,113,247,.4)}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
   .grid .card{margin:0}
   .grid .card h4{margin-top:0}
@@ -93,18 +93,18 @@
   .figbar .fb:focus-visible{outline:2px solid var(--accent2);outline-offset:1px}
   .figbar .fb.reset[aria-pressed="true"]{background:var(--pill);color:#fff;border-color:var(--accent2)}
   .figbar .fb[data-st="ship"][aria-pressed="true"]{background:rgba(63,185,80,.22);border-color:var(--st-ship);color:#5fd97a}
-  .figbar .fb[data-st="flight"][aria-pressed="true"]{background:rgba(88,166,255,.22);border-color:var(--st-flight);color:#79b8ff}
-  .figbar .fb[data-st="prop"][aria-pressed="true"]{background:rgba(210,153,34,.22);border-color:var(--st-prop);color:#e0b250}
-  .figbar .fb[data-st="spec"][aria-pressed="true"]{background:rgba(219,109,109,.22);border-color:var(--st-spec);color:#e88}
+  .figbar .fb[data-st="flight"][aria-pressed="true"]{background:rgba(210,153,34,.22);border-color:var(--st-flight);color:#e0b250}
+  .figbar .fb[data-st="prop"][aria-pressed="true"]{background:rgba(88,166,255,.22);border-color:var(--st-prop);color:#79b8ff}
+  .figbar .fb[data-st="spec"][aria-pressed="true"]{background:rgba(163,113,247,.22);border-color:var(--st-spec);color:#c8a9fb}
   .fig .node{cursor:default;transition:opacity .15s ease}
   .fig .node rect,.fig .node circle,.fig .node ellipse{transition:stroke-width .12s ease,filter .12s ease}
   .fig .node:focus{outline:none}
   .fig .node:hover rect,.fig .node:focus rect,.fig .node:hover circle,.fig .node:focus circle,.fig .node:hover ellipse,.fig .node:focus ellipse{filter:brightness(1.4);stroke-width:2.4px}
   .fig .node:focus rect,.fig .node:focus circle,.fig .node:focus ellipse{stroke:var(--accent2)}
-  .fig .node[data-st="ship"] rect{stroke:var(--st-ship)}
-  .fig .node[data-st="flight"] rect{stroke:var(--st-flight)}
-  .fig .node[data-st="prop"] rect{stroke:var(--st-prop)}
-  .fig .node[data-st="spec"] rect{stroke:var(--st-spec)}
+  .fig.filtering .node.match[data-st="ship"] rect,.fig.filtering .node.match[data-st="ship"] circle,.fig.filtering .node.match[data-st="ship"] polygon{stroke:var(--st-ship);stroke-width:2.4px}
+  .fig.filtering .node.match[data-st="flight"] rect,.fig.filtering .node.match[data-st="flight"] circle,.fig.filtering .node.match[data-st="flight"] polygon{stroke:var(--st-flight);stroke-width:2.4px}
+  .fig.filtering .node.match[data-st="prop"] rect,.fig.filtering .node.match[data-st="prop"] circle,.fig.filtering .node.match[data-st="prop"] polygon{stroke:var(--st-prop);stroke-width:2.4px}
+  .fig.filtering .node.match[data-st="spec"] rect,.fig.filtering .node.match[data-st="spec"] circle,.fig.filtering .node.match[data-st="spec"] polygon{stroke:var(--st-spec);stroke-width:2.4px}
   .fig.filtering .node{opacity:.16}
   .fig.filtering .node.match{opacity:1}
   .fig .node title{pointer-events:none}
@@ -1105,19 +1105,19 @@ ties → lexicographic node id</code></pre>
         <g class="node" data-st="ship"><title>CdcEngine — fans CdcEvents out per organization to the configured sinks.</title><rect x="390" y="60" width="140" height="44" rx="8" fill="#21303f" stroke="#58a6ff"/><text x="460" y="80" fill="#e6edf3" text-anchor="middle">CdcEngine</text><text x="460" y="95" fill="#9aa7b4" text-anchor="middle" font-size="9">per-org fan-out</text></g>
         <g class="node" data-st="ship"><title>NATS JetStream sink — delivers, at-least-once. Shipped.</title><rect x="580" y="6"   width="110" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="25" fill="#e6edf3" text-anchor="middle">NATS JetStream</text></g>
         <g class="node" data-st="ship"><title>Webhook sink — delivers, at-least-once. Shipped.</title><rect x="580" y="46"  width="110" height="30" rx="7" fill="#0f1f14" stroke="#3fb950"/><text x="635" y="65" fill="#e6edf3" text-anchor="middle">Webhook</text></g>
-        <g class="node" data-st="flight"><title>Kafka — the dispatcher branch is an empty TODO; it does NOT deliver yet. In flight.</title><rect x="580" y="92"  width="110" height="30" rx="7" fill="#1a2233" stroke="#58a6ff"/><text x="635" y="108" fill="#e6edf3" text-anchor="middle" font-size="10">Kafka (TODO)</text></g>
-        <g class="node" data-st="spec"><title>Redis Streams — does not exist; there is no sink variant for it.</title><rect x="580" y="130" width="110" height="30" rx="7" fill="#231414" stroke="#db6d6d"/><text x="635" y="148" fill="#e6edf3" text-anchor="middle" font-size="10">Redis (absent)</text></g>
+        <g class="node" data-st="flight"><title>Kafka — the dispatcher branch is an empty TODO; it does NOT deliver yet. In flight.</title><rect x="580" y="92"  width="110" height="30" rx="7" fill="#241e10" stroke="#d29922"/><text x="635" y="108" fill="#e6edf3" text-anchor="middle" font-size="10">Kafka (TODO)</text></g>
+        <g class="node" data-st="spec"><title>Redis Streams — does not exist; there is no sink variant for it.</title><rect x="580" y="130" width="110" height="30" rx="7" fill="#1a142b" stroke="#a371f7"/><text x="635" y="148" fill="#e6edf3" text-anchor="middle" font-size="10">Redis (absent)</text></g>
         <g stroke="#9aa7b4" stroke-width="1.3" fill="none" marker-end="url(#a8)">
           <path d="M160,82 L208,82"/><text x="184" y="74" fill="#9aa7b4" text-anchor="middle" font-size="8">ChangeEvent</text>
           <path d="M340,82 L388,82"/><text x="364" y="74" fill="#9aa7b4" text-anchor="middle" font-size="8">CdcEvent</text>
           <path d="M530,76 L578,24" stroke="#3fb950"/><path d="M530,80 L578,60" stroke="#3fb950"/>
-          <path d="M530,90 L578,106" stroke="#58a6ff" stroke-dasharray="4 3"/><path d="M530,96 L578,144" stroke="#db6d6d" stroke-dasharray="4 3"/>
+          <path d="M530,90 L578,106" stroke="#d29922" stroke-dasharray="4 3"/><path d="M530,96 L578,144" stroke="#a371f7" stroke-dasharray="4 3"/>
         </g>
       </svg>
       <div class="legend"><b>Legend.</b>
         <span class="sw" style="background:#0f1f14;border:1px solid #3fb950"></span><span class="st ship">Shipped</span> sink (delivers) ·
-        <span class="sw" style="background:#1a2233;border:1px solid #58a6ff"></span><span class="st flight">In flight</span> — Kafka dispatcher branch is an empty TODO, does <b>not</b> deliver ·
-        <span class="sw" style="background:#231414;border:1px solid #db6d6d"></span>Redis Streams does not exist (no sink variant). At-least-once delivery on the two shipped sinks.</div>
+        <span class="sw" style="background:#241e10;border:1px solid #d29922"></span><span class="st flight">In flight</span> — Kafka dispatcher branch is an empty TODO, does <b>not</b> deliver ·
+        <span class="sw" style="background:#1a142b;border:1px solid #a371f7"></span>Redis Streams does not exist (no sink variant). At-least-once delivery on the two shipped sinks.</div>
     </div>
 
     <h3>The rest at a glance</h3>

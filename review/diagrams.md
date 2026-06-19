@@ -112,8 +112,15 @@ pattern, to preserve when editing or adding diagrams:
 - Each diagram node is `<g class="node" data-st="ship|flight|prop|spec"><title>tooltip</title> …
   shape + text … </g>`. The `<title>` is a hover/focus tooltip; the script also copies it to
   `aria-label` and makes the node keyboard-focusable (`tabindex`).
-- `data-st` carries the node's delivery status and drives both the status stroke color and the
-  filter. **Tooltips must only restate facts already on the page** — never invent provenance.
+- `data-st` carries the node's delivery status and drives the filter. At rest each diagram keeps
+  its own colors; when a status filter is active, matching nodes stay lit and gain a
+  status-colored stroke (non-matches dim). **Tooltips must only restate facts already on the
+  page** — never invent provenance.
+- **Canonical status palette (identical on every page):** Shipped = green `#3fb950`,
+  In-flight = amber `#d29922`, Proposed = blue `#58a6ff`, Speculative = purple `#a371f7`.
+  This is the single source of truth for status color — pills, filter chips, and the
+  filter-highlight strokes all use it. Error/rejected states use a separate red (`--err`
+  `#db6d6d` in the hub; literal red in diagrams), which is **not** a status color.
 - Diagrams with **mixed** status get a `.figbar` toolbar (placed immediately before the `.fig`,
   so it is the toolbar's `nextElementSibling`) with an "All" reset plus one button per status
   present. Single-status diagrams get tooltips only — no toolbar (an empty filter is confusing).

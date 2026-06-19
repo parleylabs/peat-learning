@@ -99,7 +99,10 @@ and ASCII box-art, so diagrams get the same discipline as text.
 - **Re-derive, don't just preserve.** When the code a diagram depicts changes, regenerate the
   diagram's facts — updating the surrounding prose while leaving the old SVG/ASCII is the
   common silent bug. Diagram nodes carry the **shipped/in-flight/proposed/speculative** status
-  (color + legend), not only the prose around them.
+  (color + legend / interactive filter), not only the prose around them.
+- **One status palette across all pages:** Shipped = green, In-flight = amber, Proposed = blue,
+  Speculative = purple (exact hex in `review/diagrams.md`). Error/rejected states use a separate
+  red and are not a status. Keep `index.html` and `peat-constrained-networking.html` in sync.
 - **Watch the dual-copy hazard.** The same concept is sometimes drawn twice — as hub SVG and
   as module ASCII (e.g. the layer model, the dependency graph). Those twins must agree.
 - **The registry is the source of record.** `review/diagrams.md` lists every diagram with its

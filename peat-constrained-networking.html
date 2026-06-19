@@ -115,10 +115,10 @@
   .fig .node:focus{outline:none}
   .fig .node:hover rect,.fig .node:focus rect,.fig .node:hover circle,.fig .node:focus circle,.fig .node:hover ellipse,.fig .node:focus ellipse{filter:brightness(1.4);stroke-width:2.4px}
   .fig .node:focus rect,.fig .node:focus circle,.fig .node:focus ellipse{stroke:var(--accent2)}
-  .fig .node[data-st="ship"] rect,.fig .node[data-st="ship"] circle{stroke:var(--ok)}
-  .fig .node[data-st="flight"] rect,.fig .node[data-st="flight"] circle{stroke:var(--warn)}
-  .fig .node[data-st="prop"] rect,.fig .node[data-st="prop"] circle{stroke:var(--accent2)}
-  .fig .node[data-st="spec"] rect,.fig .node[data-st="spec"] circle{stroke:var(--L-sync)}
+  .fig.filtering .node.match[data-st="ship"] rect,.fig.filtering .node.match[data-st="ship"] circle,.fig.filtering .node.match[data-st="ship"] ellipse{stroke:var(--ok);stroke-width:2.4px}
+  .fig.filtering .node.match[data-st="flight"] rect,.fig.filtering .node.match[data-st="flight"] circle,.fig.filtering .node.match[data-st="flight"] ellipse{stroke:var(--warn);stroke-width:2.4px}
+  .fig.filtering .node.match[data-st="prop"] rect,.fig.filtering .node.match[data-st="prop"] circle,.fig.filtering .node.match[data-st="prop"] ellipse{stroke:var(--accent2);stroke-width:2.4px}
+  .fig.filtering .node.match[data-st="spec"] rect,.fig.filtering .node.match[data-st="spec"] circle,.fig.filtering .node.match[data-st="spec"] ellipse{stroke:var(--L-sync);stroke-width:2.4px}
   .fig.filtering .node{opacity:.16}
   .fig.filtering .node.match{opacity:1}
   .fig .node title{pointer-events:none}
