@@ -194,6 +194,20 @@ self-contained — never make them fetch a manifest at runtime):
   sweep is due), do not create, push, or PR a branch at all** — just log the no-drift entry and
   exit. (Requires the curriculum to live in a pushed git repo.)
 
+**Push mechanics (cloud/ci) — use real `git push`, never the file-content API.** A fresh
+`git clone https://…/peat-learning.git learning` has **no push credentials**. The cloud
+environment provides an **authenticated git remote** (a local git proxy) on the repo it
+pre-checks-out at session start, so:
+1. At the very start, *before any `cd`*, capture it: `ENVREMOTE="$(git remote get-url origin 2>/dev/null)"`.
+2. After cloning `learning/`, repoint its origin to that authenticated URL —
+   `git -C learning remote set-url origin "$ENVREMOTE"` — then `git push` works with the
+   environment's credentials.
+- **Push via `git` only. Do NOT fall back to the GitHub MCP `push_files` / file-content API** —
+  it mangles the large embedded base64 logo (`data:` URIs) and silently substitutes a placeholder.
+  Creating the PR via the GitHub MCP `create_pull_request` is fine (it carries no file content).
+- **Gate sub-agents (§0b) are read-only reviewers; the orchestrator performs every file write,
+  the commit, and the push** — so no large/base64 file ever crosses an agent boundary.
+
 Mode comes from `args.mode` (default `local`).
 
 ## 8 · Definition of done (incremental)
