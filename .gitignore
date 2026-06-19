@@ -1,0 +1,11 @@
+# macOS / editor cruft
+.DS_Store
+.AppleDouble
+*.swp
+*~
+.idea/
+.vscode/
+
+# Pre-rewrite backups — git history is the canonical baseline once committed,
+# so the originals/ folder is redundant in the repo.
+review/originals/
