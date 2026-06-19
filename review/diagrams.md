@@ -17,8 +17,7 @@ plain-fence ASCII art is for tiny inline sketches only. HTML diagrams are hand-a
 SVG and must stay self-contained (no external renderer/CDN). The same concept may appear twice
 (hub SVG + module ASCII) — those copies must agree; the **Twin** column notes the pairing.
 
-**Last verified** baseline: `2026-06-18` full sweep, at the per-repo commits recorded in
-`REVIEW-STATE.json` → `audited_commits`. Update per-row as diagrams are re-derived.
+**Last verified** baseline: `2026-06-18` full sweep. Diagrams with provenance in peat or peat-mesh were spot-checked on the 2026-06-19 incremental run and advanced to `2026-06-19` — no fact changes required (blob-announce uses a separate ALPN so SyncMessageType is unchanged; distribution relocation does not alter dep graph direction; ADR-071 is Proposed). See `REVIEW-STATE.json` → `run_log`.
 
 > **Provenance status — read this.** The **Provenance** column records the `path:line`/ADR each
 > diagram *cites in the curriculum*; it was transcribed from the docs, **not independently
@@ -36,25 +35,25 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 |---|---|---|---|---|---|---|---|
 | M-001 | `00b-the-big-idea.md:82` | The missing coordination layer in the stack | ascii | illustrative (whitepaper argument) | n/a | — | 2026-06-18 |
 | M-002 | `00b-the-big-idea.md:236` | Three authority axes: RBAC Role / CellRole / AuthorityLevel | ascii | `peat-protocol/src/models/role.rs` | — | — | 2026-06-18 |
-| M-003 | `01-architecture-overview.md:106` | Lens A — crate/packaging 5-layer model | ascii | `ARCHITECTURE.md` (verified vs code) | — | H-002 | 2026-06-18 |
-| M-004 | `01-architecture-overview.md:174` | Lens B — local change → peer state | mermaid | `DEVELOPER_GUIDE.md §3.2` | — | H-001 | 2026-06-18 |
+| M-003 | `01-architecture-overview.md:106` | Lens A — crate/packaging 5-layer model | ascii | `ARCHITECTURE.md` (verified vs code) | — | H-002 | 2026-06-19 |
+| M-004 | `01-architecture-overview.md:174` | Lens B — local change → peer state | mermaid | `DEVELOPER_GUIDE.md §3.2` | — | H-001 | 2026-06-19 |
 | M-005 | `01-architecture-overview.md:181` | Lens B legend | ascii | teaching | — | — | 2026-06-18 |
-| M-006 | `01-architecture-overview.md:297` | Cargo dependency graph (facade points down) | mermaid | `Cargo.toml` (verified) | optional edges | H-003 | 2026-06-18 |
-| M-007 | `02-peat-protocol.md:108` | Three phases as a flow | mermaid | `peat-protocol/src/lib.rs`; `hierarchy/maintenance.rs:227,252,312` | — | — | 2026-06-18 |
-| M-008 | `02-peat-protocol.md:267` | Routing rule `is_route_valid` | ascii | `router.rs:101+` | — | — | 2026-06-18 |
-| M-009 | `02-peat-protocol.md:496` | HierarchyLevel enum tiers | ascii | `peat-mesh/src/beacon/types.rs:56-67`; ADR-066 | — | — | 2026-06-18 |
-| M-010 | `02-peat-protocol.md:532` | Phases ↔ src/ module layout | ascii | `peat-protocol/src/` | — | — | 2026-06-18 |
+| M-006 | `01-architecture-overview.md:297` | Cargo dependency graph (facade points down) | mermaid | `Cargo.toml` (verified) | optional edges | H-003 | 2026-06-19 |
+| M-007 | `02-peat-protocol.md:108` | Three phases as a flow | mermaid | `peat-protocol/src/lib.rs`; `hierarchy/maintenance.rs:227,252,312` | — | — | 2026-06-19 |
+| M-008 | `02-peat-protocol.md:267` | Routing rule `is_route_valid` | ascii | `router.rs:101+` | — | — | 2026-06-19 |
+| M-009 | `02-peat-protocol.md:496` | HierarchyLevel enum tiers | ascii | `peat-mesh/src/beacon/types.rs:56-67`; ADR-066 | — | — | 2026-06-19 |
+| M-010 | `02-peat-protocol.md:532` | Phases ↔ src/ module layout | ascii | `peat-protocol/src/` | — | — | 2026-06-19 |
 | M-011 | `02b-formation-and-leadership.md:72` | Hierarchy enum + sizing table | ascii | `beacon/types.rs:50-54` doc comments | — | M-009 | 2026-06-18 |
 | M-012 | `02b-formation-and-leadership.md:97` | Formation lifecycle state machine | mermaid | `coordinator.rs` | Ready/AwaitingApproval/Failed | — | 2026-06-18 |
 | M-013 | `02b-formation-and-leadership.md:145` | Formation handshake (ALPN `peat/formation-auth/1`) | ascii | `FORMATION_AND_LEADERSHIP.md` | — | — | 2026-06-18 |
 | M-014 | `02b-formation-and-leadership.md:170` | Handshake HMAC challenge-response sequence | mermaid | `formation_handshake.rs` | — | H-009 | 2026-06-18 |
 | M-015 | `02b-formation-and-leadership.md:238` | Leader election state machine (2s hb, ~6s timeout) | ascii | `leader_election.rs:192-242` | — | M-016 | 2026-06-18 |
 | M-016 | `02b-formation-and-leadership.md:265` | Election state diagram | mermaid | `leader_election.rs:238-240`; ADR-068 | — | M-015 | 2026-06-18 |
-| M-017 | `03-peat-mesh.md:110` | Discovery → connection | ascii | `discovery/*`; `peer_connector.rs` | — | M-018 | 2026-06-18 |
-| M-018 | `03-peat-mesh.md:129` | Discovery flowchart (mDNS/K8s/static) | mermaid | `discovery/*`; `peer_connector.rs` | — | M-017 | 2026-06-18 |
-| M-019 | `03-peat-mesh.md:187` | Sync message type wire bytes | ascii | `automerge_sync.rs:92-110`; ADR-034/040 | — | — | 2026-06-18 |
-| M-020 | `03-peat-mesh.md:206` | CRDT/negentropy sync sequence | mermaid | `negentropy_sync.rs`; ADR-040 (#435) | — | — | 2026-06-18 |
-| M-021 | `03-peat-mesh.md:290` | Transport trait + ConnectionState | ascii | `peat-mesh/src/transport/mod.rs` | — | — | 2026-06-18 |
+| M-017 | `03-peat-mesh.md:110` | Discovery → connection | ascii | `discovery/*`; `peer_connector.rs` | — | M-018 | 2026-06-19 |
+| M-018 | `03-peat-mesh.md:129` | Discovery flowchart (mDNS/K8s/static) | mermaid | `discovery/*`; `peer_connector.rs` | — | M-017 | 2026-06-19 |
+| M-019 | `03-peat-mesh.md:187` | Sync message type wire bytes | ascii | `automerge_sync.rs:92-110`; ADR-034/040 | — | — | 2026-06-19 |
+| M-020 | `03-peat-mesh.md:206` | CRDT/negentropy sync sequence | mermaid | `negentropy_sync.rs`; ADR-040 (#435) | — | — | 2026-06-19 |
+| M-021 | `03-peat-mesh.md:290` | Transport trait + ConnectionState | ascii | `peat-mesh/src/transport/mod.rs` | — | — | 2026-06-19 |
 | M-022 | `04-peat-btle-and-lite.md:85` | BleAdapter trait + platform matrix | ascii | `peat-btle/src/platform/mod.rs` | iOS Beta | — | 2026-06-18 |
 | M-023 | `04-peat-btle-and-lite.md:125` | GATT sync sequence | mermaid | `sync/protocol.rs`; `gatt/protocol.rs:68-77` | — | — | 2026-06-18 |
 | M-024 | `04-peat-btle-and-lite.md:135` | GATT Write/Indicate legend | ascii | `peat-btle/docs/sync` | — | — | 2026-06-18 |
@@ -66,9 +65,9 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 | M-030 | `06-data-flows.md:143` | Trace B: discovery → cell (score weights) | ascii | `leader_election.rs:101-106`; `coordinator.rs` | — | — | 2026-06-18 |
 | M-031 | `06-data-flows.md:201` | Trace C: up/down/lateral hierarchy flow | ascii | `hierarchy/`; `command/` | — | — | 2026-06-18 |
 | M-032 | `06-data-flows.md:272` | System architecture (gateway off the data path) | ascii | Module 6 §6.4 | peat-sbd/peat-lora Proposed | H-002 | 2026-06-18 |
-| M-033 | `08-running-and-operating.md:34` | Quickstart 3-node topology | ascii | Module 3 §3.4 | — | — | 2026-06-18 |
-| M-034 | `00b-the-big-idea.md:117` | Mesh O(n²) vs hierarchy O(n log n) topology | mermaid | 00b §3 (analytical); `hierarchy/router.rs:19-20,90-91,140` | Analytical; Shipped (routing) | — | 2026-06-18 |
-| M-035 | `06-data-flows.md:253` | Tasking today vs wanted (`command_log`) | mermaid | `peat-node/proto/sidecar.proto:342-373`; ADR-046 #853 | Shipped / In-flight / Speculative | — | 2026-06-18 |
+| M-033 | `08-running-and-operating.md:34` | Quickstart 3-node topology | ascii | Module 3 §3.4 | — | — | 2026-06-19 |
+| M-034 | `00b-the-big-idea.md:117` | Mesh O(n²) vs hierarchy O(n log n) topology | mermaid | 00b §3 (analytical); `hierarchy/router.rs:19-20,90-91,140` | Analytical; Shipped (routing) | — | 2026-06-19 |
+| M-035 | `06-data-flows.md:253` | Tasking today vs wanted (`command_log`) | mermaid | `peat-node/proto/sidecar.proto:342-373`; ADR-046 #853 | Shipped / In-flight / Speculative | — | 2026-06-19 |
 | M-036 | `09-protocol-specs.md:25` | Five specs — reading order & freshness | mermaid | spec README; `005` amended 2026-05-18 | Draft / current | — | 2026-06-18 |
 | M-037 | `09-protocol-specs.md:40` | Spec vs shipped-code divergences | table | `001-transport.md:95-101`; `device_id.rs:39-47` | mixed (code is the contract) | — | 2026-06-18 |
 
@@ -76,17 +75,17 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 
 | ID | Location | Concept | Type | Provenance | Twin | Last verified |
 |---|---|---|---|---|---|---|
-| H-001 | `index.html:385` | Lens B in motion — local change → peer state | svg | mirrors M-004 | M-004 | 2026-06-18 |
-| H-002 | `index.html:437` | Repo constellation / layer model (incl. peat-node) | svg | mirrors M-003/M-032 | M-003 | 2026-06-18 |
-| H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-06-18 |
-| H-004 | `index.html:670` | peat-protocol surface / phases | svg | mirrors Module 2 | — | 2026-06-18 |
-| H-005 | `index.html:707` | (Module 2/2b deep-dive figure) | svg | mirrors Module 2b | — | 2026-06-18 |
-| H-006 | `index.html:827` | peat-mesh sync / discovery | svg | mirrors Module 3 | — | 2026-06-18 |
-| H-007 | `index.html:854` | (Module 3 figure) | svg | mirrors Module 3 | — | 2026-06-18 |
+| H-001 | `index.html:385` | Lens B in motion — local change → peer state | svg | mirrors M-004 | M-004 | 2026-06-19 |
+| H-002 | `index.html:437` | Repo constellation / layer model (incl. peat-node) | svg | mirrors M-003/M-032 | M-003 | 2026-06-19 |
+| H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-06-19 |
+| H-004 | `index.html:670` | peat-protocol surface / phases | svg | mirrors Module 2 | — | 2026-06-19 |
+| H-005 | `index.html:707` | (Module 2/2b deep-dive figure) | svg | mirrors Module 2b | — | 2026-06-19 |
+| H-006 | `index.html:827` | peat-mesh sync / discovery | svg | mirrors Module 3 | — | 2026-06-19 |
+| H-007 | `index.html:854` | (Module 3 figure) | svg | mirrors Module 3 | — | 2026-06-19 |
 | H-008 | `index.html:936` | BLE / lite edge | svg | mirrors Module 4 | — | 2026-06-18 |
-| H-009 | `index.html:1054` | Gateway / formation security | svg | mirrors Module 2b/5 | M-014 | 2026-06-18 |
-| H-010 | `index.html:1113` | Gateway CDC / control plane | svg | mirrors M-027 | M-027 | 2026-06-18 |
-| H-011 | `index.html:1393` | Repo map / what to clone next | svg | mirrors Module 7 | — | 2026-06-18 |
+| H-009 | `index.html:1054` | Gateway / formation security | svg | mirrors Module 2b/5 | M-014 | 2026-06-19 |
+| H-010 | `index.html:1113` | Gateway CDC / control plane | svg | mirrors M-027 | M-027 | 2026-06-19 |
+| H-011 | `index.html:1393` | Repo map / what to clone next | svg | mirrors Module 7 | — | 2026-06-19 |
 
 ## HTML — `peat-constrained-networking.html` ("Off the Grid" track)
 
@@ -97,13 +96,13 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 | C-003 | `peat-constrained-networking.html:261` | Three-layer stack: addressing/transport/sync | svg | `peat-addressing-transport-sync.md` | — | 2026-06-18 |
 | C-004 | `peat-constrained-networking.html:295` | Out-of-order postcards converge (CRDT) | svg | Automerge convergence | — | 2026-06-18 |
 | C-005 | `peat-constrained-networking.html:341` | PACE ladder primary→emergency | svg | PACE model | — | 2026-06-18 |
-| C-006 | `peat-constrained-networking.html:374` | Edge lite dialect → bridge → Automerge | svg | `peat-mesh` lite-bridge; peat-lite | Shipped | 2026-06-18 |
-| C-007 | `peat-constrained-networking.html:410` | One satellite pass: data up, missing down | svg | ADR-051 (SBD) | Proposed | 2026-06-18 |
-| C-008 | `peat-constrained-networking.html:452` | Yank-the-hub: broker dark, PEAT re-homes | svg | leader election / failover | Shipped | 2026-06-18 |
-| C-009 | `peat-constrained-networking.html:490` | Reachability vs actual sync toggle | svg | discovery vs sync distinction | — | 2026-06-18 |
-| C-010 | `peat-constrained-networking.html:560` | System layout with selected role ringed | svg | CellRole / hierarchy | — | 2026-06-18 |
-| C-011 | `peat-constrained-networking.html:620` | Dense local coord, summary crosses cost cliff | svg | hierarchical aggregation | — | 2026-06-18 |
-| C-012 | `peat-constrained-networking.html:694` | Roadmap: built / in flight / to design | svg | ADR-051/052; epics | shipped/in-flight/proposed | 2026-06-18 |
+| C-006 | `peat-constrained-networking.html:374` | Edge lite dialect → bridge → Automerge | svg | `peat-mesh` lite-bridge; peat-lite | Shipped | 2026-06-19 |
+| C-007 | `peat-constrained-networking.html:410` | One satellite pass: data up, missing down | svg | ADR-051 (SBD) | Proposed | 2026-06-19 |
+| C-008 | `peat-constrained-networking.html:452` | Yank-the-hub: broker dark, PEAT re-homes | svg | leader election / failover | Shipped | 2026-06-19 |
+| C-009 | `peat-constrained-networking.html:490` | Reachability vs actual sync toggle | svg | discovery vs sync distinction | — | 2026-06-19 |
+| C-010 | `peat-constrained-networking.html:560` | System layout with selected role ringed | svg | CellRole / hierarchy | — | 2026-06-19 |
+| C-011 | `peat-constrained-networking.html:620` | Dense local coord, summary crosses cost cliff | svg | hierarchical aggregation | — | 2026-06-19 |
+| C-012 | `peat-constrained-networking.html:694` | Roadmap: built / in flight / to design | svg | ADR-051/052; epics | shipped/in-flight/proposed | 2026-06-19 |
 
 ---
 

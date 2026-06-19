@@ -1,11 +1,17 @@
 # Ground Truth — peat-mesh
 
-**Audited HEAD:** `00ab0c9` ("chore: bump to 0.9.0-rc.42 (#260)"), branch `main`, up to date
-with `origin/main` (`git rev-list --count HEAD..@{u}` = 0). `git fetch` ran clean; working tree
-not modified.
+**Audited HEAD:** `71fc3d5` ("chore: bump to 0.9.0-rc.43"), branch `main`, up to date.
 
-**Crate version:** `0.9.0-rc.42` (`Cargo.toml:3`). Note: README still advertises `0.3.2` /
-`0.1.0` in its install snippets (`README.md:29,46`) — stale.
+**Crate version:** `0.9.0-rc.43` (`Cargo.toml:3`). Note: README still advertises `0.3.2` /
+`0.1.0` in its install snippets — stale.
+
+**Changes since last audit (00ab0c9 → 71fc3d5, 2026-06-19):**
+- **`src/storage/file_distribution.rs`** — `IrohFileDistribution`, `DistributionScope`, `TransferPriority` and related types **relocated here** from peat-protocol (peat#992). This is now the canonical location.
+- **`src/storage/model_distribution.rs`** — `IrohModelDistribution` likewise relocated here.
+- **`src/storage/blob_announce.rs`** — new file. Blob provider gossip via `peat/blob-announce/1` ALPN. `BlobAnnounce` struct carries holder EndpointId + addresses + blob hashes + TTL. `DEFAULT_ANNOUNCE_TTL=3` hops. Epidemic re-broadcast: receiver forwards with `ttl-1` while `ttl > 0`. Wire format version-gated (version byte at offset 0). Uses a separate ALPN (not SyncMessageType) to avoid breaking older nodes during mixed-version rollout. **Shipped.**
+- **`src/sync/automerge_backend.rs`** — inbound-accepted peers now register into `known_peers` (peat-mesh#261). Fixes silent attachment-delivery failure when only one peer configures the other's address. **Shipped.**
+- **`tests/blob_provider_gossip_e2e.rs`** — e2e test for provider gossip.
+- **`CHANGELOG.md`**, **`Cargo.toml`** — bumped to rc.43.
 
 Status labels per the §1 contract: **Shipped** (in code, tested), **In flight** (open
 issue/PR), **Proposed** (ADR, no impl), **Speculative** (teaching-only).

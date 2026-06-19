@@ -28,14 +28,41 @@ The headline corrections, applied consistently across every document:
 
 ---
 
+## 2026-06-19 — Incremental refresh (CI mode)
+
+**Repos moved:** peat (35d0f11 → 68e9c3c, rc.25 → rc.26), peat-mesh (00ab0c9 → 71fc3d5, rc.42 → rc.43), peat-node (4e1b5c8 → bbe3b68, v0.4.3 → v0.4.7). peat-btle, peat-lite, peat-gateway: no change.
+
+**What changed in the code:**
+- peat rc.26: `file_distribution.rs` / `model_distribution.rs` in peat-protocol become re-export shims over peat-mesh (peat#992). `qos/mod.rs` switches to free functions for `TransferPriority` conversions (orphan rule). New **ADR-071** (Proposed): subscription-based / interest-driven convergence; `NeedEvaluator` hook added as opt-in seam (peat#991).
+- peat-mesh rc.43: `file_distribution.rs` / `model_distribution.rs` **canonical location** moves here. New `blob_announce.rs` — `peat/blob-announce/1` ALPN epidemic gossip for "who holds blob X" (peat-mesh#262, **Shipped**). Inbound-accepted peers auto-register into `known_peers` (peat-mesh#261, **Shipped**).
+- peat-node v0.4.4–v0.4.7: v0.4.4 empty-env startup crash fixed. v0.4.5 send-side outbox watcher `PEAT_NODE_ATTACHMENT_OUTBOX_WATCH=true` (**Shipped**). v0.4.6 peer-status heartbeat (30s log, connected/known counts + endpoint IDs, **Shipped**). v0.4.7 deps bumped to peat-mesh rc.43 + peat-protocol rc.26 with one test-fixture line for the new `collection` field.
+
+**Documents updated:**
+- `02-peat-protocol.md` — audit commit bumped; storage table row for `file_distribution` / `model_distribution` re-export; ADR-071 Proposed note in `distribution` row; QoS orphan-rule free-function note.
+- `03-peat-mesh.md` — audit commit bumped; storage/ table row expanded with new types; new §"rc.43 storage additions" covering distribution relocation, blob provider gossip (wire format, ALPN, TTL=3), and known_peers fix.
+- `07-repo-links-and-gaps.md` — all commit/version references updated; peat-node audited version corrected to v0.4.7; ADR-071 entry added to §7.6; registry-version caveat updated to rc.43.
+- `08-running-and-operating.md` — peat-node binary row updated to v0.4.7; new §8.9 covering peer-status heartbeat, outbox watcher, empty-env fix; troubleshooting note added for "attachment synced but not delivered" (known_peers fix).
+- `01-architecture-overview.md` — rc.42 → rc.43 in three places; gateway lag updated to ~41 RCs.
+- `00b-the-big-idea.md` — peat-protocol version rc.25 → rc.26.
+- `index.html`, `peat-constrained-networking.html`, `changelog.html` — SYNC stamps updated; changelog prepended new `incr` row.
+
+**Diagram audit:** All diagrams with provenance in peat or peat-mesh spot-checked. No fact changes required: blob-announce uses a separate ALPN (SyncMessageType enum unchanged, M-019 facts hold); distribution relocation does not alter the dep graph direction (M-006, H-003 correct); ADR-071 is Proposed with no shipped UI change. Last-verified dates advanced in `review/diagrams.md` for M-003 through M-021 range and H-002/H-003/H-006/H-007.
+
+**New unverifiable claims logged:**
+- ADR-071 NeedEvaluator seam is opt-in; full Phase 1 (subscriber registry, collection-field wire format) not yet wired — status remains In-flight.
+- gRPC auth #38 status not re-checked against v0.4.4–v0.4.7 delta (could have closed).
+
+**Resolved unverifiable claims:**
+- "peat-node is 5 commits ahead" — fully audited: commits are v0.4.4/v0.4.5/v0.4.6/v0.4.7 + one fix; no RPC count change, no gRPC auth #38 landing (still open per CHANGELOG). Resolved.
+
+---
+
 ## Top claims that remain UNVERIFIABLE (chase before publish)
 
 Pulled from every rewrite pass. A human should resolve these against live source / a re-audit:
 
-- **peat-node origin delta:** peat-node origin is **5 commits ahead** of the audited HEAD `4e1b5c8`
-  (v0.4.4/v0.4.5 tagged, NOT audited). The 28/27 RPC count, gRPC auth (#38), tombstone/RBAC details
-  could have shifted there. Affects modules 01, 02b, 03, 04, 05, 06, 07, 08, 09 wherever peat-node is
-  cited.
+- **ADR-071 NeedEvaluator Phase 1 completion** (added 2026-06-19): the seam landed opt-in in peat-protocol rc.26 / peat-node v0.4.7; the full subscriber registry, durable subscription surface, and collection-field wire format are not yet confirmed shipped.
+- **gRPC auth #38** (peat-node): CHANGELOG v0.4.4–v0.4.7 does not mention it landing — still open, but not re-confirmed against source.
 - **Binaries/ports at the audited HEAD:** existence of a `peat-quickstart` binary, `peat-mesh-node`
   production-vs-demo status, `PEAT_BIND_PORT 4040` / `PEAT_HTTP_PORT 8080` defaults, the
   `PEAT_CONNECTION_RECYCLE_SECS` env var and its 60s/5s behavior.

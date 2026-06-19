@@ -1,10 +1,16 @@
 # Ground-truth audit — `peat` (umbrella workspace)
 
 **Repo:** `github.com/defenseunicorns/peat` (the `./peat` subdirectory of the umbrella working tree).
-**HEAD audited:** `35d0f11` — `chore: raise peat-mesh dependency floor to rc.42 (#990)`.
-Prior two: `338ffed` (peat-ffi `TransportConfigFFI.enable_n0_relay`), `616c74d` (peat-ffi dart_ffi BLE gating).
-**Origin status:** `git fetch` ran; `main...origin/main` is `0 0` (up to date). **No pull/working-tree change made.**
-**Workspace version:** `0.9.0-rc.25` (`Cargo.toml [workspace.package].version`). `peat-ffi` versions independently at `0.2.7`.
+**HEAD audited:** `68e9c3c` — `chore: bump workspace to 0.9.0-rc.26`.
+Prior: `70f77a4` (refactor: re-export relocated distribution impl from peat-mesh, peat#993), `72fc043` (feat: ADR-071 + interest-driven convergence seam, peat#991), `35d0f11` (raise peat-mesh floor to rc.42).
+**Origin status:** up to date.
+**Workspace version:** `0.9.0-rc.26` (`Cargo.toml [workspace.package].version`). `peat-ffi` versions independently at `0.2.7`.
+
+**Changes since last audit (35d0f11 → 68e9c3c, 2026-06-19):**
+- `peat-protocol/src/storage/file_distribution.rs` and `model_distribution.rs` are now `pub use peat_mesh::storage::…::*` re-export shims (peat#992/peat#993). Canonical implementation lives in peat-mesh.
+- `peat-protocol/src/qos/mod.rs` replaces `From<TransferPriority>` / `From<QoSClass>` trait impls with free functions `transfer_priority_from_qos` / `qos_from_transfer_priority` due to orphan rule (TransferPriority now in peat-mesh).
+- New `peat/docs/adr/071-subscription-based-convergence.md` — **Proposed** ADR for interest-driven distribution (receiver-self-select via NeedEvaluator). Phase 1 seam merged as opt-in; default distribution behavior unchanged.
+- `CHANGELOG.md`, `Cargo.lock`, `Cargo.toml` updated to rc.26.
 
 This file is the citations-backed reality model. Every later curriculum claim must trace here.
 Labels: **Shipped** (in code/tested) · **In-flight** (open issue/epic) · **Proposed** (ADR in Proposed status, no impl) · **Speculative** (teaching-only).

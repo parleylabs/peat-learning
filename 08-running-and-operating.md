@@ -112,7 +112,7 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 |--------|-------|--------|---------|
 | `peat-quickstart` | `examples/quickstart` (this workspace) | **[Shipped]** | the minimal learning binary above |
 | `peat-mesh-node` | `peat-mesh`, binary `src/bin/peat-mesh-node.rs`, requires feature `node` | **[Shipped]** | the all-in-one production mesh node you can build from a checkout (Module 3 §3.1) |
-| `peat-node` | the `peat-node` repo (gRPC/Connect sidecar) | **[Shipped]** | the production node sidecar most deployments run (Module 3 §3.1, Module 6) |
+| `peat-node` | the `peat-node` repo (gRPC/Connect sidecar) v0.4.7 | **[Shipped]** | the production node sidecar most deployments run (Module 3 §3.1, Module 6) |
 | `peat-sim` | the operator guide's binary (network simulator) | **[Documented]** | run/simulate multi-node deployments — **not in this `peat` workspace** |
 
 > **Heads-up — three different runtimes, three different config surfaces.**
@@ -325,6 +325,58 @@ them against the `cot` module if a deployment depends on an exact value.
     (§8.1).
   - *Persistence / backend errors at startup* → confirm `PEAT_APP_ID` / `PEAT_SECRET_KEY` are set and
     the dir is writable and not full; if corrupted, archive + clear the dir and let it re-sync.
+  - *Attachment synced but file never delivered* → the most likely cause is that the receiving node
+    is not in the sender's `known_peers`. As of peat-mesh rc.43 (peat-node v0.4.7), **inbound-
+    accepted peers now auto-register into `known_peers`** (peat-mesh#261), so a one-directional
+    `PEAT_NODE_PEERS` is sufficient. On older builds both sides had to explicitly configure the
+    other. Use the 30-second **peer-status log line** (see §8.9 below) to verify that the
+    receiver appears in the sender's `known_peers` before investigating further.
+
+---
+
+## 8.9 peat-node attachment & observability features (v0.4.4 – v0.4.7) **[Shipped]**
+
+These capabilities landed in `peat-node` since the previously audited v0.4.3 baseline:
+
+### Peer-status heartbeat (v0.4.6) **[Shipped]**
+
+Every 30 seconds the node logs a `peer status` line:
+
+```
+peer status connected=2 known=3
+  connected_peers: [abc123, def456]
+  known_peers:     [abc123, def456, ghi789]
+```
+
+`connected_peers` = live CRDT-sync connections (from the transport); `known_peers` = the set this
+node has dialed — the exact set used for distribution targeting and blob-provider lookup. A
+receiver missing from a sender's `known_peers` is precisely why a synced attachment document never
+becomes a delivered file; this heartbeat makes that invisible failure visible at a glance. The line
+fires at startup then repeats on the 30-second interval.
+
+### Send-side outbox watcher (v0.4.5) **[Shipped, opt-in]**
+
+`PEAT_NODE_ATTACHMENT_OUTBOX_WATCH=true` enables a filesystem watcher on the configured
+`--attachment-root` directories. Any stable file (unchanged across one poll) that hasn't been sent
+yet is auto-distributed to all peers — the same `SendAttachments` path as an explicit gRPC call,
+with no application involvement:
+
+```bash
+export PEAT_NODE_ATTACHMENT_OUTBOX_WATCH=true
+# optional: PEAT_NODE_ATTACHMENT_OUTBOX_POLL_SECS=2  (default)
+```
+
+Drop a file in the outbox root and it lands byte-identical in every connected peer's inbox.
+Polling (not inotify) is deliberate: reliable across container bind mounts where `inotify`/`FSEvents`
+are unavailable. Off by default — the explicit `SendAttachments` RPC is the safe default for
+applications that need to control when files are distributed.
+
+### Empty-env crash fix (v0.4.4) **[Shipped]**
+
+An empty `PEAT_NODE_ATTACHMENT_INBOX=""` (or any empty optional `PEAT_NODE_*` env var, as
+Compose/Helm commonly inject for a "disabled" setting) crash-looped the node with clap's "a value
+is required" error. As of v0.4.4 empty `PEAT_NODE_*` vars are normalized to unset before argument
+parsing.
 
 ---
 

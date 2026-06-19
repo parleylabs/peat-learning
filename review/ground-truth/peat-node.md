@@ -1,9 +1,18 @@
 # Ground truth — `peat-node`
 
 **Repo:** `peat-node` (GitHub `defenseunicorns/peat-node`)
-**Audited HEAD:** `4e1b5c8` — `feat: deterministic iroh identity for static peering + offline derive-id (v0.4.3) (#162)`, 2026-06-18.
-**Working tree:** clean, on `main`. `git fetch` shows **origin/main is 5 commits ahead** (`4a45299`); did **not** pull or modify the tree per instructions. New tags on origin: `v0.4.4`, `v0.4.5`. So the audited code is `0.4.3`; origin already has at least two further tagged releases not audited here. Flagged as an unverified delta.
-**Package version (`Cargo.toml`):** `0.4.3`.
+**Audited HEAD:** `bbe3b68` — `chore(release): v0.4.7`, 2026-06-19.
+**Working tree:** clean, on `main`. Up to date with origin.
+**Package version (`Cargo.toml`):** `0.4.7`.
+
+**Changes since last audit (4e1b5c8 → bbe3b68, covering v0.4.4 through v0.4.7, 2026-06-19):**
+
+- **v0.4.4** (`21e477e`): Fixed empty `PEAT_NODE_*` env var startup crash — empty optional env vars (e.g. `PEAT_NODE_ATTACHMENT_INBOX=""`) are now normalized to unset before clap argument parsing. Added `test/attachment-delivery-compose.sh` functest that verifies byte-identical file delivery over a real two-node iroh transfer.
+- **v0.4.5** (`8fb7873`): **Send-side outbox watcher** — `PEAT_NODE_ATTACHMENT_OUTBOX_WATCH=true` (opt-in). Polls `--attachment-root` dirs; auto-distributes stable new files via `SendAttachments` (`AllNodes` scope, default priority). `PEAT_NODE_ATTACHMENT_OUTBOX_POLL_SECS` tunes interval (default 2s). Polling not inotify (reliable on container bind mounts). Off by default. **Shipped.**
+- **v0.4.6** (`3b93826`): **Peer-status heartbeat** — every 30s logs `peer status connected=N known=M` with endpoint IDs for both `connected_peers` (live CRDT-sync connections from transport) and `known_peers` (the exact set used for distribution targeting / blob-provider lookup). Fires at startup then repeats. Default log filter expanded to include `peat_protocol=info` and `iroh=warn`. **Shipped.**
+- **v0.4.7** (`bbe3b68`): Bumped to peat-mesh rc.43 + peat-protocol rc.26. One test-fixture line for the new `collection` field on distribution documents (ADR-071 seam, opt-in; no runtime behavior change). No source change to sidecar logic.
+
+**RPC count unchanged:** proto still defines 28 RPCs; `service.rs` still implements 27. gRPC auth #38 not mentioned in any v0.4.4–v0.4.7 CHANGELOG entry — still open.
 
 ## What this repo actually is
 

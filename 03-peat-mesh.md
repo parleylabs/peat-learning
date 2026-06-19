@@ -3,7 +3,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@00ab0c9` (`0.9.0-rc.42`).
+`peat-mesh@71fc3d5` (`0.9.0-rc.43`).
 
 > **How to read the labels.** Every capability below carries one of four tags so you always know
 > what is real:
@@ -77,7 +77,7 @@ Every type below was confirmed present at the audited HEAD.
 | Module | Central types | Responsibility |
 |--------|---------------|----------------|
 | `transport/` | `MeshTransport`, `MeshConnection`, `NodeId`, `PeerEvent`, `Translator`, `TransportManager` | Pluggable transport backends (Iroh QUIC, peat-lite UDP, BLE) + cross-transport bridging |
-| `storage/` | `AutomergeStore`, `AutomergeSyncCoordinator`, `NegentropySync`, `SyncChannelManager`, `TtlManager` | CRDT persistence (redb + Automerge), the sync protocol, negentropy set reconciliation, TTL/GC |
+| `storage/` | `AutomergeStore`, `AutomergeSyncCoordinator`, `NegentropySync`, `SyncChannelManager`, `TtlManager`, `IrohFileDistribution`, `NetworkedIrohBlobStore`, `BlobAnnounce` | CRDT persistence (redb + Automerge), the sync protocol, negentropy set reconciliation, TTL/GC; file/model distribution (relocated from peat-protocol in rc.43, peat#992); **blob provider gossip** (rc.43, `peat/blob-announce/1` ALPN) |
 | `discovery/` | `DiscoveryStrategy`, `PeerInfo`, `DiscoveryEvent` | mDNS, Kubernetes, static-config, hybrid peer discovery |
 | `topology/` | `TopologyManager`, `TopologyBuilder`, `PeerSelector`, `PartitionDetector` | Hierarchy/leader formation from beacon metrics; partition detection; autonomous mode |
 | `routing/` | `MeshRouter`, `SelectiveRouter`, `DataPacket`, `DataDirection` | Upward telemetry aggregation vs. downward command dissemination (anti-flood) |
@@ -308,7 +308,7 @@ Three implementations plug into the same interface — and **only these three ar
 1. **Iroh QUIC** **[Shipped]** (`transport/iroh_mesh.rs`) — the default. Wraps `iroh::Endpoint`.
    **By default it uses no relay servers** (tactical builds must not phone home through third-party
    infrastructure); the opt-in `relay-n0-hosted` feature enables n0's hosted relay pool for NAT
-   traversal. A runtime toggle, `relay_policy_builder(enable_n0_relay)`, was added in rc.42
+   traversal. A runtime toggle, `relay_policy_builder(enable_n0_relay)`, was added in rc.42 (still present in rc.43)
    (`network/iroh_transport.rs:279`); disabling the relay-default outright is tracked by peat#833.
 2. **peat-lite UDP bridge** **[Shipped, opt-in: feature `lite-bridge`]** (`transport/lite.rs`) —
    bridges embedded, non-QUIC devices (ESP32-class); supports OTA firmware push (`lite_ota.rs`,
@@ -363,6 +363,49 @@ the code is clean.**
 > **[In-flight]** (peat-btle#75). P-384 is not in the code (only P-256). The ARM-without-crypto-extensions
 > performance envelope is **unbenchmarked** (peat-mesh#126). Do not tell a customer "FIPS 140-3
 > validated."
+
+### rc.43 storage additions — what's new **[Shipped]**
+
+Two changes landed in rc.43 that affect how files reach nodes and how peers find blobs:
+
+**1. File/model distribution implementation relocated to peat-mesh (peat#992).**
+`peat-protocol/src/storage/file_distribution.rs` and `model_distribution.rs` are now
+`pub use peat_mesh::storage::…::*` re-export shims. The canonical `IrohFileDistribution`,
+`DistributionScope`, and `TransferPriority` types live in
+`peat-mesh/src/storage/file_distribution.rs`. peat-protocol consumers see no API change. This
+consolidates the iroh consumer into one crate and makes peat-mesh the single source of truth for
+blob-related storage. **[Shipped, rc.43]**
+
+**2. Blob provider gossip — `peat/blob-announce/1` ALPN (peat-mesh#262).**
+Before rc.43, a node could only fetch a blob from a peer it had directly dialed (the distribution
+document's `target_nodes` held only `known_peers`). A node unreachable from the sender would never
+receive the file. rc.43 adds a separate `peat/blob-announce/1` ALPN that propagates *"who holds
+blob X"* mesh-wide via epidemic re-broadcast: when a node fetches a blob, it re-announces its own
+holding to its direct peers (with a TTL of 3 hops by default, `DEFAULT_ANNOUNCE_TTL=3`), which
+forward the announcement onward while `ttl > 0`. The `NetworkedIrohBlobStore`'s `BlobPeerIndex` is
+updated, so a subsequent `fetch_blob` can dial the holder even without a direct connection.
+
+```text
+// blob_announce.rs wire format (version 1)
+byte  0       version = 1
+byte  1       ttl (remaining relay hops; 0 = don't re-broadcast)
+bytes 2..34   holder EndpointId (32 bytes)
+byte  34      addr_count  → [len][utf8 socket-addr] × addr_count
+bytes ..      hash_count (u16 LE) → [len][utf8 hex hash] × hash_count
+```
+
+A **dedicated ALPN** (not a new `SyncMessageType`) was chosen because the Automerge sync decoder
+hard-errors on unrecognized message-type tags — a new tag would break sync against older nodes during
+a mixed-version rollout. A separate ALPN is compat-safe: nodes that don't speak it skip gracefully
+(`blob_announce.rs` module doc). **[Shipped, rc.43]**
+
+**3. Inbound-accepted peers now register into `known_peers` (peat-mesh#261).**
+Previously, only the dialing side of a connection added the peer to `known_peers`; the accepting
+side did not. This meant a one-directional `PEAT_NODE_PEERS` (peer A points at B, B has no static
+config) would sync state but then silently fail to deliver attached files — the distribution
+watcher uses `known_peers` to resolve targets. After peat-mesh#261 a single dial in either
+direction registers both sides, fixing the silent-delivery failure without requiring symmetric
+peering config. **[Shipped, rc.43]**
 
 ---
 

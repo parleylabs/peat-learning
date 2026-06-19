@@ -22,12 +22,12 @@ not in any repo).
 
 | Repo | Audited HEAD | Crate/pkg version | Origin status |
 |---|---|---|---|
-| `peat` (umbrella: peat-protocol/schema/transport/persistence/ffi + reserved `peat` facade) | `35d0f11` "raise peat-mesh floor to rc.42 (#990)" | workspace `0.9.0-rc.25`; `peat-ffi` `0.2.7` | up to date (`0 0`), no pull |
-| `peat-mesh` | `00ab0c9` "bump to 0.9.0-rc.42 (#260)" | `0.9.0-rc.42` (README stale: advertises 0.3.2/0.1.0) | up to date, clean |
+| `peat` (umbrella: peat-protocol/schema/transport/persistence/ffi + reserved `peat` facade) | `68e9c3c` "bump workspace to 0.9.0-rc.26" | workspace `0.9.0-rc.26`; `peat-ffi` `0.2.7` | up to date |
+| `peat-mesh` | `71fc3d5` "bump to 0.9.0-rc.43" | `0.9.0-rc.43` (README stale: advertises 0.3.2/0.1.0) | up to date |
 | `peat-btle` | `3d70f48` (HEAD = origin/main) | `0.4.0` | up to date |
 | `peat-lite` | `7a8a8fb` "rename hierarchy tiers to abstract vocabulary (ADR-066) (#28)" | `0.2.5`, edition 2021, MSRV 1.70 | even with origin |
-| `peat-gateway` | `8d16824` "add dependabot config (#134)" | `0.1.0`; pins `peat-mesh =0.9.0-rc.1` (~40 RCs stale, intentional) | up to date |
-| `peat-node` | `4e1b5c8` "deterministic iroh identity (v0.4.3) (#162)" | `0.4.3` | **origin 5 commits ahead** (v0.4.4/v0.4.5 tagged, NOT audited — unverified delta) |
+| `peat-gateway` | `8d16824` "add dependabot config (#134)" | `0.1.0`; pins `peat-mesh =0.9.0-rc.1` (~41 RCs stale, intentional) | up to date |
+| `peat-node` | `bbe3b68` "chore(release): v0.4.7" | `0.4.7` | up to date |
 
 **`peat` umbrella structure:** the `peat` crate itself is a **reserved-name placeholder with zero
 deps**. Real code lives in workspace members: `peat-protocol` (core: formation, hierarchy, QoS,
@@ -315,9 +315,10 @@ The READMEs are stale; the code is clean.**
 | 052 | Peat-LoRa long-range radio | **Proposed** | no crate; **ChaCha20 → FIPS conflict** |
 | 059 | Cross-transport document bridging | **Proposed** | Translator codec ships; Amendment 4 cycle-break #828 |
 | 060 | Encryption tiers (FIPS posture) | **Proposed** | **§5 already implemented in code** (rc.12 swap) |
-| 063 | Persistent multiplexed sync streams | **Proposed** | rc.25 floor cites ADR-063 / peat-mesh#175 (#935) |
+| 063 | Persistent multiplexed sync streams | **Proposed** | rc.25/rc.26 floor cites ADR-063 / peat-mesh#175 (#935) |
 | 066 | Abstract hierarchy vocabulary | **Proposed** | partially landed; leaf still `Node` not `Platform` |
 | 068 | Node base-unit vocabulary | **Proposed** | #968/#970 track convergence on Node |
+| 071 | Subscription-based convergence (interest-driven distribution) | **Proposed** | NeedEvaluator seam merged opt-in in rc.26 (peat#991); full Phase 1 subscriber registry not yet wired; default distribution behavior unchanged |
 | 040 | "Nostr protocol lessons" → negentropy | (shipped lesson) | on-disk title is `040-nostr-protocol-lessons.md`; negentropy is the applied lesson, issue #435 |
 | 044 | MLS group key agreement | **Proposed** | **NOT implemented**; carries pre-FIPS ChaCha20 |
 | 042 | UDP bypass | (shipped primitive) | `UdpBypassChannel` |
@@ -338,7 +339,7 @@ working specs.
 
 ---
 
-## 10 · Open epics / issues (anchors, HEAD `35d0f11`)
+## 10 · Open epics / issues (anchors, HEAD `68e9c3c` / rc.26)
 
 - **#853** ADR-046 Targeted Message Delivery epic (+#854-#859; dup #546; specs #770/#771/#772);
   **#780** targeted binary distribution (+#774-#778).

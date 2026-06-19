@@ -16,7 +16,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `35d0f11`, `peat-mesh` rc.42 (`00ab0c9`). Citations below point at the
+Audited at `peat` HEAD `68e9c3c` (0.9.0-rc.26), `peat-mesh` rc.43 (`71fc3d5`). Citations below point at the
 working-tree source.
 
 ---
@@ -48,10 +48,10 @@ the ones to learn first. All of these are **Shipped** unless noted:
 | `composition` | Capability composition engine: additive / emergent / redundant / constraint rules |
 | `cot` | Cursor-on-Target translation (TAK interop), MIL-STD-2525 symbols (ADR-020, ADR-028) |
 | `event` | Event routing & aggregation with priority queues (ADR-027) |
-| `distribution` | AI model distribution: deployment directives, manifests (ADR-012, ADR-026) |
+| `distribution` | AI model distribution: deployment directives, manifests (ADR-012, ADR-026). **ADR-071 [Proposed]** adds the interest-driven convergence seam (`NeedEvaluator` hook) — the full receiver-self-select path is In-flight |
 | `mesh_integration` | Adapters bridging generic `peat-mesh` interfaces to PEAT domain types |
 | `policy` | Generic conflict-resolution engine (`Conflictable` trait, LWW / highest-attribute) |
-| `storage` | Document store + Automerge backend re-exports (`AutomergeBackend`, capability traits) |
+| `storage` | Document store + Automerge backend re-exports (`AutomergeBackend`, capability traits). `file_distribution.rs` and `model_distribution.rs` are now **re-export shims** over `peat-mesh` (relocated per peat#992 / rc.43) |
 | `credentials` | Credential handling used by the security layer |
 | `transport`, `network` | **Re-export shims** over `peat_mesh::transport` / `peat_mesh::network` |
 | `geohash` | Vendored geohash algorithm (supply-chain audit; deterministic geo-encoding) |
@@ -60,7 +60,12 @@ the ones to learn first. All of these are **Shipped** unless noted:
 
 The `transport` and `network` modules are thin `pub use peat_mesh::…` shims — the real transport
 and crypto code lives in `peat-mesh` (Module 3). Treat `peat-protocol` as the domain layer over
-that plumbing.
+that plumbing. As of rc.26, `storage/file_distribution.rs` and `storage/model_distribution.rs` are
+also re-export shims (`pub use peat_mesh::storage::file_distribution::*`) — the canonical
+implementation now lives in `peat-mesh`. Additionally, `qos/mod.rs` uses **free functions**
+(`transfer_priority_from_qos` / `qos_from_transfer_priority`) rather than `From` impls for the
+`QoSClass ↔ TransferPriority` conversions, because `TransferPriority` relocated to `peat-mesh` and
+a cross-crate `From` would violate Rust's orphan rule (`peat-protocol/src/qos/mod.rs:148-165`).
 
 A few constants in `lib.rs` set the defaults of the system (all **Shipped**, verbatim from
 `lib.rs:112,115,118`):

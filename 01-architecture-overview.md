@@ -289,14 +289,14 @@ Concretely, verified from the manifests:
   `peat-mesh`.
 - `peat-lite` → *(nothing PEAT)* — `no_std`, standalone, only `heapless`.
 - `peat-gateway` → `peat-mesh` (an exact `=`-pin, with features `automerge-backend` + `broker`).
-  **The pin is intentionally stale** — it pins `=0.9.0-rc.1` while the ecosystem is at rc.42, so
-  the gateway lags ~40 release candidates by design.
+  **The pin is intentionally stale** — it pins `=0.9.0-rc.1` while the ecosystem is at rc.43, so
+  the gateway lags ~41 release candidates by design.
 
 Rendered as a diagram (solid = required dependency, dashed = optional feature):
 
 ```mermaid
 flowchart TD
-    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, stale by ~40 rc| M
+    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, stale by ~41 rc| M
     T["peat-transport<br/>(HTTP/REST · TAK/CoT)"] --> P
     FFI["peat-ffi<br/>(Kotlin / Swift)"] --> P
     PER["peat-persistence"] --> P
@@ -330,7 +330,7 @@ this project, and spotting it is part of the job.
 Because `peat-mesh` and `peat-btle` are separate published crates, the `peat` workspace pins
 their versions carefully. Open `peat/Cargo.toml` and you will find a long, heavily commented
 floor-version history (a succession of release-candidate floors; the audited HEAD is literally
-the commit "raise peat-mesh dependency floor to rc.42") explaining a cargo **cycle-detection**
+the commit "bump to 0.9.0-rc.43") explaining a cargo **cycle-detection**
 problem that arose when `peat-btle` and `peat-mesh` each optionally depended on the other.
 
 The fix (**ADR-059 Amendment 4, Slice 4.b**) **broke the back-edge**: `peat-btle` no longer
@@ -381,7 +381,7 @@ Concretely, from the manifests:
    only a tiny `no_std` CRDT library, or only a cross-platform BLE-mesh transport. The value of
    each edge crate is not locked behind adopting `peat-protocol`.
 2. **Independent versioning and publishing.** Each is its own crate, released on its own cadence
-   (peat-mesh at rc.42, peat-btle at 0.4.0, peat-lite at 0.2.5 — distinct version lines). The
+   (peat-mesh at rc.43, peat-btle at 0.4.0, peat-lite at 0.2.5 — distinct version lines). The
    embedded/mobile crates additionally publish Android artifacts to Maven Central (a
    `publish-maven` workflow exists in `peat-btle`).
 3. **Reaches targets the core cannot.** `peat-lite` compiles for bare-metal microcontrollers and
