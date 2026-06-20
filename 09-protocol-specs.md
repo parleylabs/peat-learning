@@ -133,7 +133,11 @@ distinct mechanisms: Automerge's own sync protocol and **negentropy** set reconc
 mentions change bundling (e.g. 100 ms / 1 KB) and a subscription model. One label to fix: the shipped
 peat-node `Subscribe` predicate language is a simple set of top-level `eq/lt/gt/and/or/not` predicates,
 **not** a named "DQL" with geo-bbox filtering — describe what ships, and confirm any richer bundling
-thresholds against spec 002 plus the code before quoting them.
+thresholds against spec 002 plus the code before quoting them. Note one further distinction landing
+now: **ADR-071 ([Proposed])** introduces a separate, *durable* "subscription" — a node's registered
+interest in a collection that drives blob convergence whether or not anyone is watching a change
+stream (Module 3 §3.4b). Don't conflate it with this `Subscribe` change-stream predicate; the seam is
+present in code but inert by default.
 
 ## 9.3 `003-schema` — the data model (Protobuf) [Shipped]
 

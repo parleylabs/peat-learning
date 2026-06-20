@@ -190,9 +190,9 @@
       or a whitepaper concept that exists in no repo. Do not assume it ships.</p>
     </div>
     <div class="warn"><b>Audited against (the source of truth for every badge below).</b> peat
-    <code>35d0f11</code> (workspace 0.9.0-rc.25) · peat-mesh <code>00ab0c9</code> (rc.42) · peat-btle
+    <code>68e9c3c</code> (workspace 0.9.0-rc.26) · peat-mesh <code>71fc3d5</code> (rc.43) · peat-btle
     <code>3d70f48</code> (0.4.0) · peat-lite <code>7a8a8fb</code> (0.2.5) · peat-gateway
-    <code>8d16824</code> (0.1.0) · peat-node <code>4e1b5c8</code> (0.4.3). The single recurring pattern:
+    <code>8d16824</code> (0.1.0) · peat-node <code>bbe3b68</code> (0.4.7). The single recurring pattern:
     <b>code &gt; current ADRs &gt; specs/guide/README</b>. READMEs and the developer guide are months
     older than the code and are wrong in several places this track flags.</div>
 
@@ -459,7 +459,7 @@ NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
         enrollment, CDC, identity federation, envelope encryption. <b>Never in the data path.</b></div>
       <div class="card"><h4>peat-node/</h4><span class="muted">Deployable node.</span> A real, separate
         gRPC/Connect sidecar that embeds peat-mesh + peat-protocol. Iroh QUIC only (no BLE).
-        <span class="st ship">Shipped</span> at 0.4.3.</div>
+        <span class="st ship">Shipped</span> at 0.4.7.</div>
     </div>
 
     <h3>The dependency graph (the literal truth)</h3>
@@ -889,6 +889,27 @@ ties → lexicographic node id</code></pre>
       confirm against <code>automerge_sync.rs</code>.</div>
     </div>
 
+    <h3>Blob distribution &amp; provider gossip</h3>
+    <p>CRDT sync moves <em>documents</em>; large opaque payloads (models, files, attachments) move as
+    <b>blobs</b> over iroh's content-addressed protocol. That distribution layer
+    (<code>IrohFileDistribution</code>) <b>relocated into peat-mesh at rc.43</b> (peat#992) — peat-mesh is
+    the canonical iroh consumer, so <code>peat-protocol</code> now just re-exports it.</p>
+    <div class="note"><b>Targeting today is <code>known_peers</code>-bound.</b> A sender's
+    <code>DistributionScope</code> resolves to peers it has directly dialed: <code>AllNodes</code> and
+    <code>Nodes{ids}</code> work; <code>Formation</code> and <code>Capable</code> are
+    reserved-but-stubbed (warn + fall back to all peers). <b>Provider gossip</b>
+    (<span class="st ship">Shipped</span>, rc.43, peat-mesh#262) closes the multi-hop gap: a dedicated ALPN
+    <code>peat/blob-announce/1</code> gossips "who holds blob X" into the index <code>fetch_blob</code>
+    consults, TTL-bounded to 3 relay hops, re-announcing on acquire, with trust-classified announces to
+    block provider poisoning. Riding its own ALPN (not a new sync message type) keeps it compat-safe in a
+    mixed-version rollout.</div>
+    <div class="note"><b>Interest-driven convergence is <span class="st prop">Proposed</span> (ADR-071).</b>
+    A receiver-evaluated <code>NeedEvaluator</code> + a <code>collection</code> field on the distribution
+    doc let a node decide locally whether it needs data, instead of the sender enumerating recipients. The
+    additive seam ships in code but is <b>inert by default</b> (no evaluator attached; publish still writes
+    <code>collection: None</code>) — <code>target_nodes</code> directed delivery is what ships. See Module 3
+    §3.4b.</div>
+
     <h3>Discovery → connection</h3>
     <div class="fig">
       <svg viewBox="0 0 720 170" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
@@ -1132,7 +1153,7 @@ ties → lexicographic node id</code></pre>
     (#124/#125). Enrollment validates the pubkey for <b>length only</b> — <b>no proof-of-possession</b>. The
     <code>Strict</code> enrollment policy is unimplemented (always 403s). All <span class="st flight">In flight</span>.</div>
     <p class="muted">Depends on <code>peat-mesh = "=0.9.0-rc.1"</code> purely as a library — an intentionally
-    frozen pin that lags the mesh ecosystem (rc.42) by ~40 RCs.</p>
+    frozen pin that lags the mesh ecosystem (rc.43) by ~40 RCs.</p>
 
     <div class="chk"><b>Checkpoint.</b> Why is the gateway never in the data path, and what is the "gateway"
     in a DDIL story instead? · which two CDC sinks actually deliver, and what is the status of Kafka and
@@ -1376,7 +1397,7 @@ DOWN  CommandCoordinator.issue_command() → CommandRouter resolves targets
       <tr><td><b>peat-node/</b></td><td><b>the deployable node</b> — a real, separate gRPC/Connect sidecar embedding peat-mesh + peat-protocol; Iroh QUIC only</td><td>github.com/defenseunicorns/peat-node</td></tr>
     </table></div>
     <div class="note"><b>peat-node, not "peat-mesh-node."</b> The deployable node is the standalone
-    <code>peat-node</code> repo (0.4.3), exposing a gRPC/Connect API (the proto defines ~28 RPCs / 27
+    <code>peat-node</code> repo (0.4.7), exposing a gRPC/Connect API (the proto defines ~28 RPCs / 27
     implemented — the README's "25" is outdated). Whether a <code>peat-mesh-node</code> binary also exists is
     <span class="st spec">unverified</span> at the audited HEAD. v1 honesty caveats in peat-node: the gRPC
     surface is <b>unauthenticated</b> (#38, <span class="st flight">In flight</span>); attachment priority
@@ -1390,7 +1411,7 @@ DOWN  CommandCoordinator.issue_command() → CommandRouter resolves targets
     <h3>Where a new contributor gets the most leverage</h3>
     <div class="tbl-wrap"><table>
       <tr><th>Contribution</th><th>What &amp; why</th><th>Status / size</th></tr>
-      <tr><td><b>Doc-fixes</b></td><td>Make stale docs match shipped code: README RBAC names (drop Operator/Supervisor → Leader/Member/Observer/Commander/Admin); README crypto (ChaCha20/X25519 → AES-256-GCM/ECDH-P256); peat-mesh version (0.3.2 → rc.42); peat-node RPC count (25 → 28/27); GATT UUID (→ 0xA1B2); peat-lite README missing <code>Document</code> 0x07. Highest-ROI first PR.</td><td><span class="st flight">Doc-fix</span> · trivial–small</td></tr>
+      <tr><td><b>Doc-fixes</b></td><td>Make stale docs match shipped code: README RBAC names (drop Operator/Supervisor → Leader/Member/Observer/Commander/Admin); README crypto (ChaCha20/X25519 → AES-256-GCM/ECDH-P256); peat-mesh version (0.3.2 → rc.43); peat-node RPC count (25 → 28/27); GATT UUID (→ 0xA1B2); peat-lite README missing <code>Document</code> 0x07. Highest-ROI first PR.</td><td><span class="st flight">Doc-fix</span> · trivial–small</td></tr>
       <tr><td><b>FIPS module validation</b></td><td>Swap RustCrypto (<code>aes-gcm</code>/<code>p256</code>) for a CMVP-validated module via <code>aws-lc-rs</code> behind the existing security trait. The single most important enterprise-readiness item.</td><td><span class="st flight">In flight (peat-btle#75)</span> · medium</td></tr>
       <tr><td><b>QoS enforcement</b></td><td>Wire-level cross-class preemption so a Critical bundle can pause an in-flight Bulk transfer; make "&lt;5 s P1" real.</td><td><span class="st flight">In flight</span> · medium</td></tr>
       <tr><td><b>Control-plane auth</b></td><td>peat-node gRPC auth (#38); gateway ingress AuthZ (#99), NATS ACLs/auth/TLS (#97/#124/#125), enrollment proof-of-possession.</td><td><span class="st flight">In flight</span> · medium</td></tr>
@@ -1565,7 +1586,7 @@ cargo build -p peat-quickstart --release   <span class="cm"># binary/crate name 
       <span class="fw">PARLEY<b>LABS</b></span> &nbsp; <span class="beep">beep · boop · beep</span>
       <svg class="squig" width="54" height="9" viewBox="0 0 54 9" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5 q4.5 -4 9 0 t9 0 t9 0 t9 0 t9 0 t9 0"/></svg>
       <br><span class="ft">PEAT onboarding curriculum · styled per the Parley Labs Brand Guide · © Parley Labs</span>
-      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-06-18</b> · full sweep · peat <code>35d0f11</code> · mesh <code>rc.42</code> · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>0.1.0</code> · node <code>0.4.3</code><!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
+      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-06-19</b> · incremental · peat <code>68e9c3c</code> · mesh <code>rc.43</code> · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>0.1.0</code> · node <code>0.4.7</code><!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
     </span>
   </footer>
 </main>

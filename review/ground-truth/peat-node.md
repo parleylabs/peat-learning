@@ -1,9 +1,10 @@
 # Ground truth — `peat-node`
 
 **Repo:** `peat-node` (GitHub `defenseunicorns/peat-node`)
-**Audited HEAD:** `4e1b5c8` — `feat: deterministic iroh identity for static peering + offline derive-id (v0.4.3) (#162)`, 2026-06-18.
-**Working tree:** clean, on `main`. `git fetch` shows **origin/main is 5 commits ahead** (`4a45299`); did **not** pull or modify the tree per instructions. New tags on origin: `v0.4.4`, `v0.4.5`. So the audited code is `0.4.3`; origin already has at least two further tagged releases not audited here. Flagged as an unverified delta.
-**Package version (`Cargo.toml`):** `0.4.3`.
+**Audited HEAD:** `bbe3b68` — `chore(release): v0.4.7` (advanced from `4e1b5c8` on the 2026-06-19
+incremental — the prior "5 commits ahead" delta is now audited; see the dated delta at the end of this file).
+**Working tree:** clean, on `main`. `git fetch` ran; advanced through `v0.4.4`–`v0.4.7` this run, no pull/working-tree change beyond fetch.
+**Package version (`Cargo.toml`):** `0.4.7` (the `peat-cli` crate is at `0.4.5`).
 
 ## What this repo actually is
 
@@ -126,3 +127,34 @@ Operator CLI **`peat`** (`crates/peat-cli`) ships in the same image at `/usr/loc
 - **Decision:** the 28-defined-vs-27-implemented RPC gap is reported as-is; did not exhaustively line-map every proto RPC to a handler (all README categories are covered). Logged as a follow-up rather than a blocker.
 - **Assumption:** BLE in `docs/DESIGN.md:188` is an architecture-diagram aspiration, not implemented code — based on the complete absence of any BLE/btle dependency or code path. Holds unless a future peat-mesh feature adds it transparently.
 - **Assumption:** peat-node inherits peat-mesh's FIPS posture for the sync/transport AEAD (ADR-060 swap already done at mesh rc.12). peat-node itself only ever uses AES-256-GCM / HKDF-SHA256 / SHA-256 directly. Holds at this pin.
+
+---
+
+## 2026-06-19 incremental delta (`4e1b5c8` → `bbe3b68`, v0.4.3 → v0.4.7)
+
+The prior "5 commits ahead" unverified delta is now audited. Releases v0.4.4–v0.4.7:
+
+- **Attachment outbox watcher (#167, v0.4.5; PRD-006 v1.1).** `src/attachments/outbox.rs`: a send-side
+  poll watcher over the configured `--attachment-root` dirs. When a file is *stable* across a poll and
+  not yet sent, it auto-distributes by synthesising the same `SendAttachments` request an app would
+  send (reuses `handlers::send_attachments` end-to-end). **Off by default**, gated on
+  `PEAT_NODE_ATTACHMENT_OUTBOX_WATCH`; the explicit RPC stays the safe default. Polls (not inotify) for
+  reliability across container bind mounts. Symmetric counterpart to the receive-side inbox watcher.
+  **Shipped, off by default.**
+- **Peer-status heartbeat + sync-stack logging (#169, v0.4.7).** `PEER_STATUS_LOG_INTERVAL =
+  Duration::from_secs(30)` (`src/node.rs:207`); a 30 s task logs `connected_peers` (live CRDT-sync
+  connections, from the transport) vs `known_peers` (peers this node dialed, from the blob store) at
+  info. `known_peers` is the exact set `resolve_targets` and `fetch_blob` use, so the line answers "why
+  did a synced distribution doc never become a delivered file." Default `RUST_LOG` filter widened to
+  cover the whole sync stack (`peat_protocol=info`, `iroh=warn`). Multi-host example docs note the
+  two-way-dial requirement. **Shipped.**
+- **Empty-env startup-crash fix + content-validated attachment-delivery functest (#164, v0.4.4).**
+  **Shipped.**
+- Release/CI plumbing (cargo-chef + rust-cache, Dockerfile, chart bumps) across #165/#166/#168.
+
+**Confirmed unchanged from the 0.4.3 audit:** `proto/sidecar.proto` still defines **27** `rpc`s in one
+`service PeatSidecar` (the curriculum's "~28/27" stands; README "25" still stale). gRPC auth #38 did
+**not** land — the surface remains unauthenticated. Tombstone/RBAC details unchanged.
+
+**Not exercised (read-only audit):** the outbox watcher's poll/stability/dedup and the heartbeat were
+read from source, not run live.

@@ -52,7 +52,7 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 | M-016 | `02b-formation-and-leadership.md:265` | Election state diagram | mermaid | `leader_election.rs:238-240`; ADR-068 | — | M-015 | 2026-06-18 |
 | M-017 | `03-peat-mesh.md:110` | Discovery → connection | ascii | `discovery/*`; `peer_connector.rs` | — | M-018 | 2026-06-18 |
 | M-018 | `03-peat-mesh.md:129` | Discovery flowchart (mDNS/K8s/static) | mermaid | `discovery/*`; `peer_connector.rs` | — | M-017 | 2026-06-18 |
-| M-019 | `03-peat-mesh.md:187` | Sync message type wire bytes | ascii | `automerge_sync.rs:92-110`; ADR-034/040 | — | — | 2026-06-18 |
+| M-019 | `03-peat-mesh.md:187` | Sync message type wire bytes | ascii | `automerge_sync.rs:92-110`; ADR-034/040 | — | — | 2026-06-19 |
 | M-020 | `03-peat-mesh.md:206` | CRDT/negentropy sync sequence | mermaid | `negentropy_sync.rs`; ADR-040 (#435) | — | — | 2026-06-18 |
 | M-021 | `03-peat-mesh.md:290` | Transport trait + ConnectionState | ascii | `peat-mesh/src/transport/mod.rs` | — | — | 2026-06-18 |
 | M-022 | `04-peat-btle-and-lite.md:85` | BleAdapter trait + platform matrix | ascii | `peat-btle/src/platform/mod.rs` | iOS Beta | — | 2026-06-18 |
@@ -68,9 +68,10 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 | M-032 | `06-data-flows.md:272` | System architecture (gateway off the data path) | ascii | Module 6 §6.4 | peat-sbd/peat-lora Proposed | H-002 | 2026-06-18 |
 | M-033 | `08-running-and-operating.md:34` | Quickstart 3-node topology | ascii | Module 3 §3.4 | — | — | 2026-06-18 |
 | M-034 | `00b-the-big-idea.md:117` | Mesh O(n²) vs hierarchy O(n log n) topology | mermaid | 00b §3 (analytical); `hierarchy/router.rs:19-20,90-91,140` | Analytical; Shipped (routing) | — | 2026-06-18 |
-| M-035 | `06-data-flows.md:253` | Tasking today vs wanted (`command_log`) | mermaid | `peat-node/proto/sidecar.proto:342-373`; ADR-046 #853 | Shipped / In-flight / Speculative | — | 2026-06-18 |
+| M-035 | `06-data-flows.md:253` | Tasking today vs wanted (`command_log`) | mermaid | `peat-node/proto/sidecar.proto:342-373`; ADR-046 #853 | Shipped / In-flight / Speculative | — | 2026-06-19 |
 | M-036 | `09-protocol-specs.md:25` | Five specs — reading order & freshness | mermaid | spec README; `005` amended 2026-05-18 | Draft / current | — | 2026-06-18 |
 | M-037 | `09-protocol-specs.md:40` | Spec vs shipped-code divergences | table | `001-transport.md:95-101`; `device_id.rs:39-47` | mixed (code is the contract) | — | 2026-06-18 |
+| M-038 | `03-peat-mesh.md:§3.4b` | Provider gossip: locating a blob beyond direct peers (`peat/blob-announce/1`) | mermaid | `peat-mesh/src/storage/blob_announce.rs` (ALPN, `DEFAULT_ANNOUNCE_TTL=3`, `classify_announce`); peat-mesh#262 | Shipped | H-006 | 2026-06-19 |
 
 ## HTML — `index.html` (hub; mirrors the modules)
 
@@ -81,7 +82,7 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 | H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-06-18 |
 | H-004 | `index.html:670` | peat-protocol surface / phases | svg | mirrors Module 2 | — | 2026-06-18 |
 | H-005 | `index.html:707` | (Module 2/2b deep-dive figure) | svg | mirrors Module 2b | — | 2026-06-18 |
-| H-006 | `index.html:827` | peat-mesh sync / discovery | svg | mirrors Module 3 | — | 2026-06-18 |
+| H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-06-19 |
 | H-007 | `index.html:854` | (Module 3 figure) | svg | mirrors Module 3 | — | 2026-06-18 |
 | H-008 | `index.html:936` | BLE / lite edge | svg | mirrors Module 4 | — | 2026-06-18 |
 | H-009 | `index.html:1054` | Gateway / formation security | svg | mirrors Module 2b/5 | M-014 | 2026-06-18 |
@@ -172,3 +173,15 @@ pattern, to preserve when editing or adding diagrams:
   gateway-observes-from-the-side picture (gateway is NOT in the data path), the
   sensor→command-post end-to-end trace labeled shipped-vs-proposed leg by leg, and the
   negentropy reconcile round-trip. Add to this registry when authored.
+
+- **2026-06-19 incremental verification (peat rc.26 / peat-mesh rc.43 / peat-node v0.4.7).**
+  Added **M-038** (provider-gossip sequence, all Shipped — `peat/blob-announce/1`, TTL=3) with its
+  hub twin in the H-006 prose cards. Spot-checked the diagrams whose provenance repos moved and
+  found their facts **unchanged**, advancing only the directly-relevant rows: **M-019** (SyncMessageType
+  wire bytes — provider gossip deliberately rides a *separate ALPN*, adds **no** new sync tag, so the
+  byte list is intact), **M-035** (peat-node `sidecar.proto` — RPC count still **27**, no new tasking
+  surface). M-020/M-021 (negentropy/transport), M-007/M-009/M-010 (peat-protocol phases/enums) were
+  reviewed against the diffs and are untouched by the storage relocation/version bumps; their
+  `Last verified` stays 2026-06-18 pending the next full sweep (Phase 6b). The relocation of
+  `file_distribution`/`model_distribution` into `peat-mesh` (peat#992) is a *module-location* change,
+  not a depicted-fact change, for the existing sync diagrams.

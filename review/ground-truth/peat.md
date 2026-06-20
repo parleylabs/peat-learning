@@ -1,10 +1,11 @@
 # Ground-truth audit — `peat` (umbrella workspace)
 
 **Repo:** `github.com/defenseunicorns/peat` (the `./peat` subdirectory of the umbrella working tree).
-**HEAD audited:** `35d0f11` — `chore: raise peat-mesh dependency floor to rc.42 (#990)`.
-Prior two: `338ffed` (peat-ffi `TransportConfigFFI.enable_n0_relay`), `616c74d` (peat-ffi dart_ffi BLE gating).
-**Origin status:** `git fetch` ran; `main...origin/main` is `0 0` (up to date). **No pull/working-tree change made.**
-**Workspace version:** `0.9.0-rc.25` (`Cargo.toml [workspace.package].version`). `peat-ffi` versions independently at `0.2.7`.
+**HEAD audited:** `68e9c3c` — `chore: bump workspace to 0.9.0-rc.26` (advanced from `35d0f11` on the
+2026-06-19 incremental — see the dated delta at the end of this file).
+**Origin status:** `git fetch` ran; advanced 3 commits this run. **No pull/working-tree change beyond fetch.**
+**Workspace version:** `0.9.0-rc.26` (`Cargo.toml [workspace.package].version`); peat-mesh dependency
+floor `>=0.9.0-rc.43` (`Cargo.toml:287`). `peat-ffi` versions independently at `0.2.7`.
 
 This file is the citations-backed reality model. Every later curriculum claim must trace here.
 Labels: **Shipped** (in code/tested) · **In-flight** (open issue/epic) · **Proposed** (ADR in Proposed status, no impl) · **Speculative** (teaching-only).
@@ -203,3 +204,26 @@ Three integration depths (README:124-126): Shallow REST/HTTP (~500-1000 LOC, ~50
 - Did not `cargo build`/`cargo test` (read-only audit; would not change verdicts on type/status questions). Build-command verification deferred to the curriculum-run phase (module 08).
 - "DeviceId" `code_def` in gbrain returned 0 (peat-mesh not indexed under the queried scope); confirmed instead via the re-export test assertions in `device_id.rs`.
 - The prompt's anticipated issue numbers (#857 sync GC) did not match current reality; recorded actual mapping in §11 rather than asking.
+
+---
+
+## 2026-06-19 incremental delta (`35d0f11` → `68e9c3c`, rc.25 → rc.26)
+
+Three commits:
+
+- **`68e9c3c`** — workspace bumped `0.9.0-rc.25` → `0.9.0-rc.26`; peat-mesh dependency floor raised to
+  `>=0.9.0-rc.43, <0.9.1` (`Cargo.toml:287`). peat-ffi unchanged at `0.2.7`.
+- **`70f77a4`** (#993) — `peat-protocol/src/storage/{file_distribution,model_distribution}.rs` are now
+  3-line re-exports of `peat_mesh::storage::…` (relocation per peat#992; peat-mesh is the canonical
+  iroh consumer). The implementation no longer lives in the protocol/spec layer.
+- **`72fc043`** (#991) — **ADR-071 (Proposed)** added (`docs/adr/071-subscription-based-convergence.md`,
+  Status: Proposed, dated 2026-06-19) + the additive Phase-1 convergence **seam** (then relocated to
+  peat-mesh by #993): `collection` on the distribution doc, `NeedEvaluator` + `CollectionSubscriptionNeed`,
+  `should_deliver`/`can_skip_permanently`, opt-in via `with_need_evaluator` (default None — existing
+  behavior unchanged). Unit + single-process receive-path tests only.
+
+ADR-071 model: distribution moves from **sender-enumerated** (`resolve_targets` → `target_nodes`) to
+**interest-driven convergence** — the writer publishes availability under a collection/topic and each
+receiver locally evaluates a pluggable need predicate (subscription now; version-gap + capability are
+Phases 2–3) and pulls if needed, locating a holder via provider gossip. Directed send (node-list) is
+retained. **Proposed**; only the Phase-1 subscription seam exists in code, and it is inert by default.

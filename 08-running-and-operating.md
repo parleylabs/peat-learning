@@ -131,6 +131,31 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 > it takes `--bind` / `--name` CLI flags. When something does not pick up an env var, first confirm
 > which binary you are actually running.
 
+### What the production sidecar (`peat-node`) gained recently — v0.4.7 **[Shipped]**
+
+If you run `peat-node` (the sidecar most deployments use), three operability changes in the
+`v0.4.4 → v0.4.7` line are worth knowing, all confirmed in `peat-node` at `bbe3b68`:
+
+- **Attachment auto-sync via an outbox watcher (off by default).** Set
+  `PEAT_NODE_ATTACHMENT_OUTBOX_WATCH` and the node polls each configured `--attachment-root`; a file
+  that is *stable* across a poll and not yet sent is auto-distributed by synthesising the same
+  `SendAttachments` request an application would send (`src/attachments/outbox.rs`, PRD-006 v1.1).
+  Dropping a file in the outbox lands it in every peer's inbox with no gRPC call — the symmetric
+  counterpart to the receive-side inbox watcher. It **polls** (not inotify) so it stays reliable
+  across container bind mounts; the explicit RPC remains the safe default, which is why the watcher
+  is opt-in.
+- **A 30 s peer-status heartbeat.** The node logs `connected_peers` (live CRDT-sync connections)
+  versus `known_peers` (peers it has dialed) every 30 s (`PEER_STATUS_LOG_INTERVAL`,
+  `src/node.rs:207`). This is the single most useful line when diagnosing "the doc synced but the
+  file never arrived": delivery targeting and `fetch_blob` both key off `known_peers`, so a receiver
+  missing from a sender's `known` set is exactly why a synced distribution doc never becomes a
+  delivered file. A related rc.43 mesh fix now **registers inbound-accepted peers into `known_peers`**
+  (peat-mesh#261), so a node you only *accepted* a dial from becomes targetable, not just one you
+  dialed.
+- **The default log filter now covers the whole sync stack** (`peat_protocol=info`, `iroh=warn`), so
+  attachment send/receive failures are no longer silent under the default `RUST_LOG` (peat-node#169).
+  Multi-host setups still need a two-way dial — the example compose docs were widened to say so.
+
 ---
 
 ## 8.3 Configuration (operator guide) **[Documented — `peat-sim` surface]**
