@@ -158,3 +158,25 @@ The prior "5 commits ahead" unverified delta is now audited. Releases v0.4.4–v
 
 **Not exercised (read-only audit):** the outbox watcher's poll/stability/dedup and the heartbeat were
 read from source, not run live.
+
+---
+
+### 2026-06-22 delta — `bbe3b68 → 9fcdabd` (v0.4.7 → v0.4.8)
+
+- **Inbox now mirrors the sender's outbox layout (#173).** Files were landing at
+  `inbox/<distribution_id>/<basename>`; they now land at `inbox/<relative_path>` with original name
+  and subdirectories intact (`outbox/sub/report.pdf` → `inbox/sub/report.pdf`), re-delivery of the
+  same path overwrites (latest-wins). Sender-controlled names are **re-sanitised on arrival** — only
+  `Normal` path components accepted, so an absolute path or `..` cannot escape the inbox; such a name
+  falls back to a flat `<distribution_id>.bin` at the inbox root (`src/attachments/inbox.rs:79-88`).
+  This v1 unidirectional layout is the shipped foundation under ADR-072 (Proposed). **Shipped.**
+- **Post-write size validation (#173).** The inbox sink checks the on-disk copy matches the declared
+  `blob_size` before the tmp→target rename is published; on mismatch it drops the partial and errors
+  so the watcher retries rather than publishing a short file (`src/attachments/inbox.rs:116-123`).
+  Local-write completeness check (content integrity already guaranteed upstream by iroh CAS). **Shipped.**
+- **Startup version banner.** First log line reports peat-node's own version + resolved
+  `peat-mesh`/`peat-protocol`/`peat-schema` versions captured from `Cargo.lock` at build time
+  (`build.rs:31-44` → `src/main.rs:391-396`). **Shipped.**
+- **`--print-config` / `PEAT_NODE_PRINT_CONFIG`.** Opt-in resolved-config dump at startup, secrets
+  redacted (`src/main.rs:29-30,445-451`). **Shipped.**
+- **Confirmed unchanged:** `proto/sidecar.proto` not touched — still 27 `rpc`s ("~28/27" stands).

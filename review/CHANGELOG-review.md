@@ -483,3 +483,54 @@ RPC count held at **27**, gRPC auth #38 did **not** land, tombstone/RBAC unchang
 end-to-end (publish writes `collection: None`); provider-gossip multi-hop reach read from source +
 e2e test names, not independently benchmarked; outbox watcher gate/poll behaviour not exercised by a
 live run (read-only audit). New `open_todos` track ADR-071 collection plumbing and Phases 2–3.
+
+---
+
+## 2026-06-22 — incremental refresh (CI mode)
+
+**Repos moved:** `peat` `68e9c3c → 8a94796` (workspace 0.9.0-rc.26 → rc.27), `peat-gateway`
+`8d16824 → bece4d6` (crate still 0.1.0), `peat-node` `bbe3b68 → 9fcdabd` (v0.4.7 → v0.4.8).
+`peat-mesh` (71fc3d5), `peat-btle` (3d70f48), `peat-lite` (7a8a8fb) — no drift.
+
+**Headline correction — gateway mesh pin.** The most consequential fact change this cycle:
+`peat-gateway`'s `peat-mesh` pin jumped `=0.9.0-rc.1 → =0.9.0-rc.40` (Dependabot peat-gateway#144).
+The curriculum's prior "intentionally frozen, ~40 RCs stale by design" narrative is now wrong — the
+gateway lags the ecosystem (rc.43) by only ~3 RCs and is being kept current via Dependabot. Corrected
+in **Module 1 §1.5** (prose + M-006 mermaid edge label), **Module 5 §5.6**, and the **hub** gateway
+card. The bump was real integration work (adapted the CDC watcher to the new `ChangeEvent` `origin`
+field + `redb` 2→4), which we now cite as evidence for the "tracking the mesh is real work" caveat
+rather than the obsolete "frozen by design" framing.
+
+**Other changes:**
+- **Module 8** — replaced the v0.4.7 ops box with **v0.4.8**: inbox now mirrors the sender's outbox
+  layout with path re-sanitisation + `<distribution_id>.bin` fallback (#173), startup version banner,
+  `--print-config` / `PEAT_NODE_PRINT_CONFIG`, post-write `blob_size` validation. Added a note that
+  the rc.27 `relay-n0-hosted` facade-forwarding fix makes enabling the flag at `peat-protocol`/`peat-ffi`
+  actually flip the relay posture (was a silent no-op).
+- **Module 2** — facade callout now flags **ADR-072 (Proposed)** as the synced-folder lifecycle
+  follow-on to ADR-071, and documents the rc.27 `relay-n0-hosted` forward fix + `connect_peer_nowait`.
+- **Module 3 §3.4b** — added the **ADR-072 (Proposed)** publisher-declared lifecycle/handling policy
+  paragraph atop the ADR-071 seam.
+- **Module 00b** — peat-ffi deep-integration note gains `connect_peer_nowait` (Shipped, rc.27).
+- **Module 9** — unchanged this run (ADR-071 wording already current).
+- Version/commit stamps advanced across Modules 00b/1/2/5/7, `index.html`,
+  `peat-constrained-networking.html`, `changelog.html` (Current-sync card + new history row).
+
+**Diagrams.** M-006 (Cargo dependency graph) re-derived — edge label changed from "stale by ~40 rc"
+to "rc.40 (~3 rc behind)". Spot-checked + advanced to 2026-06-22: H-003 (twin SVG; arrow facts
+unchanged, no rc label in the SVG), M-027/H-010 (gateway CDC sink set unchanged — `src/cdc/engine.rs`,
+the sink modules, and `CdcSinkType` in `src/tenant/models.rs` untouched), M-033 + M-035 (peat-node
+moved but proto unchanged, RPC count still 27).
+
+**House rules.** ADR-072 and ADR-059 ("Data as a Capability") both labeled **Proposed** (no code);
+`connect_peer_nowait` and the relay forward labeled **Shipped** with `path:line`. FIPS/crypto
+untouched; no vendor names; autonomy framing untouched.
+
+**New flags / follow-on.**
+- **ADR-059 number collision** (NEW open_todo): peat#997 added `docs/adr/059-data-as-a-capability.md`,
+  but `docs/adr/059-cross-transport-document-bridging.md` already owns ADR-059 (the one the curriculum
+  cites for the peat-btle "Amendment 4" cycle-break). Existing ADR-059 citations remain correct
+  (cross-transport bridging); the new ADR is logged but deliberately not woven into prose to avoid
+  conflating the two. Watch for the source repo to renumber one of them.
+- **Unverifiable (read-only audit):** ADR-072 / ADR-059 are Proposed with no code; `connect_peer_nowait`
+  and the v0.4.8 inbox layout / size check were read from source + CHANGELOG, not exercised live.

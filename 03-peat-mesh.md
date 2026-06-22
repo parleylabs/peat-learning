@@ -337,6 +337,14 @@ distributions reach receivers via `target_nodes` exactly as before. Provider gos
 "who has it" half this model needs; version-gap and capability inputs are ADR-071 Phases 2–3.
 Treat interest-driven convergence as **Proposed** and `target_nodes` directed delivery as what ships.
 
+A companion proposal, **ADR-072 (Proposed): synced-folder lifecycle & file-handling policy**, sits
+on top of the same distribution document. It answers the questions the file-drop surface leaves open —
+what a deletion means, what re-dropping identical (checksum-confirmed) content means, and who owns
+versioning — via a *publisher-declared* lifecycle/handling policy carried on the sender-owned metadata
+half (so a state change like a retraction is a contention-free Automerge field update). v1 is
+explicitly **unidirectional** (a watched root is either an outbox or an inbox; no conflict
+management). No code yet — the only shipped piece is `peat-node`'s v1 inbox/outbox layout (Module 8).
+
 ---
 
 ## 3.5 Key data flow #3 — the pluggable transport abstraction **[Shipped]**

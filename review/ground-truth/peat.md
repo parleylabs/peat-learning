@@ -227,3 +227,31 @@ ADR-071 model: distribution moves from **sender-enumerated** (`resolve_targets` 
 receiver locally evaluates a pluggable need predicate (subscription now; version-gap + capability are
 Phases 2–3) and pulls if needed, locating a holder via provider gossip. Directed send (node-list) is
 retained. **Proposed**; only the Phase-1 subscription seam exists in code, and it is inert by default.
+
+---
+
+### 2026-06-22 delta — `68e9c3c → 8a94796` (workspace 0.9.0-rc.26 → rc.27)
+
+- **`relay-n0-hosted` facade fix (peat#995).** After the ADR-062 relocation moved `IrohTransport`
+  endpoint construction into `peat-mesh`, `peat-protocol`'s `relay-n0-hosted` feature was an orphaned
+  no-op (`= []`). rc.27 wires it to forward — `peat-protocol/Cargo.toml:123` →
+  `["peat-mesh/relay-n0-hosted"]` — and adds the same passthrough on `peat-ffi`
+  (`peat-ffi/Cargo.toml:109`). Still OFF by default. **Shipped.**
+- **`peat-ffi` non-blocking `connect_peer_nowait` (peat#995).** Fire-and-forget variant of
+  `connect_peer` — spawns dial + formation handshake + sync trigger on the runtime and returns
+  immediately; shares `connect_peer_inner` with the blocking variant (`peat-ffi/src/lib.rs:813,1222`).
+  Background failures surfaced via `tracing`. `peat-ffi` 0.2.7 → 0.2.8; Maven AAR cut 0.1.3
+  (`peat-ffi/android/build.gradle.kts:33`). **Shipped.**
+- **ADR-072 (Proposed): synced-folder lifecycle & file-handling policy** (`docs/adr/072-...md`).
+  Publisher-declared lifecycle/handling policy on the ADR-071 distribution document (deletion,
+  idempotent re-drop, version ordering). v1 unidirectional (a root is outbox OR inbox; no conflict
+  management). **Status: Proposed — no code.**
+- **ADR-059 (Proposed): "Data as a Capability"** (`docs/adr/059-data-as-a-capability.md`, peat#997).
+  Extends the capability-advertisement pattern (ADR-018) to arbitrary data sources. **NUMBER
+  COLLISION:** a second file `docs/adr/059-cross-transport-document-bridging.md` already owns ADR-059
+  (the one the curriculum cites for the peat-btle cycle-break "Amendment 4"). The curriculum's
+  existing ADR-059 references point at the cross-transport-bridging ADR and remain correct; the new
+  data-as-a-capability ADR is logged but not woven into prose to avoid conflating the two. **Status:
+  Proposed — no code.**
+- No `peat-protocol/src`, `peat-mesh`, or `peat-schema` source change this delta — protocol/mesh
+  diagrams' facts unaffected.

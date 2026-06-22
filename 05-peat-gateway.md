@@ -4,7 +4,7 @@
 server. But an organization that fields meshes still has to onboard teams, plug into its own identity
 system, manage cryptographic material, and feed mesh events into its analytics and audit pipelines.
 That work happens in the gateway. Repo path: [`peat-gateway/`](../peat-gateway/) (crate `0.1.0`,
-audited at HEAD `8d16824`).
+audited at HEAD `bece4d6`).
 
 > **Mental model — the gateway watches and manages; it does not relay.** CRDT sync, blob transfer,
 > and peer-to-peer routing all live in `peat-mesh` and never pass through the gateway. The gateway is
@@ -307,17 +307,21 @@ them. The bundle gets the artifact into the air-gap; the platform supplies the s
 ## 5.6 How it depends on the mesh
 
 [`peat-gateway/Cargo.toml`](../peat-gateway/Cargo.toml) pins `peat-mesh` to an **exact** version
-(`=0.9.0-rc.1`) with features `["automerge-backend", "broker"]`, and uses it purely as a **library**:
+(`=0.9.0-rc.40`) with features `["automerge-backend", "broker"]`, and uses it purely as a **library**:
 `MeshGenesis` / `MembershipPolicy` / `MeshTier` for trust material, and `DocumentStore` / `ChangeEvent`
 for CDC watching. It never starts a mesh node and never routes mesh data.
 
-That `=` pin is deliberate, and it is honest to say so: it is **intentionally frozen and currently lags
-the live mesh by roughly 40 release candidates** (the ecosystem is at `rc.43`; the gateway sits on
-`rc.1`). The freeze is treated as intentional in the crate's verification checklist, and bumping it is
-real integration work, not a one-line version bump — the gateway must be re-validated against the newer
-mesh surface. So when you read "shipped" for this crate, read it as "shipped against an older,
-deliberately pinned mesh," and budget integration time before assuming the gateway tracks the latest
-mesh behavior.
+That `=` pin moved a long way this cycle. It sat on `=0.9.0-rc.1` for months — a deliberately frozen
+pin that lagged the live mesh by ~40 release candidates — but a Dependabot bump (peat-gateway#144)
+fast-forwarded it to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (`rc.43`) by only ~3 RCs.
+That bump was **not** a one-line version change: the same PR adapted the CDC watcher to `peat-mesh`'s
+newer `ChangeEvent` surface — the `Updated`/`Removed`/`Initial` variants now carry an `origin` field
+(and `Initial` a `collection`), with a catch-all arm added (`src/cdc/watcher.rs:81,154,202`) — and rode
+a `redb` 2→4 major bump (the new `ReadableDatabase` trait import in `src/storage/redb_backend.rs`). In
+other words, tracking the mesh is real integration
+work, exactly as the old "frozen" framing warned; it just happens to be getting done now. Still read
+"shipped" for this crate as "shipped against an exact-pinned mesh," and budget integration time when
+the next mesh surface change lands.
 
 ---
 
