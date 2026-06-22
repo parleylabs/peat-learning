@@ -207,6 +207,27 @@ non-mDNS environments, a `peers.toml` lists `[[peers]]` blocks with `id` / `addr
   (feature `kubernetes`) — **[Shipped]**, used because multicast mDNS is unavailable inside most
   clusters (Module 3).
 
+```mermaid
+flowchart TB
+  subgraph dev["Single host / dev"]
+    d1["peat-node binary<br/>PEAT_NODE_COUNT=20 → simulator"]
+  end
+  subgraph multi["Multi-node & Docker Compose"]
+    seed["seed node --seed"]
+    j1["joiner"] -->|"PEAT_STATIC_PEERS=seed:4040"| seed
+    j2["joiner / edge (PEAT_CELL_SIZE=3)"] -->|static peers| seed
+  end
+  subgraph k8s["Kubernetes — StatefulSet"]
+    pod0["peat-node-0"] --- pod1["peat-node-1"] --- pod2["peat-node-2"]
+    pod0 -. "EndpointSlice discovery (feature kubernetes)" .-> pod2
+  end
+```
+
+*All patterns expose the same ports (below) and keep the n0 hosted relay **off by default**
+(air-gap posture). Single-host/multi-node/Docker/edge are **[Documented]** (peat-sim workflow);
+in-cluster `EndpointSlice` discovery is **[Shipped]** because multicast mDNS is unavailable inside
+most clusters.*
+
 ### Ports & networking
 
 | Port | Proto | Purpose |
@@ -229,6 +250,21 @@ and bandwidth allocation*, and these primitives are **[Shipped]** (`peat-protoco
 `peat-mesh/src/qos/`). But priority *enforcement* — cross-class wire-level preemption so a Critical
 bundle pauses an in-flight Bulk transfer, and the "<5 s P1 latency" target — is **[In-flight]**, not
 a validated SLA. Treat QoS today as ordering and budgeting, not a hard latency guarantee.
+
+```mermaid
+flowchart LR
+  ch["outgoing change"] --> cls["QoSClass<br/>5 levels (P1–P5)"]
+  cls --> sm["SyncMode<br/>LatestOnly / FullHistory / Windowed"]
+  sm --> ba["BandwidthAllocation<br/>per bandwidth_limit_kbps profile"]
+  ba --> ec["EvictionController<br/>drops lowest-priority when the budget is full"]
+  ec --> outp["sent to peers, ordered by class"]
+  cls -. "cross-class preemption + <5s P1 — In-flight" .-> gap["not enforced in v1"]
+```
+
+*The pipeline — classes, sync-mode override, bandwidth allocation, eviction/GC — is **[Shipped]**
+(`peat-protocol/src/qos/`, `peat-mesh/src/qos/`). Cross-class wire-level **preemption** (a Critical
+bundle pausing an in-flight Bulk transfer) and the "<5 s P1" latency target are **[In-flight]**: QoS
+today orders and budgets, it does not preempt.*
 
 Partitions are handled automatically: heartbeat-timeout detection → exponential-backoff reconnection
 → CRDT auto-merge on heal (`peat-mesh/src/topology/`; peat-node's reconnect watchdog runs a 5 s

@@ -343,6 +343,29 @@ with defaults set in `new()` at `:66-87`):
 6. **Human approval**, *if* any present capability requires oversight
    (`needs_human_approval`, `:174-179`).
 
+```mermaid
+flowchart TD
+  start["members gathered"] --> g1{"1 · min size ≥ 3?"}
+  g1 -- no --> failed["Failed"]
+  g1 -- yes --> g2{"2 · confirmed leader?"}
+  g2 -- no --> forming["Forming<br/>(keep gathering)"]
+  g2 -- yes --> g3{"3 · every member has a role?"}
+  g3 -- no --> forming
+  g3 -- yes --> g4{"4 · required coverage?<br/>Communication + Sensor"}
+  g4 -- no --> failed
+  g4 -- yes --> g5{"5 · readiness ≥ 0.7?"}
+  g5 -- no --> failed
+  g5 -- yes --> g6{"6 · a present capability needs oversight?"}
+  g6 -- yes --> await["AwaitingApproval"]
+  g6 -- no --> ready["Ready"]
+  await -- "approve_formation()" --> ready
+```
+
+*Shipped — the gates are checked **in this order** (`coordinator.rs:97-168`; defaults `:66-87`).
+Gates 1/4/5 fail outright; 2/3 keep the cell `Forming`. Gate 6 is the autonomy-under-human-authority
+contract: an oversight-required capability holds the cell in `AwaitingApproval` until a human
+approves.*
+
 The result is a `FormationStatus` (`coordinator.rs:33-44`):
 
 ```rust

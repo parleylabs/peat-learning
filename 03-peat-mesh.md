@@ -480,6 +480,19 @@ outage; the QUIC/peat-node path is the robust one. Tombstone retention (168 h / 
 governs what survives a long offline window — tracked by peat-node#136 (*not* the misattributed
 "#857", which is actually ADR-046 Phase-4 selectors).
 
+```mermaid
+flowchart LR
+  del["document deleted"] --> tomb["tombstone marker created"]
+  tomb --> ret["retention window<br/>168 h / 7-day default (TtlManager)"]
+  ret --> gc["GC removes the tombstone"]
+  ret -. "peer reconnects within window" .-> redel["tombstone still present →<br/>deletion re-delivered"]
+```
+
+*The QUIC/peat-node path is **[Shipped]**: a deletion leaves a tombstone that is retained ~7 days
+(peat-node#136) so a peer offline **shorter** than the window still learns of it on reconnect; a peer
+offline longer can miss it — which is why retention must exceed the slowest expected outage. The
+peat-btle reconnect re-delivery of pending state is **[In-flight]** (peat-btle#73).*
+
 ---
 
 ## Try it

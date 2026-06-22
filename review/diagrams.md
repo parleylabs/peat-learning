@@ -72,6 +72,12 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 | M-036 | `09-protocol-specs.md:25` | Five specs — reading order & freshness | mermaid | spec README; `005` amended 2026-05-18 | Draft / current | — | 2026-06-18 |
 | M-037 | `09-protocol-specs.md:40` | Spec vs shipped-code divergences | table | `001-transport.md:95-101`; `device_id.rs:39-47` | mixed (code is the contract) | — | 2026-06-18 |
 | M-038 | `03-peat-mesh.md:§3.4b` | Provider gossip: locating a blob beyond direct peers (`peat/blob-announce/1`) | mermaid | `peat-mesh/src/storage/blob_announce.rs` (ALPN, `DEFAULT_ANNOUNCE_TTL=3`, `classify_announce`); peat-mesh#262 | Shipped | H-006 | 2026-06-19 |
+| M-039 | `02-peat-protocol.md:210` | Capability composition (four rules → Emergent) | mermaid | `src/composition/`; `composition/engine.rs:151` | Shipped | — | 2026-06-18 |
+| M-040 | `02b-formation-and-leadership.md:345` | `check_formation_complete` — six gates | mermaid | `coordinator.rs:97-168,66-87,174-179` | Shipped | M-012 | 2026-06-18 |
+| M-041 | `03-peat-mesh.md:415` | Tombstone lifecycle: delete → retention → GC | mermaid | `storage/` TtlManager; peat-node#136; peat-btle#73 | Shipped; In-flight (BLE) | — | 2026-06-18 |
+| M-042 | `08-running-and-operating.md:184` | Deployment topologies (single/multi/Docker/k8s) | mermaid | 08 §8.4; EndpointSlice (feature `kubernetes`) | Documented; Shipped (EndpointSlice) | — | 2026-06-18 |
+| M-043 | `08-running-and-operating.md:207` | QoS pipeline (class → sync-mode → allocation → eviction) | mermaid | `peat-protocol/src/qos/`; `peat-mesh/src/qos/` | Shipped; In-flight (preemption) | — | 2026-06-18 |
+| M-044 | `00b-the-big-idea.md:152` | Up / down / lateral information flows | mermaid | 00b §3; `hierarchy/router.rs:19-20,90-91,140` | Shipped | M-031 | 2026-06-18 |
 
 ## HTML — `index.html` (hub; mirrors the modules)
 
@@ -115,25 +121,26 @@ a full sweep of modules 00b–09 against this registry (2026-06-19). Concepts th
 diagram were excluded (e.g. the three authority axes = M-002, the formation handshake = M-014/H-009,
 partition recovery = C-008). **Build here?** flags whether a diagram is derivable purely from the
 curriculum's own audited prose (safe to author offline) or needs verification against the PEAT
-source on a refresh run (per *code over everything*). The four highest-value prose-derived ones were
-authored 2026-06-19 and are now rows M-034–M-037 above.
+source on a refresh run (per *code over everything*). The prose-derived, build-here-safe entries have
+been authored (rows M-034–M-044 above); what remains below is **needs-code** (P-01/P-02/P-04/P-05,
+for a refresh run with the source) plus a few deliberately deferred low-value/redundant items.
 
 | ID | Diagram | Home (xref) | Type | Status labels | Build here? | Priority |
 |---|---|---|---|---|---|---|
 | P-01 | Crypto key hierarchy + the two encryption layers (mesh-wide AES-256-GCM, per-peer ECDH-P256 E2EE) + FIPS boundary | 05 (03/04/07) | mermaid/SVG | Shipped; In-flight (aws-lc-rs); Proposed (LoRa ChaCha20) | needs code (exact derivation chain) | **High** |
 | P-02 | Identity "name family": Ed25519 key → DeviceId (SHA-256[..16]) → NodeId variants (BLAKE3→u32, bare u32) → transport address, with the Translator bridge | 03 (06/09) | mermaid mapping | Shipped | mostly safe; confirm widths vs code | **High** |
-| P-03 | Deployment topologies: single-host / multi-node seed+joiners / edge / Docker Compose / k8s StatefulSet | 08 | mermaid / SVG set | Shipped | safe | **High** |
+| P-03 | Deployment topologies: single-host / multi-node seed+joiners / edge / Docker Compose / k8s StatefulSet | 08 | mermaid | Shipped | safe | ✅ authored M-042 |
 | P-04 | Gateway enrollment sequence: Open / Controlled / Strict + OIDC (RFC 7662) introspection | 05 | sequence | Shipped / In-flight | needs code (confirm flow) | **High** |
 | P-05 | Connection-health state machine: Healthy → Degraded → Suspect → Dead | 03 | state | Shipped | needs code (triggers/thresholds) | Med-High |
-| P-06 | Capability-gap / contribution status ladder (the ~9 missing capabilities by status) | 07 | mermaid | mixed | safe (note: §7.7 table already covers most) | Med |
-| P-07 | QoS priority pipeline: P1–P5 classes, queueing, eviction, the in-flight preemption gap | 03 (06) | flow/state | Shipped; In-flight (preemption) | safe | Med |
-| P-08 | Tombstone lifecycle: deletion → 7-day retention → GC (why retention ≥ slowest reconnect) | 03 | timeline/state | Shipped; In-flight (per-collection enforcement) | safe | Med |
-| P-09 | Capability composition: input capabilities → composition rules → emergent cell capability | 02 (00b table at §4) | mermaid | Shipped | safe | Med |
-| P-10 | The six `check_formation_complete` gates as an ordered decision sequence | 02b | flow | Shipped | safe | Med |
-| P-11 | Conflict-resolution policy decision tree (5 `ConflictPolicy` variants → which applies) | 06 | flow | Shipped; In-flight (enforcement) | safe | Low-Med |
-| P-12 | Up / down / lateral information flows with priority escalation up the tiers | 00b (02b) | mermaid | Shipped | safe (Trace C / M-031 partly covers) | Med |
-| P-13 | Hub SVG twins for the four new mermaid diagrams (M-034–M-037), pre-rendered to inline SVG | index.html | SVG | mirror | safe | Low |
-| P-14 | Ops surfaces: ports/networking layout; monitoring → Prometheus → alerting pipeline | 08 | SVG/flow | Shipped / Documented | safe | Low |
+| P-06 | Capability-gap / contribution status ladder (the ~9 missing capabilities by status) | 07 | mermaid | mixed | safe | deferred — §7.7 table already covers it |
+| P-07 | QoS priority pipeline: P1–P5 classes, queueing, eviction, the in-flight preemption gap | 08 (03/06) | flow | Shipped; In-flight (preemption) | safe | ✅ authored M-043 |
+| P-08 | Tombstone lifecycle: deletion → 7-day retention → GC (why retention ≥ slowest reconnect) | 03 | timeline | Shipped; In-flight (BLE re-delivery) | safe | ✅ authored M-041 |
+| P-09 | Capability composition: input capabilities → composition rules → emergent cell capability | 02 | mermaid | Shipped | safe | ✅ authored M-039 |
+| P-10 | The six `check_formation_complete` gates as an ordered decision sequence | 02b | flow | Shipped | safe | ✅ authored M-040 |
+| P-11 | Conflict-resolution policy decision tree (5 `ConflictPolicy` variants → which applies) | 06 | flow | Shipped; In-flight (enforcement) | **no** — "which policy when" isn't in the docs (it's a per-command `conflict_policy` field, not a fixed tree); building it would invent logic | deferred — needs code |
+| P-12 | Up / down / lateral information flows with priority escalation up the tiers | 00b (02b) | mermaid | Shipped | safe | ✅ authored M-044 (twin M-031) |
+| P-13 | Hub SVG twins for the new mermaid diagrams (M-034–M-044), pre-rendered to inline SVG | index.html | SVG | mirror | safe | Low (deferred) |
+| P-14 | Ops surfaces: ports/networking layout; monitoring → Prometheus → alerting pipeline | 08 | SVG/flow | Shipped / Documented | safe | Low (deferred) |
 
 ## Interactivity (HTML)
 

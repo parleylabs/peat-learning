@@ -217,6 +217,33 @@ kinds of rule, and each is a real module in `src/composition/`:
 A composed capability is emitted with `CapabilityType::Emergent` (`composition/engine.rs:151`), so
 "Emergent" is both a rule kind and the type of the synthesized result.
 
+```mermaid
+graph LR
+  subgraph members["Member capabilities (advertised)"]
+    cam["camera"]; comms["comms"]; rng["range"]; s1["sensor"]; s2["sensor (2nd)"]
+  end
+  subgraph engine["CompositionEngine — four rules (src/composition/)"]
+    add["additive — coverage / payload / bandwidth sum"]
+    em["emergent — camera + comms + range ⇒ ISR"]
+    red["redundant — two same sensors ⇒ reliability flag"]
+    con["constraint — team speed = slowest member"]
+  end
+  out["CapabilityType::Emergent<br/>a cell capability no single node had"]
+  cam --> em
+  comms --> em
+  rng --> em
+  s1 --> red
+  s2 --> red
+  add --> out
+  em --> out
+  red --> out
+  con --> out
+```
+
+*Shipped (`src/composition/`; the synthesized result is emitted as `CapabilityType::Emergent`,
+`composition/engine.rs:151`). "Emergent" is both one of the four rule kinds and the type of the
+composed capability.*
+
 ### Capability types (Shipped)
 
 A node advertises **capabilities**, and each type composes differently. The capability enum itself

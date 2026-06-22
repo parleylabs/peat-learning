@@ -180,6 +180,27 @@ cannot route cross-cell or reach the zone (`peat-mesh hierarchy/router.rs:19-20,
 up/down/lateral model is not just a diagram — the same-cell-or-leader-mediated constraint is checked
 in code.
 
+```mermaid
+flowchart TB
+  subgraph up["UP — aggregation (state summarized each level)"]
+    direction TB
+    u1["node: battery 73%, pos x,y,z"] --> u2["cell: 4/4 operational, sector A"] --> u3["cohort: sensing 92%, coverage nominal"]
+  end
+  subgraph down["DOWN — dissemination (intent → action)"]
+    direction TB
+    d1["intent: maintain surveillance of region X"] --> d2["team taskings"] --> d3["node directives"]
+  end
+  subgraph lat["LATERAL — peer coordination (within a tier)"]
+    direction LR
+    p1["peer"] <--> p2["peer"]
+  end
+```
+
+*The model to memorize. UP summarizes, DOWN translates intent into action (higher levels say **what**,
+lower levels decide **how** — autonomy under human authority), LATERAL is peer sync within a tier. All
+**Shipped**, and the routing rule that enforces it (cell leaders route upward; non-leaders cannot
+route cross-cell) is real code (`hierarchy/router.rs:19-20,90-91,140`).*
+
 > **Where this lands in the code.** Module 2 §2.4 (hierarchy / aggregation / routing) and Module 6
 > Trace C (up / down / lateral). The §2.4 routing-validity snippet is the place to confirm the
 > same-cell / leader-mediated rule.
