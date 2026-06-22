@@ -1,10 +1,10 @@
 # Ground Truth — peat-mesh
 
-**Audited HEAD:** `00ab0c9` ("chore: bump to 0.9.0-rc.42 (#260)"), branch `main`, up to date
-with `origin/main` (`git rev-list --count HEAD..@{u}` = 0). `git fetch` ran clean; working tree
-not modified.
+**Audited HEAD:** `71fc3d5` ("chore: bump to 0.9.0-rc.43"), branch `main` (advanced from `00ab0c9`
+on the 2026-06-19 incremental — see the dated delta at the end of this file). `git fetch` ran clean;
+working tree not modified.
 
-**Crate version:** `0.9.0-rc.42` (`Cargo.toml:3`). Note: README still advertises `0.3.2` /
+**Crate version:** `0.9.0-rc.43` (`Cargo.toml:3`). Note: README still advertises `0.3.2` /
 `0.1.0` in its install snippets (`README.md:29,46`) — stale.
 
 Status labels per the §1 contract: **Shipped** (in code, tested), **In flight** (open
@@ -278,3 +278,39 @@ SDKs, signed CRDT ops, formal benchmark suite) as **Planned/Future** = Proposed
   `#[cfg(test)]` modules and CHANGELOG regression-test names; pass/fail not independently re-run.
 - **ASSUMPTION:** `CrdtType` variant set taken from peat-mesh's encode/decode call sites; the
   authoritative enum definition is in peat-lite and should be confirmed in that repo's audit.
+
+---
+
+## 2026-06-19 incremental delta (`00ab0c9` → `71fc3d5`, rc.42 → rc.43)
+
+Four commits. New ground truth, all read against `71fc3d5`:
+
+- **Distribution/file-transfer impl relocated INTO peat-mesh (peat#992).** `src/storage/mod.rs:24-37`
+  now owns `blob_announce`, `file_distribution`, `model_distribution` (feature `automerge-backend`),
+  with the comment "relocated from peat-protocol per peat#992 — peat-mesh is the canonical iroh
+  consumer; transport-specific impl belongs here." The peat-protocol modules of the same name are now
+  3-line `pub use peat_mesh::storage::…::*` re-exports. **Shipped.**
+- **`DistributionScope` targeting (`storage/file_distribution.rs:98`, `resolve_targets:873`).**
+  `AllNodes` (default) and `Nodes { node_ids }` resolve to `blob_store.known_peers()` (the latter
+  filtered to known peers). `Formation { formation_id }` and `Capable { min_gpu_gb, cpu_arch,
+  min_storage_mb }` are **stubbed** — each logs a `warn!` ("not yet implemented") and falls back to
+  all `known_peers`. So targeting is direct-dial-bound. **Shipped (AllNodes/Nodes); In-flight/stub
+  (Formation/Capable).**
+- **Provider gossip — `peat/blob-announce/1` ALPN (`storage/blob_announce.rs`, peat-mesh#262).**
+  `CAP_BLOB_ANNOUNCE_ALPN = b"peat/blob-announce/1"`, `ANNOUNCE_VERSION = 1`, `DEFAULT_ANNOUNCE_TTL =
+  3` relay hops, `MAX_HASHES = 4096`, `MAX_ADDRS = 16`. Gossips holdings into the `BlobPeerIndex`
+  that `fetch_blob` consults, carrying holder socket addrs so a needer can dial a non-adjacent holder;
+  acquiring re-announces. Rides a dedicated ALPN (not a new `SyncMessageType`) **on purpose** — the
+  Automerge sync decoder hard-errors on an unknown tag, so a new tag would break mixed-version sync;
+  an unknown ALPN just never opens the stream. `classify_announce` gates trust (first-party / relayed
+  / forged-origin) against provider/address poisoning. 8 unit + 3 real-iroh e2e tests. **Shipped.**
+- **ADR-071 Phase-1 seam (`storage/file_distribution.rs`).** `NeedEvaluator` trait (`needs(&doc)`),
+  `CollectionSubscriptionNeed` impl over a shared `Arc<RwLock<HashSet<String>>>`, `collection:
+  Option<String>` on `DistributionDocument` (None = directed-only, backward compatible),
+  `with_need_evaluator(...)` opt-in (default None), pure `should_deliver(is_directed_target,
+  needed_by_interest)` and `can_skip_permanently(...)` gates. **Inert by default**: publish writes
+  `collection: None` (TODO at ~`:963`), no evaluator attached unless a consumer opts in. ADR-071 is
+  **Proposed**; the seam is **Shipped-but-inert**.
+- **Sync fix #261:** inbound-accepted peers are now registered into the blob store's `known_peers`
+  (`sync/automerge_backend.rs`, `with_inbound_peer_registry`), so a node you only accepted a dial from
+  becomes targetable for distribution — not just one you dialed. **Shipped.**

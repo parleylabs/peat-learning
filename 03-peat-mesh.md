@@ -3,7 +3,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@00ab0c9` (`0.9.0-rc.42`).
+`peat-mesh@71fc3d5` (`0.9.0-rc.43`).
 
 > **How to read the labels.** Every capability below carries one of four tags so you always know
 > what is real:
@@ -77,7 +77,7 @@ Every type below was confirmed present at the audited HEAD.
 | Module | Central types | Responsibility |
 |--------|---------------|----------------|
 | `transport/` | `MeshTransport`, `MeshConnection`, `NodeId`, `PeerEvent`, `Translator`, `TransportManager` | Pluggable transport backends (Iroh QUIC, peat-lite UDP, BLE) + cross-transport bridging |
-| `storage/` | `AutomergeStore`, `AutomergeSyncCoordinator`, `NegentropySync`, `SyncChannelManager`, `TtlManager` | CRDT persistence (redb + Automerge), the sync protocol, negentropy set reconciliation, TTL/GC |
+| `storage/` | `AutomergeStore`, `AutomergeSyncCoordinator`, `NegentropySync`, `SyncChannelManager`, `TtlManager`, `IrohFileDistribution`, `BlobAnnounce` | CRDT persistence (redb + Automerge), the sync protocol, negentropy set reconciliation, TTL/GC, **blob/file distribution + provider gossip** (relocated here from `peat-protocol` per peat#992 — see §3.4b) |
 | `discovery/` | `DiscoveryStrategy`, `PeerInfo`, `DiscoveryEvent` | mDNS, Kubernetes, static-config, hybrid peer discovery |
 | `topology/` | `TopologyManager`, `TopologyBuilder`, `PeerSelector`, `PartitionDetector` | Hierarchy/leader formation from beacon metrics; partition detection; autonomous mode |
 | `routing/` | `MeshRouter`, `SelectiveRouter`, `DataPacket`, `DataDirection` | Upward telemetry aggregation vs. downward command dissemination (anti-flood) |
@@ -263,12 +263,79 @@ continuously, barely notice the same shaped link; that contrast is the tell that
 not capacity, is the bottleneck.
 
 **ADR-063 ("Persistent Multiplexed Sync Streams") is [Proposed]** (peat#935 / peat-mesh#175; the
-rc.25 dependency floor cites it). It proposes keeping a long-lived multiplexed stream open per peer
+rc.26 dependency floor cites it). It proposes keeping a long-lived multiplexed stream open per peer
 instead of one-stream-per-message. The one-stream-per-message characterization and any specific
 "rounds per second" figure are the proposal's framing and analytical reasoning, **not measured PEAT
 results** — treat them as the motivation for the proposal. The durable lesson, true before any fix
 lands: on a degraded, high-latency link, latency and write cadence — not just throughput — shape how
 fast a mesh converges.
+
+---
+
+## 3.4b Blob distribution & provider gossip **[Shipped]**
+
+CRDT sync moves *documents*. Large opaque payloads — an AI model, a file, an attachment — move as
+**blobs** over iroh's content-addressed blob protocol, coordinated by a small distribution layer
+that **relocated into `peat-mesh` at rc.43** (peat#992): `peat-mesh` is the canonical iroh consumer,
+so the transport-specific implementation belongs here rather than in the `peat-protocol` facade,
+which now re-exports it. The entry point is `IrohFileDistribution`
+(`peat-mesh/src/storage/file_distribution.rs`): a sender publishes a **distribution document**
+(blob hash + metadata) into an Automerge collection; that document syncs mesh-wide like any other
+doc; a receive watcher on each node fetches the referenced blob.
+
+**Who receives it — targeting today (Shipped).** A sender chooses a `DistributionScope`
+(`file_distribution.rs:98`). Be precise about what is wired versus stubbed, because the enum
+advertises more than it does:
+
+| Scope | What it does today |
+|-------|--------------------|
+| `AllNodes` (default) | resolves to this node's `known_peers()` — the peers it has directly dialed |
+| `Nodes { node_ids }` | the requested ids, **filtered to `known_peers()`** |
+| `Formation { formation_id }` | **not implemented** — logs a `warn!` and falls back to all `known_peers()` |
+| `Capable { min_gpu_gb, cpu_arch, min_storage_mb }` | **not implemented** — same `warn!` + fallback |
+
+So targeting is `known_peers`-bound: a node that is interested but reachable only transitively is
+not reached, and `Formation`/`Capable` are reserved-but-stubbed (`resolve_targets`, `:873`).
+
+**Provider gossip — multi-hop "who holds blob X" [Shipped].** New at rc.43 (peat-mesh#262, slice 1/3 of
+multi-hop blob delivery, peat-node#170): a dedicated ALPN, **`peat/blob-announce/1`**
+(`storage/blob_announce.rs`), gossips holdings into the `BlobPeerIndex` that `fetch_blob` already
+consults — so a node can locate and dial a holder it is **not** directly peered with (relay /
+holepunch permitting). It rides its own ALPN rather than a new `SyncMessageType` on purpose: the
+Automerge sync decoder hard-errors on an unknown message-type tag, so a new tag would break sync
+against any older node mid-rollout, whereas an unknown ALPN simply never opens the stream
+(graceful degradation to today's direct-peer behavior). Announcements are **TTL-bounded**
+(`DEFAULT_ANNOUNCE_TTL = 3` relay hops) and acquiring a blob **re-announces** the new holding, so
+holdings converge epidemically without deep flooding. Inbound announces are trust-classified
+(`classify_announce`: first-party vs relayed vs forged-origin) to block provider/address poisoning.
+
+```mermaid
+%% Provider gossip: locating a blob beyond direct peers (peat/blob-announce/1).
+%% Status: all Shipped (peat-mesh rc.43, peat-mesh#262).
+sequenceDiagram
+    participant H as Holder (has blob X)
+    participant M as Mid node
+    participant N as Needer (wants X, not peered with H)
+    H->>M: announce "I hold X" (ttl=3, + my addrs)
+    Note over M: apply to BlobPeerIndex · classify_announce (trust)
+    M->>N: re-broadcast (ttl=2)
+    N->>H: fetch_blob(X) — dial H via gossiped addr (relay/holepunch)
+    H-->>N: blob bytes
+    Note over N: acquiring X re-announces "I hold X" → next-hop convergence
+```
+
+**Interest-driven convergence — the ADR-071 seam [Proposed; seam Shipped-but-inert].** rc.43 also
+lands the additive Phase-1 seam for **ADR-071 (Proposed): subscription-based convergence**. The
+idea: stop enumerating recipients and let each receiver decide *locally* whether it needs the data.
+In code today that is a `NeedEvaluator` trait with one implementation, `CollectionSubscriptionNeed`,
+plus a `collection: Option<String>` field on the distribution document and an opt-in
+`with_need_evaluator(...)` builder — `should_deliver(is_directed_target, needed_by_interest)`
+delivers when a node is either an explicit `target_nodes` recipient **or** needs the blob by
+interest. It is **inert by default**: no evaluator is attached unless a consumer opts in, and the
+publish path still writes `collection: None` (a `TODO` notes the plumbing is a follow-on), so
+distributions reach receivers via `target_nodes` exactly as before. Provider gossip supplies the
+"who has it" half this model needs; version-gap and capability inputs are ADR-071 Phases 2–3.
+Treat interest-driven convergence as **Proposed** and `target_nodes` directed delivery as what ships.
 
 ---
 

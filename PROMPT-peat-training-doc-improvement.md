@@ -4,9 +4,13 @@
 > learning material. Copy the section below the line into the agent. It is deliberately
 > opinionated and PEAT-specific: it must not drift into generic documentation advice.
 >
-> **Run it** either as a single capable agent adopting each role in §2 in sequence, or as a
-> multi-agent workflow with one agent per role. Code is the source of truth; ADRs, docs,
-> gbrain, and the existing training material are secondary and must be verified against code.
+> **Run it as a multi-agent workflow on the latest, most capable model (Opus-class)** — one agent
+> per role in §2, with independent fact-check and validation gates (the gates are enumerated in
+> `PROMPT-peat-curriculum-refresh.md` §0b and apply here too). Do **not** run it single-pass on a
+> smaller/faster model: this is complex-code comprehension where cross-checking and the strongest
+> model earn their keep. If the runtime cannot spawn sub-agents, still run every role and gate as a
+> distinct, explicit pass. Code is the source of truth; ADRs, docs, gbrain, and the existing
+> training material are secondary and must be verified against code.
 
 ---
 

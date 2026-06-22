@@ -1,7 +1,8 @@
 {
   "review": "PEAT learning-curriculum hardening to enterprise-onboarding grade",
   "prompt": "learning/PROMPT-peat-training-doc-improvement.md",
-  "date": "2026-06-18",
+  "date": "2026-06-19",
+  "last_full_run": "2026-06-18",
   "status": "complete",
   "phases_completed": [
     "Phase 1 — Ground truth established (per-repo audits + merged ground-truth.md)",
@@ -54,16 +55,16 @@
   },
   "audited_commits": {
     "peat": {
-      "head": "35d0f11",
-      "subject": "raise peat-mesh floor to rc.42 (#990)",
-      "version": "workspace 0.9.0-rc.25; peat-ffi 0.2.7",
-      "origin_status": "up to date, no pull"
+      "head": "68e9c3c",
+      "subject": "chore: bump workspace to 0.9.0-rc.26",
+      "version": "workspace 0.9.0-rc.26; peat-ffi 0.2.7; peat-mesh floor >=0.9.0-rc.43",
+      "origin_status": "advanced 35d0f11->68e9c3c this run (3 commits: ADR-071 + convergence seam #991, re-export relocation #993, rc.26 bump)"
     },
     "peat-mesh": {
-      "head": "00ab0c9",
-      "subject": "bump to 0.9.0-rc.42 (#260)",
-      "version": "0.9.0-rc.42 (README stale: advertises 0.3.2/0.1.0)",
-      "origin_status": "up to date, clean"
+      "head": "71fc3d5",
+      "subject": "chore: bump to 0.9.0-rc.43",
+      "version": "0.9.0-rc.43 (README stale: advertises 0.3.2/0.1.0)",
+      "origin_status": "advanced 00ab0c9->71fc3d5 this run (4 commits: register inbound peers #261, provider gossip #262, relocate distribution impl peat#992, rc.43 bump)"
     },
     "peat-btle": {
       "head": "3d70f48",
@@ -84,14 +85,15 @@
       "origin_status": "up to date"
     },
     "peat-node": {
-      "head": "4e1b5c8",
-      "subject": "deterministic iroh identity (v0.4.3) (#162)",
-      "version": "0.4.3",
-      "origin_status": "origin 5 commits AHEAD (v0.4.4/v0.4.5 tagged, NOT audited — unverified delta)"
+      "head": "bbe3b68",
+      "subject": "chore(release): v0.4.7",
+      "version": "0.4.7 (peat-cli crate 0.4.5)",
+      "origin_status": "advanced 4e1b5c8->bbe3b68 this run (v0.4.4-v0.4.7: empty-env startup fix #164, attachment outbox watcher #167, peer-status heartbeat + sync-stack logging #169). Prior '5 commits ahead' open item resolved."
     }
   },
   "open_todos": [
-    "Re-audit the peat-node origin delta (5 commits ahead: v0.4.4/v0.4.5) — could move the 28/27 RPC count, land gRPC auth #38, or change tombstone/RBAC details cited across modules 01,02b,03,04,05,06,07,08,09",
+    "ADR-071 Phase-1 follow-on: the convergence path is wired but inert — publish writes collection:None (file_distribution.rs ~963 TODO) and no NeedEvaluator is attached by default. Re-audit Module 3 §3.4b / Module 2 when the sidecar starts binding a collection on publish and registering durable subscriptions (the gRPC surface), which will flip interest-driven delivery from Proposed-seam to Shipped",
+    "Track ADR-071 Phases 2-3 (version-gap need, capability advertisement) — not yet in code; curriculum currently shows only the subscription input",
     "Resolve CellRole Support discrepancy: merged ground-truth peat.md omits Support, but direct read of peat-protocol/src/models/role.rs:25 confirms it exists (7 variants). Per decision D1 source wins and Support was retained; reconcile the ground-truth doc to match",
     "File/link a tracking issue for leader-election score-over-message convergence (leader_election.rs:340-345 follows higher node id with an in-code 'future work' comment; no issue located)",
     "Confirm operator-guide config against compiled code: [security.pki] X.509 device-cert flow, CoT bind_port 8087 / type strings / command_authority enum surface (currently labeled Documented, not Shipped)",
@@ -100,12 +102,45 @@
     "Confirm standalone-repo existence/status: peat-sim, peat-registry, peat-sdk-go, a standalone peat-android repo"
   ],
   "unverifiable_claims": [
-    "peat-node origin delta (5 commits ahead, v0.4.4/v0.4.5 untested) — RPC count, gRPC auth #38, tombstone/RBAC could have shifted",
+    "ADR-071 collection plumbing: publish writes collection:None (file_distribution.rs ~963 TODO), so the interest-driven convergence path is wired but never exercised end-to-end at this HEAD — the seam (NeedEvaluator, CollectionSubscriptionNeed, with_need_evaluator) is unit/single-process tested only; no live multi-node interest-driven delivery confirmed",
+    "Provider-gossip runtime behaviour (peat/blob-announce/1): DEFAULT_ANNOUNCE_TTL=3-hop epidemic convergence, re-announce-on-acquire, and relay/holepunch dial to a non-adjacent holder are read from source + e2e test names (3 real-iroh tests) but not independently benchmarked for actual multi-hop reach under partition",
+    "peat-node attachment outbox watcher: PEAT_NODE_ATTACHMENT_OUTBOX_WATCH env gate and poll-based stability/dedup read from src/attachments/outbox.rs; not exercised by a live run this read-only audit",
     "Existence at the audited HEAD of a peat-quickstart binary; peat-mesh-node production-vs-demo status; PEAT_BIND_PORT 4040 / PEAT_HTTP_PORT 8080 defaults; PEAT_CONNECTION_RECYCLE_SECS env var and its 60s/5s behavior",
     "Exact SyncMessageType discriminant byte values; connection-health RTT/loss thresholds; discovery 60s candidate-pool timeout; specific Prometheus metric names and /api/v1/... endpoints; stream-ID range enforcement at runtime",
     "External-spec / design-target numbers (flagged, not asserted): BLE rate/range; LoRa/Iridium SBD figures; ~10 MB Automerge / 256 KB / ~40x memory comparison; <5s P1 latency; 1,000+ node validation (1023 sim ceiling, #724-#727); 20-node-plateau thesis; 500,000/4,000 vs 9,120/384 connection-model disagreement",
     "Operator-guide config not traced into compiled code: [security.pki] X.509 device-cert flow; CoT bind_port 8087 / type strings; command_authority enum surface (labeled Documented)",
     "crates.io / Maven Central publication of any PEAT crate; peat-sim, peat-registry, peat-sdk-go, standalone peat-android repo existence (only ADR/epic anchors corroborate: ADR-054, #724, Phase-3 roadmap)",
     "Spec-defined, implementation unconfirmed: Automerge ActorId byte construction; access-level ladder Public(0)..Critical(4) + audit retention tiers (90d/1y/2y); partition original-leader-keeps-Cell-ID rule; leader-election score-over-message convergence; EdgeIntelligence variant / >=3-sensor WideAreaObservation threshold (dropped/softened); spec line count ~3,750 (dropped)"
+  ],
+  "run_log": [
+    {
+      "when": "2026-06-19",
+      "mode": "ci",
+      "repos_changed": {
+        "peat": "35d0f11 -> 68e9c3c (rc.25 -> rc.26)",
+        "peat-mesh": "00ab0c9 -> 71fc3d5 (rc.42 -> rc.43)",
+        "peat-node": "4e1b5c8 -> bbe3b68 (v0.4.3 -> v0.4.7)",
+        "peat-btle": "no drift (3d70f48)",
+        "peat-lite": "no drift (7a8a8fb)",
+        "peat-gateway": "no drift (8d16824)"
+      },
+      "docs_touched": [
+        "00b-the-big-idea.md (version)",
+        "01-architecture-overview.md (versions, floor)",
+        "02-peat-protocol.md (header + relocation/ADR-071 note)",
+        "03-peat-mesh.md (header, storage row, NEW §3.4b blob distribution + provider gossip + ADR-071 seam)",
+        "04-peat-btle-and-lite.md (version)",
+        "05-peat-gateway.md (version)",
+        "07-repo-links-and-gaps.md (versions)",
+        "08-running-and-operating.md (NEW peat-node v0.4.7 ops: outbox watcher, peer-status heartbeat, sync-stack logging)",
+        "09-protocol-specs.md (ADR-071 subscription cross-ref)",
+        "index.html (audit stamp, node/mesh versions, gateway lag, doc-fix, NEW hub mesh cards, SYNC stamp)",
+        "peat-constrained-networking.html (SYNC stamp, NEW provider-gossip note in §07)",
+        "changelog.html (Current-sync card, SYNC stamp, prepended incremental row)"
+      ],
+      "claims_changed": "version/commit stamps across 8 modules + 3 HTML; new Shipped capability (provider gossip, peat#262); new Proposed model + inert seam (ADR-071); relocation fact (peat#992); peat-node v0.4.7 ops surface (#164/#167/#169) + peat-mesh #261 known_peers fix",
+      "diagrams_touched": "M-038 added (provider-gossip sequence, 03-peat-mesh.md §3.4b). Spot-checked + advanced to 2026-06-19: M-019 (SyncMessageType wire bytes — unchanged; blob-announce rides a separate ALPN, adds no tag), M-020/M-021 (negentropy/transport — unchanged), M-007/M-009/M-010 (peat-protocol phases/enums — unchanged), M-035 (peat-node proto:342-373 — RPC count still 27, unchanged), H-006/H-007 (hub mesh — prose cards added)",
+      "notes": "Incremental CI refresh. No full sweep due (last_full_run 2026-06-18, < 30d). All §0b gates run (fact-check, house-rules, cohesion, diagram, blast-radius). Resolved prior open_todo (peat-node 5-commits-ahead): RPC count held at 27, gRPC auth #38 did NOT land, tombstone/RBAC unchanged. New open_todos + unverifiable_claims logged for ADR-071 inert seam and provider-gossip runtime behaviour."
+    }
   ]
 }

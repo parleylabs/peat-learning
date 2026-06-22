@@ -18,8 +18,8 @@ crates: [`peat-btle/`](../peat-btle/) (Bluetooth LE mesh transport) and
 > **standalone leaf crates**: they depend on nothing else in PEAT (beyond `peat-btle`'s one optional
 > link to `peat-lite`), and `peat-mesh` pulls them in only through opt-in Cargo features.
 
-**Audited against:** peat-btle `3d70f48` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `00ab0c9` /
-0.9.0-rc.42.
+**Audited against:** peat-btle `3d70f48` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `71fc3d5` /
+0.9.0-rc.43.
 
 ---
 

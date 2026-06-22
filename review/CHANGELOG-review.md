@@ -430,3 +430,56 @@ ladder + audit retention tiers (likely Phase-3); stream-ID range *enforcement*; 
 `EdgeIntelligence` / "≥3 sensors" threshold (dropped/softened); peat-node origin delta.
 
 File: `/Users/bryanbui/code/peat/learning/09-protocol-specs.md`
+
+---
+
+## 2026-06-19 — Incremental refresh (CI, delta-driven)
+
+First scheduled incremental on top of the 2026-06-18 full sweep. Three of six repos drifted; the
+refresh re-audited and rewrote only the affected docs (and their diagrams). No full sweep due
+(`last_full_run` 2026-06-18, < 30-day interval).
+
+**Repos moved (old → new):**
+- **peat** `35d0f11 → 68e9c3c` — workspace `0.9.0-rc.25 → rc.26`; +ADR-071 (Proposed) and its
+  additive Phase-1 convergence seam (#991); distribution impl re-exported after relocation (#993);
+  peat-mesh dependency floor raised to `>=0.9.0-rc.43`.
+- **peat-mesh** `00ab0c9 → 71fc3d5` — `rc.42 → rc.43`; **provider gossip** (`peat/blob-announce/1`
+  ALPN, #262), the **relocation** of blob/file-transfer distribution from peat-protocol into
+  peat-mesh (peat#992, "canonical iroh consumer"), and a sync fix registering inbound-accepted peers
+  into `known_peers` (#261).
+- **peat-node** `4e1b5c8 → bbe3b68` — `v0.4.3 → v0.4.7`; attachment **outbox watcher** for
+  bidirectional hands-off file sync (#167, env `PEAT_NODE_ATTACHMENT_OUTBOX_WATCH`, off by default),
+  a **30 s peer-status heartbeat** logging `connected_peers` vs `known_peers` (#169), default log
+  filter widened to cover the whole sync stack, and an empty-env startup-crash fix (#164).
+
+peat-btle, peat-lite, peat-gateway: **no drift**.
+
+**Docs changed.** Version/commit stamps updated across `00b`, `01`, `02`, `03`, `04`, `05`, `07`
+and both HTML tracks + `changelog.html`. New labeled content:
+- **Module 3 §3.4b (new)** — "Blob distribution & provider gossip": the relocation to peat-mesh, the
+  `DistributionScope` targeting table (`AllNodes`/`Nodes` work; `Formation`/`Capable` are
+  reserved-but-stubbed — warn + fall back to all `known_peers`, `resolve_targets:873`), provider
+  gossip (**Shipped**: ALPN, `DEFAULT_ANNOUNCE_TTL=3`, re-announce-on-acquire, `classify_announce`
+  trust gating), a new mermaid (**M-038**), and the **ADR-071** interest-driven-convergence seam
+  (**Proposed**; `NeedEvaluator`/`CollectionSubscriptionNeed`/`with_need_evaluator` present but inert,
+  publish still writes `collection: None`).
+- **Module 2** — facade note that `storage/file_distribution` + `model_distribution` are now
+  re-export shims, pointing at Module 3.
+- **Module 8** — peat-node v0.4.7 ops note (outbox watcher, peer-status heartbeat, sync-stack logging;
+  ties `known_peers` to delivery targeting and the #261 fix).
+- **Module 9** — distinguishes the **durable** ADR-071 subscription from the existing `Subscribe`
+  change-stream predicate.
+- **index.html** — two new hub mesh cards (blob distribution / provider gossip; ADR-071) mirroring
+  §3.4b; **peat-constrained-networking.html** — §07 note on multi-hop blob reach.
+
+**House rules.** Provider gossip labeled **Shipped** (code + e2e tests); ADR-071 labeled **Proposed**
+with the seam called out as Shipped-but-inert; relocation cited to peat#992; FIPS/crypto untouched; no
+vendor names introduced; autonomy framing untouched.
+
+**Resolved.** Prior open item "peat-node 5 commits ahead (v0.4.4/v0.4.5 untested)" — now audited:
+RPC count held at **27**, gRPC auth #38 did **not** land, tombstone/RBAC unchanged.
+
+**New flags (unverifiable / follow-on).** ADR-071 convergence path wired but never exercised
+end-to-end (publish writes `collection: None`); provider-gossip multi-hop reach read from source +
+e2e test names, not independently benchmarked; outbox watcher gate/poll behaviour not exercised by a
+live run (read-only audit). New `open_todos` track ADR-071 collection plumbing and Phases 2–3.

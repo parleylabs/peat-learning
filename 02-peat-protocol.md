@@ -16,7 +16,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `35d0f11`, `peat-mesh` rc.42 (`00ab0c9`). Citations below point at the
+Audited at `peat` HEAD `68e9c3c`, `peat-mesh` rc.43 (`71fc3d5`). Citations below point at the
 working-tree source.
 
 ---
@@ -61,6 +61,15 @@ the ones to learn first. All of these are **Shipped** unless noted:
 The `transport` and `network` modules are thin `pub use peat_mesh::…` shims — the real transport
 and crypto code lives in `peat-mesh` (Module 3). Treat `peat-protocol` as the domain layer over
 that plumbing.
+
+> **The shim list grew (rc.43).** `storage/file_distribution.rs` and `storage/model_distribution.rs`
+> are now thin re-exports too — `pub use peat_mesh::storage::…::*` — the blob/file-transfer
+> implementation **relocated into `peat-mesh`** (peat#992), which is "the canonical iroh consumer;
+> transport-specific impl belongs there, not in the protocol/spec layer." So when you grep for
+> `IrohFileDistribution` or `DistributionScope`, the source now lives in `peat-mesh/src/storage/`.
+> The same commit landed the **ADR-071 interest-driven-convergence seam** (a `NeedEvaluator` trait,
+> a `collection` field on the distribution document, opt-in via `with_need_evaluator`) — **Proposed**
+> as a model, with the additive seam present but inert by default. Module 3 §3.4b walks it.
 
 A few constants in `lib.rs` set the defaults of the system (all **Shipped**, verbatim from
 `lib.rs:112,115,118`):

@@ -20,6 +20,42 @@ asked (`full` mode) or the periodic full-sweep is due.
 Inputs: `learning/REVIEW-STATE.json` (records `audited_commits` per repo and `last_full_run`),
 the six repos, and the curriculum docs. Source of truth is always the code.
 
+## 0b · Execution model — latest model, multi-agent, validation gates
+
+This work is about understanding complex systems code, so quality beats cost.
+
+- **Always run on the latest, most capable model (Opus-class) — never a smaller/faster tier —**
+  for **both** the weekly incremental and the monthly full sweep. Code comprehension and the
+  fact-checking below are exactly where the strongest model earns its keep.
+- **Run as a multi-agent workflow, even for a small incremental.** An orchestrator scopes the
+  drift (§1–§2), then fans out specialized sub-agents — the team-role lenses from
+  `PROMPT-peat-training-doc-improvement.md` §2 (protocol architect · distributed-systems verifier ·
+  security/compliance · enterprise SE · adversarial red-teamer · technical educator ·
+  regression/impact) — rather than one agent doing everything in a single pass. If the runtime
+  cannot spawn sub-agents, the orchestrator **MUST still run each gate below as a distinct,
+  explicit pass** — the gates are mandatory regardless of how they are executed.
+
+**Validation gates — ALL must pass before anything is committed:**
+
+1. **Fact-check gate (hard).** An *independent* verifier re-checks every new or changed claim
+   against the actual code with a `path:line` (or ADR/issue) citation. Any claim it cannot confirm
+   is removed or demoted to `unverifiable_claims` — **no unverified claim ships.** This is the most
+   important gate now that the refresh writes code-level assertions.
+2. **House-rules gate.** Correct shipped/in-flight/proposed/speculative label on every capability;
+   FIPS-approved primitives only (ChaCha20 / X25519 are stale-doc artifacts, never reintroduced);
+   no vendor/consumer names in generic prose; "autonomy under human authority" preserved.
+3. **Cohesion & flow gate.** The curriculum still reads as one coherent track: learning order
+   intact, hub ↔ module mirroring consistent, prose human (no AI cadence), terminology uniform.
+4. **Diagram gate.** Every affected diagram re-derived (not just preserved), status palette correct
+   (Shipped green · In-flight amber · Proposed blue · Speculative purple), hub-SVG ↔ module-ASCII
+   twins agree, SVG well-formed and self-contained (no CDN/script/fetch), legend present, and the
+   `review/diagrams.md` row advanced.
+5. **Regression / blast-radius gate.** No edit silently broke another section (the §4b checks).
+
+A gate failure **blocks the commit**: fix and re-run the gate, or log the issue to
+`REVIEW-STATE.json` `open_todos` if it is real but out of scope. Only after all gates pass do you
+commit and open the PR (§7).
+
 ## 1 · Phase 0 — Read state & detect drift
 
 1. Read `learning/REVIEW-STATE.json`. Extract `audited_commits[repo].head` for each of
@@ -150,9 +186,27 @@ self-contained — never make them fetch a manifest at runtime):
 
 - **`local` (default):** rewrite docs in place, update gbrain, update state files. Requires the
   local repo clones + gbrain MCP.
-- **`ci` / `cloud`:** do all the above except gbrain; do the work on a branch
-  (`curriculum-refresh/<date>`), and open a PR with the diff + the run-log summary instead of
-  editing the working `main`. (Requires the curriculum to live in a pushed git repo.)
+- **`ci` / `cloud`:** do all the above except gbrain. **Order matters — never push an empty
+  branch:** make every edit first, run all §0b validation gates, and **only then commit**. Create
+  the branch `curriculum-refresh/<date>` *from that commit* (or commit onto it before its first
+  push) so the branch is never pushed without its changes; push it, then open a PR with the diff +
+  run-log summary. Never edit `main` directly. If, after scoping, **nothing drifted (and no full
+  sweep is due), do not create, push, or PR a branch at all** — just log the no-drift entry and
+  exit. (Requires the curriculum to live in a pushed git repo.)
+
+**Push mechanics (cloud/ci) — use real `git push`, never the file-content API.** A fresh
+`git clone https://…/peat-learning.git learning` has **no push credentials**. The cloud
+environment provides an **authenticated git remote** (a local git proxy) on the repo it
+pre-checks-out at session start, so:
+1. At the very start, *before any `cd`*, capture it: `ENVREMOTE="$(git remote get-url origin 2>/dev/null)"`.
+2. After cloning `learning/`, repoint its origin to that authenticated URL —
+   `git -C learning remote set-url origin "$ENVREMOTE"` — then `git push` works with the
+   environment's credentials.
+- **Push via `git` only. Do NOT fall back to the GitHub MCP `push_files` / file-content API** —
+  it mangles the large embedded base64 logo (`data:` URIs) and silently substitutes a placeholder.
+  Creating the PR via the GitHub MCP `create_pull_request` is fine (it carries no file content).
+- **Gate sub-agents (§0b) are read-only reviewers; the orchestrator performs every file write,
+  the commit, and the push** — so no large/base64 file ever crosses an agent boundary.
 
 Mode comes from `args.mode` (default `local`).
 

@@ -312,7 +312,7 @@ them. The bundle gets the artifact into the air-gap; the platform supplies the s
 for CDC watching. It never starts a mesh node and never routes mesh data.
 
 That `=` pin is deliberate, and it is honest to say so: it is **intentionally frozen and currently lags
-the live mesh by roughly 40 release candidates** (the ecosystem is at `rc.42`; the gateway sits on
+the live mesh by roughly 40 release candidates** (the ecosystem is at `rc.43`; the gateway sits on
 `rc.1`). The freeze is treated as intentional in the crate's verification checklist, and bumping it is
 real integration work, not a one-line version bump — the gateway must be re-validated against the newer
 mesh surface. So when you read "shipped" for this crate, read it as "shipped against an older,
