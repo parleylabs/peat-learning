@@ -39,7 +39,7 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 | M-003 | `01-architecture-overview.md:106` | Lens A — crate/packaging 5-layer model | ascii | `ARCHITECTURE.md` (verified vs code) | — | H-002 | 2026-06-18 |
 | M-004 | `01-architecture-overview.md:174` | Lens B — local change → peer state | mermaid | `DEVELOPER_GUIDE.md §3.2` | — | H-001 | 2026-06-18 |
 | M-005 | `01-architecture-overview.md:181` | Lens B legend | ascii | teaching | — | — | 2026-06-18 |
-| M-006 | `01-architecture-overview.md:297` | Cargo dependency graph (facade points down) | mermaid | `Cargo.toml` (verified) | optional edges | H-003 | 2026-06-18 |
+| M-006 | `01-architecture-overview.md:297` | Cargo dependency graph (facade points down) | mermaid | `Cargo.toml` (verified) | optional edges | H-003 | 2026-06-22 |
 | M-007 | `02-peat-protocol.md:108` | Three phases as a flow | mermaid | `peat-protocol/src/lib.rs`; `hierarchy/maintenance.rs:227,252,312` | — | — | 2026-06-18 |
 | M-008 | `02-peat-protocol.md:267` | Routing rule `is_route_valid` | ascii | `router.rs:101+` | — | — | 2026-06-18 |
 | M-009 | `02-peat-protocol.md:496` | HierarchyLevel enum tiers | ascii | `peat-mesh/src/beacon/types.rs:56-67`; ADR-066 | — | — | 2026-06-18 |
@@ -60,15 +60,15 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 | M-024 | `04-peat-btle-and-lite.md:135` | GATT Write/Indicate legend | ascii | `peat-btle/docs/sync` | — | — | 2026-06-18 |
 | M-025 | `04-peat-btle-and-lite.md:348` | Edge dependency flow (acyclic) | ascii | `Cargo.toml:47,174`; ADR-059 Amend.4 | — | — | 2026-06-18 |
 | M-026 | `04-peat-btle-and-lite.md:353` | Dependency-direction legend | ascii | Module 1 §1.6 | — | — | 2026-06-18 |
-| M-027 | `05-peat-gateway.md:211` | CDC sinks (NATS/Webhook/Kafka) | mermaid | `engine.rs:78-80`; `models.rs:80-84` | Kafka In-flight | H-010 | 2026-06-18 |
+| M-027 | `05-peat-gateway.md:211` | CDC sinks (NATS/Webhook/Kafka) | mermaid | `engine.rs:78-80`; `models.rs:80-84` | Kafka In-flight | H-010 | 2026-06-22 |
 | M-028 | `06-data-flows.md:28` | Trace A: sensor → command post | ascii | Module 6 §6.1 | leg-by-leg | M-029 | 2026-06-18 |
 | M-029 | `06-data-flows.md:62` | Trace A sequence | mermaid | `peat-lite/protocol/`; `transport/lite.rs`; `cot/` | — | M-028 | 2026-06-18 |
 | M-030 | `06-data-flows.md:143` | Trace B: discovery → cell (score weights) | ascii | `leader_election.rs:101-106`; `coordinator.rs` | — | — | 2026-06-18 |
 | M-031 | `06-data-flows.md:201` | Trace C: up/down/lateral hierarchy flow | ascii | `hierarchy/`; `command/` | — | — | 2026-06-18 |
 | M-032 | `06-data-flows.md:272` | System architecture (gateway off the data path) | ascii | Module 6 §6.4 | peat-sbd/peat-lora Proposed | H-002 | 2026-06-18 |
-| M-033 | `08-running-and-operating.md:34` | Quickstart 3-node topology | ascii | Module 3 §3.4 | — | — | 2026-06-18 |
+| M-033 | `08-running-and-operating.md:34` | Quickstart 3-node topology | ascii | Module 3 §3.4 | — | — | 2026-06-22 |
 | M-034 | `00b-the-big-idea.md:117` | Mesh O(n²) vs hierarchy O(n log n) topology | mermaid | 00b §3 (analytical); `hierarchy/router.rs:19-20,90-91,140` | Analytical; Shipped (routing) | — | 2026-06-18 |
-| M-035 | `06-data-flows.md:253` | Tasking today vs wanted (`command_log`) | mermaid | `peat-node/proto/sidecar.proto:342-373`; ADR-046 #853 | Shipped / In-flight / Speculative | — | 2026-06-19 |
+| M-035 | `06-data-flows.md:253` | Tasking today vs wanted (`command_log`) | mermaid | `peat-node/proto/sidecar.proto:342-373`; ADR-046 #853 | Shipped / In-flight / Speculative | — | 2026-06-22 |
 | M-036 | `09-protocol-specs.md:25` | Five specs — reading order & freshness | mermaid | spec README; `005` amended 2026-05-18 | Draft / current | — | 2026-06-18 |
 | M-037 | `09-protocol-specs.md:40` | Spec vs shipped-code divergences | table | `001-transport.md:95-101`; `device_id.rs:39-47` | mixed (code is the contract) | — | 2026-06-18 |
 | M-038 | `03-peat-mesh.md:§3.4b` | Provider gossip: locating a blob beyond direct peers (`peat/blob-announce/1`) | mermaid | `peat-mesh/src/storage/blob_announce.rs` (ALPN, `DEFAULT_ANNOUNCE_TTL=3`, `classify_announce`); peat-mesh#262 | Shipped | H-006 | 2026-06-19 |
@@ -79,14 +79,14 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 |---|---|---|---|---|---|---|
 | H-001 | `index.html:385` | Lens B in motion — local change → peer state | svg | mirrors M-004 | M-004 | 2026-06-18 |
 | H-002 | `index.html:437` | Repo constellation / layer model (incl. peat-node) | svg | mirrors M-003/M-032 | M-003 | 2026-06-18 |
-| H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-06-18 |
+| H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-06-22 |
 | H-004 | `index.html:670` | peat-protocol surface / phases | svg | mirrors Module 2 | — | 2026-06-18 |
 | H-005 | `index.html:707` | (Module 2/2b deep-dive figure) | svg | mirrors Module 2b | — | 2026-06-18 |
 | H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-06-19 |
 | H-007 | `index.html:854` | (Module 3 figure) | svg | mirrors Module 3 | — | 2026-06-18 |
 | H-008 | `index.html:936` | BLE / lite edge | svg | mirrors Module 4 | — | 2026-06-18 |
 | H-009 | `index.html:1054` | Gateway / formation security | svg | mirrors Module 2b/5 | M-014 | 2026-06-18 |
-| H-010 | `index.html:1113` | Gateway CDC / control plane | svg | mirrors M-027 | M-027 | 2026-06-18 |
+| H-010 | `index.html:1113` | Gateway CDC / control plane | svg | mirrors M-027 | M-027 | 2026-06-22 |
 | H-011 | `index.html:1393` | Repo map / what to clone next | svg | mirrors Module 7 | — | 2026-06-18 |
 
 ## HTML — `peat-constrained-networking.html` ("Off the Grid" track)

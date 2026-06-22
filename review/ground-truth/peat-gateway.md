@@ -212,3 +212,20 @@ These are **self-reported single-run debug-build microbenchmarks**, environment-
 5. **Ingress AuthZ is a permissive stub** and broker auth/TLS are absent — the NATS control-plane is not production-secure yet despite being feature-rich.
 6. **Performance numbers are self-reported debug-build microbenchmarks**; no "1,000+ node" claim exists here.
 7. **No proof-of-possession at enrollment** — the gateway trusts the client-supplied public key and node_id.
+
+---
+
+### 2026-06-22 delta — `8d16824 → bece4d6` (crate still 0.1.0)
+
+- **`peat-mesh` pin jumped `=0.9.0-rc.1 → =0.9.0-rc.40`** (Dependabot peat-gateway#144,
+  `Cargo.toml:23` + dev-dep). The long-standing "intentionally frozen, ~40 RCs stale by design"
+  framing is now obsolete — the gateway lags the ecosystem (rc.43) by only ~3 RCs and is being kept
+  current via Dependabot. The bump was **not** a one-line change: it adapted the CDC watcher to the
+  newer `ChangeEvent` surface — `Updated`/`Removed` gained an `origin` field, `Initial` a `collection`,
+  with a catch-all arm added (`src/cdc/watcher.rs:81,154,200`) — and carried a `redb` 2→4 major
+  (`ReadableDatabase` import, `src/storage/redb_backend.rs`). Confirms the "tracking the mesh is real
+  integration work" caveat. The CDC **sink set** (NATS/Webhook/Kafka) is unchanged — `src/cdc/engine.rs`,
+  the sink modules, and the `CdcSinkType` enum (`src/tenant/models.rs`) are all untouched in
+  `8d16824..bece4d6` — so M-027/H-010 facts hold.
+- Other commits in range are pure dependency bumps (reqwest 0.12→0.13, tower-http 0.5→0.6,
+  rdkafka 0.37→0.39, the UI/actions groups).

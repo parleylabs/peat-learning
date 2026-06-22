@@ -1,7 +1,7 @@
 {
   "review": "PEAT learning-curriculum hardening to enterprise-onboarding grade",
   "prompt": "learning/PROMPT-peat-training-doc-improvement.md",
-  "date": "2026-06-19",
+  "date": "2026-06-22",
   "last_full_run": "2026-06-18",
   "status": "complete",
   "phases_completed": [
@@ -55,10 +55,10 @@
   },
   "audited_commits": {
     "peat": {
-      "head": "68e9c3c",
-      "subject": "chore: bump workspace to 0.9.0-rc.26",
-      "version": "workspace 0.9.0-rc.26; peat-ffi 0.2.7; peat-mesh floor >=0.9.0-rc.43",
-      "origin_status": "advanced 35d0f11->68e9c3c this run (3 commits: ADR-071 + convergence seam #991, re-export relocation #993, rc.26 bump)"
+      "head": "8a94796",
+      "subject": "chore(release): workspace 0.9.0-rc.27 + peat-ffi AAR 0.1.3 (#999)",
+      "version": "workspace 0.9.0-rc.27; peat-ffi 0.2.8 (Maven AAR 0.1.3); peat-mesh floor >=0.9.0-rc.43",
+      "origin_status": "advanced 68e9c3c->8a94796 this run (4 commits: ADR-072 synced-folder lifecycle #996 [Proposed], ADR-059 data-as-a-capability #997 [Proposed, NUMBER COLLISION with existing 059-cross-transport-document-bridging.md], peat-ffi relay-n0-hosted passthrough + connect_peer_nowait #995, rc.27 bump #999). No peat-protocol/peat-mesh/peat-schema src change this delta."
     },
     "peat-mesh": {
       "head": "71fc3d5",
@@ -79,19 +79,21 @@
       "origin_status": "even with origin"
     },
     "peat-gateway": {
-      "head": "8d16824",
-      "subject": "add dependabot config (#134)",
-      "version": "0.1.0; pins peat-mesh =0.9.0-rc.1 (~40 RCs stale, intentional)",
-      "origin_status": "up to date"
+      "head": "bece4d6",
+      "subject": "chore(deps): bump redb, reqwest, tower-http, peat-mesh (#144)",
+      "version": "0.1.0; pins peat-mesh =0.9.0-rc.40 (was rc.1; Dependabot #144 bumped it ~3 RCs behind rc.43). Pin no longer 'intentionally frozen ~40 RCs stale' — kept current via Dependabot; bump adapted CDC watcher to ChangeEvent origin field + redb 2->4.",
+      "origin_status": "advanced 8d16824->bece4d6 this run (4 commits, all deps bumps: peat-mesh rc.1->rc.40 + redb/reqwest/tower-http/rdkafka/ui/actions #135/#137/#140/#144). CDC sink set unchanged (src/cdc/engine.rs + sink modules + CdcSinkType in src/tenant/models.rs untouched)."
     },
     "peat-node": {
-      "head": "bbe3b68",
-      "subject": "chore(release): v0.4.7",
-      "version": "0.4.7 (peat-cli crate 0.4.5)",
-      "origin_status": "advanced 4e1b5c8->bbe3b68 this run (v0.4.4-v0.4.7: empty-env startup fix #164, attachment outbox watcher #167, peer-status heartbeat + sync-stack logging #169). Prior '5 commits ahead' open item resolved."
+      "head": "9fcdabd",
+      "subject": "fix(attachments): mirror outbox layout in peat-cli + test inbox sinks (#173) + docs/version-minimums (#175)",
+      "version": "0.4.8 (peat-cli crate 0.4.5)",
+      "origin_status": "advanced bbe3b68->9fcdabd this run (v0.4.8: inbox mirrors sender outbox layout w/ path re-sanitisation #173, post-write blob_size validation, startup version banner, --print-config/PEAT_NODE_PRINT_CONFIG). proto/sidecar.proto unchanged — RPC count still 27."
     }
   },
   "open_todos": [
+    "ADR-059 NUMBER COLLISION (peat#997, 2026-06-22): docs/adr/059-data-as-a-capability.md was added with the same number as the existing docs/adr/059-cross-transport-document-bridging.md. The curriculum's ADR-059 citations (Module 1 §1.5 'Amendment 4' cycle-break, Module 3 §3.5, diagram M-025) refer to the cross-transport-bridging ADR and remain correct; the new data-as-a-capability ADR (Proposed) is logged but deliberately NOT woven into prose to avoid conflating the two. Re-audit if the source repo renumbers one, or if data-as-a-capability gains code (then surface it where capability advertisement / ADR-018 is taught).",
+    "ADR-072 (Proposed, peat#996): synced-folder lifecycle & file-handling policy (deletion / idempotent re-drop / version ordering on the ADR-071 distribution document). No code. Re-audit Module 3 §3.4b / Module 8 when a lifecycle policy field lands on the distribution document and peat-node begins honoring it (flips from Proposed to Shipped).",
     "ADR-071 Phase-1 follow-on: the convergence path is wired but inert — publish writes collection:None (file_distribution.rs ~963 TODO) and no NeedEvaluator is attached by default. Re-audit Module 3 §3.4b / Module 2 when the sidecar starts binding a collection on publish and registering durable subscriptions (the gRPC surface), which will flip interest-driven delivery from Proposed-seam to Shipped",
     "Track ADR-071 Phases 2-3 (version-gap need, capability advertisement) — not yet in code; curriculum currently shows only the subscription input",
     "Resolve CellRole Support discrepancy: merged ground-truth peat.md omits Support, but direct read of peat-protocol/src/models/role.rs:25 confirms it exists (7 variants). Per decision D1 source wins and Support was retained; reconcile the ground-truth doc to match",
@@ -102,6 +104,7 @@
     "Confirm standalone-repo existence/status: peat-sim, peat-registry, peat-sdk-go, a standalone peat-android repo"
   ],
   "unverifiable_claims": [
+    "2026-06-22 delta read-only: ADR-072 (synced-folder lifecycle) and ADR-059 (data-as-a-capability) are Proposed with no code. peat-ffi connect_peer_nowait (lib.rs:1222) + relay-n0-hosted facade forward (peat-protocol/Cargo.toml:123, peat-ffi/Cargo.toml:109) and peat-node v0.4.8 inbox layout-mirror + path re-sanitisation + post-write blob_size check (src/attachments/inbox.rs:79-123) read from source/CHANGELOG, not exercised by a live run",
     "ADR-071 collection plumbing: publish writes collection:None (file_distribution.rs ~963 TODO), so the interest-driven convergence path is wired but never exercised end-to-end at this HEAD — the seam (NeedEvaluator, CollectionSubscriptionNeed, with_need_evaluator) is unit/single-process tested only; no live multi-node interest-driven delivery confirmed",
     "Provider-gossip runtime behaviour (peat/blob-announce/1): DEFAULT_ANNOUNCE_TTL=3-hop epidemic convergence, re-announce-on-acquire, and relay/holepunch dial to a non-adjacent holder are read from source + e2e test names (3 real-iroh tests) but not independently benchmarked for actual multi-hop reach under partition",
     "peat-node attachment outbox watcher: PEAT_NODE_ATTACHMENT_OUTBOX_WATCH env gate and poll-based stability/dedup read from src/attachments/outbox.rs; not exercised by a live run this read-only audit",
@@ -113,6 +116,35 @@
     "Spec-defined, implementation unconfirmed: Automerge ActorId byte construction; access-level ladder Public(0)..Critical(4) + audit retention tiers (90d/1y/2y); partition original-leader-keeps-Cell-ID rule; leader-election score-over-message convergence; EdgeIntelligence variant / >=3-sensor WideAreaObservation threshold (dropped/softened); spec line count ~3,750 (dropped)"
   ],
   "run_log": [
+    {
+      "when": "2026-06-22",
+      "mode": "ci",
+      "repos_changed": {
+        "peat": "68e9c3c -> 8a94796 (rc.26 -> rc.27)",
+        "peat-gateway": "8d16824 -> bece4d6 (0.1.0; peat-mesh pin rc.1 -> rc.40)",
+        "peat-node": "bbe3b68 -> 9fcdabd (v0.4.7 -> v0.4.8)",
+        "peat-mesh": "no drift (71fc3d5)",
+        "peat-btle": "no drift (3d70f48)",
+        "peat-lite": "no drift (7a8a8fb)"
+      },
+      "docs_touched": [
+        "00b-the-big-idea.md (version rc.27; peat-ffi connect_peer_nowait Shipped note)",
+        "01-architecture-overview.md (versions/floor rc.27; gateway pin rc.1->rc.40 prose + M-006 mermaid edge label)",
+        "02-peat-protocol.md (header commit 8a94796; ADR-072 Proposed follow-on; rc.27 relay-n0-hosted forward fix + connect_peer_nowait)",
+        "03-peat-mesh.md (§3.4b ADR-072 Proposed lifecycle policy paragraph)",
+        "05-peat-gateway.md (header commit bece4d6; §5.6 pin rewrite rc.1->rc.40, dependabot #144, ChangeEvent origin adaptation)",
+        "07-repo-links-and-gaps.md (audited HEADs: peat 8a94796, gateway bece4d6, node 0.4.8)",
+        "08-running-and-operating.md (v0.4.7 -> v0.4.8 ops box: inbox layout mirror + sanitisation, version banner, --print-config, post-write size check; relay-n0-hosted facade-forward note)",
+        "index.html (audit stamp, gateway pin card, peat-node 0.4.8, SYNC stamp)",
+        "peat-constrained-networking.html (SYNC stamp)",
+        "changelog.html (Current-sync card + tags, SYNC stamp, prepended incremental row)",
+        "review/diagrams.md (M-006 re-derived; H-003/M-027/H-010/M-033/M-035 spot-checked + advanced)",
+        "review/ground-truth/{peat,peat-gateway,peat-node}.md (dated deltas)"
+      ],
+      "claims_changed": "version/commit stamps across 5 modules + 3 HTML; CORRECTED gateway 'intentionally frozen ~40 RCs stale by design' -> Dependabot-maintained pin rc.40 (~3 RCs behind), with real CDC-watcher integration work as evidence; new Shipped FFI surface (connect_peer_nowait, relay-n0-hosted facade forward, peat#995); new peat-node v0.4.8 Shipped ops (inbox layout mirror + path sanitisation + size check, version banner, --print-config); two new Proposed ADRs flagged (ADR-072 lifecycle; ADR-059 data-as-a-capability w/ number collision).",
+      "diagrams_touched": "M-006 (dependency graph) RE-DERIVED: edge label 'stale by ~40 rc' -> 'rc.40 (~3 rc behind)'. Spot-checked + advanced to 2026-06-22: H-003 (twin SVG — no rc label, arrows unchanged), M-027/H-010 (gateway CDC sink set unchanged — src/cdc/engine.rs, the sink modules, and CdcSinkType in src/tenant/models.rs all untouched), M-033 + M-035 (peat-node moved but proto/sidecar.proto unchanged, RPC count still 27).",
+      "notes": "Incremental CI refresh. No full sweep due (last_full_run 2026-06-18, < 30d). All §0b gates run (independent fact-check, house-rules, cohesion, diagram, blast-radius). peat-protocol/peat-mesh/peat-schema src unchanged this delta so protocol/mesh diagrams unaffected. New open_todos: ADR-059 number collision, ADR-072 Proposed lifecycle. New unverifiable: ADR-072/ADR-059 Proposed-no-code; connect_peer_nowait + v0.4.8 inbox layout/size-check read from source, not exercised live."
+    },
     {
       "when": "2026-06-19",
       "mode": "ci",

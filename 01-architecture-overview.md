@@ -289,14 +289,14 @@ Concretely, verified from the manifests:
   `peat-mesh`.
 - `peat-lite` → *(nothing PEAT)* — `no_std`, standalone, only `heapless`.
 - `peat-gateway` → `peat-mesh` (an exact `=`-pin, with features `automerge-backend` + `broker`).
-  **The pin is intentionally stale** — it pins `=0.9.0-rc.1` while the ecosystem is at rc.43, so
-  the gateway lags ~40 release candidates by design.
+  The pin was frozen at `=0.9.0-rc.1` for months but a Dependabot bump (peat-gateway#144) moved it
+  to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (rc.43) by only ~3 RCs (Module 5 §5.6).
 
 Rendered as a diagram (solid = required dependency, dashed = optional feature):
 
 ```mermaid
 flowchart TD
-    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, stale by ~40 rc| M
+    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, rc.40 (~3 rc behind)| M
     T["peat-transport<br/>(HTTP/REST · TAK/CoT)"] --> P
     FFI["peat-ffi<br/>(Kotlin / Swift)"] --> P
     PER["peat-persistence"] --> P
@@ -330,7 +330,7 @@ this project, and spotting it is part of the job.
 Because `peat-mesh` and `peat-btle` are separate published crates, the `peat` workspace pins
 their versions carefully. Open `peat/Cargo.toml` and you will find a long, heavily commented
 floor-version history (a succession of release-candidate floors; the floor now sits at
-`peat-mesh >=0.9.0-rc.43` and the audited HEAD is the workspace bump to `0.9.0-rc.26`) explaining a
+`peat-mesh >=0.9.0-rc.43` and the audited HEAD is the workspace bump to `0.9.0-rc.27`) explaining a
 cargo **cycle-detection** problem that arose when `peat-btle` and `peat-mesh` each optionally
 depended on the other.
 

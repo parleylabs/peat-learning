@@ -131,10 +131,35 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 > it takes `--bind` / `--name` CLI flags. When something does not pick up an env var, first confirm
 > which binary you are actually running.
 
-### What the production sidecar (`peat-node`) gained recently — v0.4.7 **[Shipped]**
+### What the production sidecar (`peat-node`) gained recently — v0.4.8 **[Shipped]**
 
-If you run `peat-node` (the sidecar most deployments use), three operability changes in the
-`v0.4.4 → v0.4.7` line are worth knowing, all confirmed in `peat-node` at `bbe3b68`:
+If you run `peat-node` (the sidecar most deployments use), a handful of operability changes in the
+`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `9fcdabd`:
+
+- **Received files now keep their name and folder layout (v0.4.8, #173).** Earlier builds wrote each
+  attachment to `inbox/<distribution_id>/<basename>` — the original filename buried under a UUID
+  directory and any subdirectories flattened. The inbox now **mirrors the sender's outbox layout**: a
+  file dropped at `outbox/sub/report.pdf` lands at `inbox/sub/report.pdf`, and re-delivery of the same
+  path overwrites (latest-wins). Because the sender controls the name, it is **re-sanitised on
+  arrival** — only `Normal` path components are accepted, so an absolute path or one containing `..`
+  can never escape the inbox; such a name falls back to a flat `<distribution_id>.bin` at the inbox
+  root (`src/attachments/inbox.rs:79-88`). This v1 unidirectional layout is the shipped foundation
+  the **ADR-072 (Proposed)** synced-folder lifecycle policy builds on (Module 3 §3.4b).
+- **A startup version banner (v0.4.8).** The first log line now reports peat-node's own version plus
+  the resolved `peat-mesh` / `peat-protocol` / `peat-schema` versions — captured from `Cargo.lock` at
+  build time (`build.rs:31-44` → `src/main.rs:391-396`). One line at the top of the logs tells an
+  operator exactly which build and mesh/protocol RC a container is running.
+- **`--print-config` / `PEAT_NODE_PRINT_CONFIG` (v0.4.8).** Opt-in flag that logs the full resolved
+  configuration at startup — shared key and encryption key redacted — for diagnosing env/flag/Compose
+  wiring (`src/main.rs:29-30,445-451`).
+- **Receive-side integrity: a post-write size check (v0.4.8).** The inbox sink validates that the
+  on-disk copy matches the declared `blob_size` before the tmp→target rename is published; on mismatch
+  it drops the partial and returns an error so the watcher retries rather than publishing a short file
+  (`src/attachments/inbox.rs:116-123`). Content integrity is already guaranteed upstream by iroh's
+  content-addressed fetch — this is the local-write completeness check. Both sides now log the
+  `filename`, `bytes`, and `sha256`/`blob_hash`, not just the distribution id.
+
+And the changes from the `v0.4.4 → v0.4.7` line that still apply:
 
 - **Attachment auto-sync via an outbox watcher (off by default).** Set
   `PEAT_NODE_ATTACHMENT_OUTBOX_WATCH` and the node polls each configured `--attachment-root`; a file
@@ -220,6 +245,10 @@ configuration — but read this carefully for the defense-prime case: **the n0 h
 default** (`relay-n0-hosted` feature off; the endpoint is built with no n0 DNS/pkarr), which is the
 correct posture for air-gapped and tactical builds. A runtime toggle to re-enable it was added in
 peat-mesh rc.42; making the default explicit is tracked by **#833**. **[Shipped, off by default]**
+One build-time caveat fixed in rc.27 (peat#995): enabling `relay-n0-hosted` at the `peat-protocol`
+or `peat-ffi` facade used to be a silent no-op after the ADR-062 relocation — the feature now
+forwards to `peat-mesh/relay-n0-hosted`, so toggling it at the facade actually flips the relay
+posture again.
 
 It is built for constrained links — the guide documents bandwidth **profiles** from
 `minimal` 9.6 kbps (tactical radio) → `low` 64 kbps (satellite) → `medium` 256 kbps (cellular) →

@@ -14,8 +14,8 @@ download list; the capability map is what tells you whether the system does what
 - **Speculative** — design discussed for teaching, not even an ADR-complete proposal anywhere.
 
 Everything below was checked against the audited HEADs in
-[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `68e9c3c`, `peat-mesh` rc.43,
-`peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` 0.1.0, `peat-node` 0.4.7. The operating
+[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `8a94796` (rc.27), `peat-mesh`
+rc.43, `peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` `bece4d6` (0.1.0), `peat-node` 0.4.8. The operating
 principle is **code over everything**: where a README, a spec, or a months-old guide disagrees with
 the source on the audited HEAD, the source wins.
 
@@ -65,7 +65,7 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 >
 > - **`peat-mesh-node`** (inside peat-mesh) is a small demo / reference binary for bringing up a mesh
 >   by hand.
-> - **`peat-node`** (its own repo, audited at v0.4.7) is the **production sidecar**: it embeds
+> - **`peat-node`** (its own repo, audited at v0.4.8) is the **production sidecar**: it embeds
 >   peat-mesh + peat-protocol and exposes them as a gRPC / Connect / gRPC-Web API on a single port. It
 >   is the Kubernetes sidecar pattern's node, it ships a Helm chart plus Zarf and UDS bundles, and it
 >   is the UDS Remote Agent integration target. The proto defines **28 RPCs** and `service.rs`

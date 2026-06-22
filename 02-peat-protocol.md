@@ -16,8 +16,8 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `68e9c3c`, `peat-mesh` rc.43 (`71fc3d5`). Citations below point at the
-working-tree source.
+Audited at `peat` HEAD `8a94796` (workspace `0.9.0-rc.27`), `peat-mesh` rc.43 (`71fc3d5`).
+Citations below point at the working-tree source.
 
 ---
 
@@ -70,6 +70,18 @@ that plumbing.
 > The same commit landed the **ADR-071 interest-driven-convergence seam** (a `NeedEvaluator` trait,
 > a `collection` field on the distribution document, opt-in via `with_need_evaluator`) — **Proposed**
 > as a model, with the additive seam present but inert by default. Module 3 §3.4b walks it.
+> A follow-on, **ADR-072 (Proposed): synced-folder lifecycle & file-handling policy**, builds on
+> that same distribution document — adding a publisher-declared lifecycle/handling policy (deletion,
+> idempotent re-drop, version ordering) on the sender-owned metadata half. No code yet; the
+> shipped piece is the v1 unidirectional inbox/outbox layout in `peat-node` (Module 8).
+
+> **A facade gotcha worth knowing (rc.27, peat#995).** After the ADR-062 relocation moved
+> `IrohTransport` endpoint construction into `peat-mesh`, `peat-protocol`'s `relay-n0-hosted` opt-in
+> was left an orphaned no-op — enabling it had no effect on the relay posture. rc.27 wired the
+> feature to forward (`peat-protocol/Cargo.toml:123` → `peat-mesh/relay-n0-hosted`), and added the
+> same passthrough on `peat-ffi` (`peat-ffi/Cargo.toml:109`) plus a non-blocking
+> `connect_peer_nowait` FFI entry point — so toggling the relay at the facade flips the underlying
+> endpoint again. Still **off by default** (tactical/edge builds must not phone home through n0).
 
 A few constants in `lib.rs` set the defaults of the system (all **Shipped**, verbatim from
 `lib.rs:112,115,118`):
