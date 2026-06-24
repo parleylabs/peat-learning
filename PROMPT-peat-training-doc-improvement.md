@@ -217,7 +217,13 @@ the markdown modules — keeping hub and modules consistent. Constraints:
 - **HTML (`hub`, `constrained`)**: self-contained (inline SVG/CSS, no external assets/CDNs);
   a **legend on every diagram**; small accessible font in diagrams with wordy detail in
   captions; existing accent system intact; single-page nav intact; every interactive
-  element's coordinates and labels must match its diagram.
+  element's coordinates and labels must match its diagram. **One approved exception (preserve,
+  never strip):** the footer's cookieless GoatCounter beacon (`//gc.zgo.at/count.js` +
+  `data-goatcounter`) and the inline feedback widget (`<div id="fb">` 👍/👎 + GitHub-issue-prefill
+  report link + SPA `active()`/`gcView()` wiring) on `index.html`, `peat-constrained-networking.html`,
+  and `changelog.html`. It is a deliberate privacy-light relaxation that fails silently offline; keep
+  it intact, keep a real `data-goatcounter` site code (never revert to the `YOURCODE` placeholder),
+  and add no *other* external resource.
 - **Markdown modules**: keep numbering and learning order; cite ADRs/issues; keep code
   snippets compilable against latest. Use ```mermaid for structural/flow diagrams (diffable,
   GitHub-rendered); reserve plain-fence ASCII art for tiny inline sketches only.

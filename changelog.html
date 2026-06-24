@@ -33,6 +33,14 @@
   .muted{color:var(--muted)}
   .foot{margin-top:42px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:13px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
   .foot .pl-mark{width:28px;height:30px}
+  /* ---- feedback widget + analytics ---- */
+  .fb{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);line-height:2}
+  .fb b{color:var(--ink)}
+  .fb-btns{display:inline-flex;gap:6px;margin:0 8px;vertical-align:middle}
+  .fb-btn{background:var(--panel2,#1c232c);border:1px solid var(--line);border-radius:7px;padding:2px 9px;cursor:pointer;font-size:14px;line-height:1.4;color:inherit}
+  .fb-btn:hover{border-color:var(--brand-green)}
+  .fb a.fb-report{color:var(--brand-green)}
+  .fb-thanks{color:var(--brand-green);font-weight:600}
 </style>
 </head>
 <body>
@@ -71,7 +79,49 @@
 
   <p class="muted" style="font-size:13px">How this stays current: the weekly cloud routine runs <code>PROMPT-peat-curriculum-refresh.md</code>, diffs each repo against the audited commits above, rewrites only the affected docs, then prepends a row here and refreshes the sync stamp. A quiet week logs a "no drift" row.</p>
 
+      <div class="fb" id="fb">
+        <b>Was this helpful?</b>
+        <span class="fb-btns"><button type="button" class="fb-btn" data-fb="up" aria-label="Helpful">👍</button><button type="button" class="fb-btn" data-fb="down" aria-label="Needs work">👎</button></span>
+        <a class="fb-report" id="fb-report" href="#">Report an error / suggest an edit →</a>
+        <span class="fb-thanks" id="fb-thanks" hidden>Thanks — logged.</span>
+      </div>
   <div class="foot"><span class="pl-mark"></span><a href="index.html">← Learning hub</a> · <a href="peat-constrained-networking.html">Off the Grid track</a> · <span>© Parley Labs · beep · boop · beep</span></div>
 </div>
+<!-- Cookieless analytics (GoatCounter) + feedback widget. Approved exception to the
+     self-contained rule: external beacon fails silently offline; PRESERVE across rewrites. -->
+<script data-goatcounter="https://parley-peat.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script>
+(function(){
+  var REPO = "parleylabs/peat-learning";
+  var PAGE = (location.pathname.split('/').pop() || "index.html");
+  function active(){
+    var s = document.querySelector('section.active') || document.querySelector('section');
+    if (s){ var h = s.querySelector('h1,h2'); return { id: s.id || PAGE, label: (h ? h.textContent.trim() : (s.id || document.title)) }; }
+    return { id: PAGE, label: document.title };
+  }
+  function gcEvent(p){ try{ if(window.goatcounter && goatcounter.count) goatcounter.count({ path: p, title: p, event: true }); }catch(e){} }
+  var counted = {};
+  function gcView(){ var a = active(); var p = "/" + PAGE + (a.id && a.id !== PAGE ? "#" + a.id : ""); if(!counted[p]){ counted[p]=1; try{ if(window.goatcounter && goatcounter.count) goatcounter.count({ path: p }); }catch(e){} } }
+  function issueURL(a, kind){
+    var ref = PAGE + (a.id && a.id !== PAGE ? "#" + a.id : "");
+    var title = "[" + kind + "] " + a.label + " (" + PAGE + ")";
+    var body = "**Where:** `" + ref + "`  (" + location.href + ")\n**Section:** " + a.label + "\n\n**What is wrong, or what would make it better?** (be specific — quote the line if you can)\n\n\n\n---\n_Sent from the PEAT learning feedback widget._";
+    return "https://github.com/" + REPO + "/issues/new?labels=curriculum-feedback&title=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(body);
+  }
+  var fb = document.getElementById('fb'); if(!fb) return;
+  var thanks = document.getElementById('fb-thanks'), report = document.getElementById('fb-report');
+  if (report) report.addEventListener('click', function(e){ e.preventDefault(); window.open(issueURL(active(), "Improve"), "_blank", "noopener"); });
+  fb.querySelectorAll('[data-fb]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var a = active(), v = b.getAttribute('data-fb');
+      gcEvent("/feedback/" + a.id + "/" + v);
+      if (v === "down"){ window.open(issueURL(a, "Fix"), "_blank", "noopener"); }
+      if (thanks){ thanks.hidden = false; setTimeout(function(){ thanks.hidden = true; }, 4000); }
+    });
+  });
+  gcView();
+  document.body.addEventListener('click', function(){ setTimeout(gcView, 80); });
+})();
+</script>
 </body>
 </html>
