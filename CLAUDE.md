@@ -31,8 +31,10 @@ refresh prompts; correctness is checked by a human reading it against the PEAT s
   claims, and the run log. The refresh reads and advances this.
 - **`review/`** — the audit trail: `ground-truth.md` (+ per-repo `ground-truth/`), `claim-ledger.md`
   (+ per-document `ledger/`), `assumptions.md`, `gaps-contributions.md`, `use-cases.md`,
-  `design-note-discrepancies.md`, `CHANGELOG-review.md`. `review/originals/` (pre-rewrite backups)
-  is gitignored — git history is the canonical baseline once committed.
+  `design-note-discrepancies.md`, `CHANGELOG-review.md`, and `measurement.md` (how the site's
+  cookieless analytics + feedback widget measure curriculum impact, and where the dashboard/issues
+  live). `review/originals/` (pre-rewrite backups) is gitignored — git history is the canonical
+  baseline once committed.
 
 ## How the curriculum stays current (the core workflow)
 
@@ -80,6 +82,17 @@ These come from the PEAT repos and the review prompts. Violating them is the mai
 - **The HTML pages are fully self-contained.** Every diagram is inline SVG; no external scripts,
   fonts, or network fetches — they must work offline and air-gapped. Do not add `<script src>`,
   CDN links, or runtime manifest fetches. Every diagram carries a legend.
+  - **Approved exception — analytics + feedback widget (PRESERVE, do not strip).** A single
+    cookieless GoatCounter beacon (`//gc.zgo.at/count.js`, `data-goatcounter=".../count"`) and the
+    inline feedback widget (`<div id="fb">` 👍/👎 + GitHub-issue-prefill "report an edit") live in
+    the footer of `index.html`, `peat-constrained-networking.html`, and `changelog.html`. This is a
+    deliberate, signed-off relaxation: the beacon is *one async request that fails silently with no
+    network*, so a downloaded/air-gapped copy still renders and works — it just doesn't report. The
+    rule is therefore "no external assets **for rendering**, plus this one privacy-light beacon."
+    The refresh/review gates must **keep** this block on rewrites (don't flag it as a
+    self-containment violation), preserve the `id="fb"` markup + the SPA `active()`/`gcView()`
+    wiring, and must **not** introduce any *other* external resource. The `YOURCODE` in
+    `data-goatcounter` is the registered site code; never overwrite a real code back to `YOURCODE`.
 - **The hub mirrors the modules.** Any change to a numbered module must be reflected in
   `index.html`, and vice versa. Module numbering and order are load-bearing.
 - **Freshness stamps are inline and updated by the refresh, not at runtime.** When commits or

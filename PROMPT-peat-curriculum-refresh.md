@@ -146,7 +146,14 @@ the incremental refresh and the full sweep**. Trace the blast radius of every ed
 - **References & links.** Cross-references ("see Module N §x"), internal anchors, and HTML
   `#id`/`data-go` targets still resolve; module numbering and learning order are intact.
 - **Self-contained HTML.** No new external fetch/script/CDN introduced; SVG well-formed; every
-  ```mermaid block parses.
+  ```mermaid block parses. **Approved exception — do not strip:** the footer carries one
+  cookieless GoatCounter beacon (`//gc.zgo.at/count.js` + `data-goatcounter`) and the inline
+  feedback widget (`<div id="fb">` 👍/👎 + GitHub-issue-prefill report link, with the SPA
+  `active()`/`gcView()` wiring). This single privacy-light beacon is a deliberate carve-out (it
+  fails silently offline, so air-gapped copies still render). **Preserve it verbatim** on every
+  rewrite — do not treat it as a self-containment violation, do not remove the `id="fb"` markup,
+  and never reset a real `data-goatcounter` site code back to the `YOURCODE` placeholder. Still
+  forbid any *other* external resource.
 - **State surfaces agree.** `REVIEW-STATE.json`, the registry rows, the `<!--SYNC-->` stamps, and
   `CHANGELOG-review.md` all describe the same run and commits.
 
