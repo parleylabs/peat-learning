@@ -1,4 +1,4 @@
-# PEAT Curriculum — Diagram Registry
+# Peat Curriculum — Diagram Registry
 
 Every diagram in the curriculum, treated as a **code-derived claim**. A diagram encodes the
 most drift-prone facts (layer model, transport set, role/enum lists, hierarchy vocabulary per
@@ -22,7 +22,7 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 
 > **Provenance status — read this.** The **Provenance** column records the `path:line`/ADR each
 > diagram *cites in the curriculum*; it was transcribed from the docs, **not independently
-> re-verified against the PEAT source in the session that created this registry** (the six code
+> re-verified against the Peat source in the session that created this registry** (the six code
 > repos were not checked out then). The `2026-06-18` date is when a full sweep — running with the
 > code present — last verified these facts, per `REVIEW-STATE.json`. Re-verification against
 > source happens on the next refresh run that has the sibling repos cloned. Treat the
@@ -106,7 +106,7 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 | C-005 | `peat-constrained-networking.html:341` | PACE ladder primary→emergency | svg | PACE model | — | 2026-06-18 |
 | C-006 | `peat-constrained-networking.html:374` | Edge lite dialect → bridge → Automerge | svg | `peat-mesh` lite-bridge; peat-lite | Shipped | 2026-06-18 |
 | C-007 | `peat-constrained-networking.html:410` | One satellite pass: data up, missing down | svg | ADR-051 (SBD) | Proposed | 2026-06-18 |
-| C-008 | `peat-constrained-networking.html:452` | Yank-the-hub: broker dark, PEAT re-homes | svg | leader election / failover | Shipped | 2026-06-18 |
+| C-008 | `peat-constrained-networking.html:452` | Yank-the-hub: broker dark, Peat re-homes | svg | leader election / failover | Shipped | 2026-06-18 |
 | C-009 | `peat-constrained-networking.html:490` | Reachability vs actual sync toggle | svg | discovery vs sync distinction | — | 2026-06-18 |
 | C-010 | `peat-constrained-networking.html:560` | System layout with selected role ringed | svg | CellRole / hierarchy | — | 2026-06-18 |
 | C-011 | `peat-constrained-networking.html:620` | Dense local coord, summary crosses cost cliff | svg | hierarchical aggregation | — | 2026-06-18 |
@@ -120,7 +120,7 @@ Diagram-worthy concepts the curriculum currently carries only in prose, tables, 
 a full sweep of modules 00b–09 against this registry (2026-06-19). Concepts that already have a
 diagram were excluded (e.g. the three authority axes = M-002, the formation handshake = M-014/H-009,
 partition recovery = C-008). **Build here?** flags whether a diagram is derivable purely from the
-curriculum's own audited prose (safe to author offline) or needs verification against the PEAT
+curriculum's own audited prose (safe to author offline) or needs verification against the Peat
 source on a refresh run (per *code over everything*). The prose-derived, build-here-safe entries have
 been authored (rows M-034–M-044 above); what remains below is **needs-code** (P-01/P-02/P-04/P-05,
 for a refresh run with the source) plus a few deliberately deferred low-value/redundant items.

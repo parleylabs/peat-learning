@@ -1,4 +1,4 @@
-# Prompt — Incremental refresh of the PEAT learning curriculum (scheduled)
+# Prompt — Incremental refresh of the Peat learning curriculum (scheduled)
 
 > The **cheap, recurring** companion to `PROMPT-peat-training-doc-improvement.md`. That prompt
 > is the full deep review (run it on first setup and on a periodic full sweep). This one is
@@ -13,7 +13,7 @@
 
 ## 0 · Mission
 
-Keep the PEAT learning curriculum in `learning/` synchronized with the code, cheaply, by
+Keep the Peat learning curriculum in `learning/` synchronized with the code, cheaply, by
 auditing only what changed since the last run. Never re-run the full review unless explicitly
 asked (`full` mode) or the periodic full-sweep is due.
 
@@ -59,7 +59,7 @@ commit and open the PR (§7).
 ## 1 · Phase 0 — Read state & detect drift
 
 1. Read `learning/REVIEW-STATE.json`. Extract `audited_commits[repo].head` for each of
-   `peat, peat-mesh, peat-btle, peat-lite, peat-gateway, peat-node`, and `last_full_run`.
+   `peat, peat-mesh, peat-btle, peat-lite, peat-gateway, peat-node, peat-flutter, peat-sapient`, and `last_full_run`.
 2. For each repo: `git -C <repo> fetch` then `git -C <repo> rev-parse origin/HEAD` (or the
    tracked branch). Compute the delta: `git -C <repo> log --oneline <audited>..origin/HEAD`
    and `git -C <repo> diff --name-only <audited>..origin/HEAD`. **Do not pull/modify the tree**
@@ -88,8 +88,10 @@ Map changed paths to curriculum docs (use judgment; this is a default routing, n
 | `peat-btle/**` | `04-peat-btle-and-lite.md`, `peat-constrained-networking.html` |
 | `peat-lite/**` | `04-peat-btle-and-lite.md`, `peat-constrained-networking.html` |
 | `peat-gateway/**` | `05-peat-gateway.md` |
-| `peat-node/**` | `06-data-flows.md`, `08-running-and-operating.md`, `09-protocol-specs.md` |
-| any `README.md`/`CHANGELOG.md`/`ROADMAP.md`/`Cargo.toml` | `00-START-HERE.md`, `00b-the-big-idea.md`, `01-architecture-overview.md`, `07-repo-links-and-gaps.md` |
+| `peat-node/**` (incl. `QUICKSTART.md`, `crates/peat-cli/QUICKSTART.md`) | `06-data-flows.md`, `08-running-and-operating.md`, `09-protocol-specs.md` (route QUICKSTART content into `08` + a getting-started callout in `00`/`00b`) |
+| `peat-flutter/**` | `04-peat-btle-and-lite.md` (the planned `04c` client-bindings section), `06-data-flows.md`; flag any non-FIPS BLE crypto in the bundled `libpeat_ffi` (`rust/Cargo.lock`) for `07-repo-links-and-gaps.md` + `09-protocol-specs.md` |
+| `peat-sapient/**` | `07-repo-links-and-gaps.md` (SAPIENT-bridge case study, paired with the TAK/CoT bridge), `09-protocol-specs.md` (BSI Flex 335 v2.0 wire format), `06-data-flows.md` |
+| any `README.md`/`CHANGELOG.md`/`ROADMAP.md`/`Cargo.toml`/`pubspec.yaml` | `00-START-HERE.md`, `00b-the-big-idea.md`, `01-architecture-overview.md`, `07-repo-links-and-gaps.md` |
 
 Always also reconcile: `learning/index.html` (the hub; it mirrors the modules) and
 `07-repo-links-and-gaps.md`. Build the **affected-docs set** from the union.

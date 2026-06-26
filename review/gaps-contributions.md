@@ -1,4 +1,4 @@
-# PEAT — Gaps & Contribution Map
+# Peat — Gaps & Contribution Map
 
 What does not exist yet, why it matters, the linked ADR/issue, a rough size, and how a new
 contributor would start. Synthesized from the six ground-truth audits and the 14 ledgers. This

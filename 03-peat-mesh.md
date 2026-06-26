@@ -1,3 +1,5 @@
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
+
 # Module 3 — The Network Layer: `peat-mesh`
 
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
@@ -92,9 +94,9 @@ Every type below was confirmed present at the audited HEAD.
 **Two notes a skeptical reader will check.**
 
 - **`security/` does not use X.509.** Enrollment is built on `MeshCertificate`
-  (`security/certificate.rs:118`): a compact, Ed25519-signed wire format
-  (`[subject_pubkey:32][mesh_id][node_id][tier:1][permissions:1][issued_at:8][expires_at:8][issuer_pubkey:32][signature:64]`,
-  148 B minimum) — *not* an X.509 certificate. The mesh ships `MeshCertificate`, `CertificateStore`,
+  (`security/certificate.rs:111-116`): a compact, Ed25519-signed wire format
+  (`[subject_pubkey:32][mesh_id_len:1][mesh_id:N][node_id_len:1][node_id:M][tier:1][permissions:1][issued_at:8][expires_at:8][issuer_pubkey:32][signature:64]`,
+  148 B minimum with empty mesh_id/node_id) — *not* an X.509 certificate. The mesh ships `MeshCertificate`, `CertificateStore`,
   `MeshGenesis`, and a `StaticEnrollmentService` (`bin:426`). Broader membership-certificate
   enrollment is **[In-flight]** as epic peat#592.
 - **`HierarchyLevel`'s leaf tier is `Node`, not `Platform`.** ADR-066 (abstract hierarchy
@@ -176,10 +178,10 @@ the umbrella ADR index — treat the citation as the code's own.)
 **Why negentropy?** Without it, deciding *which* documents differ between two peers can cost work
 proportional to the number of documents. **Negentropy** is a set-reconciliation protocol that
 locates the differing set by exchanging range fingerprints, so two nodes figure out which document
-IDs differ before sending any heavy data (ADR-040, issue #435; `negentropy = 0.5`). PEAT's
+IDs differ before sending any heavy data (ADR-040, issue #435; `negentropy = 0.5`). Peat's
 negentropy module advertises *O(log n) rounds* with stateless sessions over 32-byte SHA-256
 document IDs — **this is the algorithm's analytical bound (citing arxiv 2012.00472), not an
-independently benchmarked PEAT measurement.** After reconciliation, only the genuinely-missing docs
+independently benchmarked Peat measurement.** After reconciliation, only the genuinely-missing docs
 and deltas are sent.
 
 The flow per peer connection:
@@ -230,7 +232,8 @@ source**. This *transitive gossip* is what lets a hub-and-spoke topology converg
 it. The mechanism is real and documented in the source — receive paths call
 `AutomergeStore::put_with_origin` with `ChangeOrigin::Remote(peer_id)`, and an origin-tagged
 `gossip_tx` lets a gossip-aware consumer forward the doc onward while the legacy push channel stays
-silent to avoid a ping-pong loop (`storage/automerge_store.rs:529-541`, `automerge_sync.rs:905-925`).
+silent to avoid a ping-pong loop (`storage/automerge_store.rs:479` for `put_with_origin`, `:608` for the
+origin-tagged `gossip_tx.send`; the receive path that calls it is `automerge_sync.rs:933-948` in `put_received`).
 
 **Provenance correction.** Earlier drafts attributed this behavior to "ADR-061" and a
 "DEVELOPER_GUIDE §6.4.1." **Neither exists** — peat-mesh's ADR index runs 0001-0013 with no 061,
@@ -265,7 +268,7 @@ not capacity, is the bottleneck.
 **ADR-063 ("Persistent Multiplexed Sync Streams") is [Proposed]** (peat#935 / peat-mesh#175; the
 rc.26 dependency floor cites it). It proposes keeping a long-lived multiplexed stream open per peer
 instead of one-stream-per-message. The one-stream-per-message characterization and any specific
-"rounds per second" figure are the proposal's framing and analytical reasoning, **not measured PEAT
+"rounds per second" figure are the proposal's framing and analytical reasoning, **not measured Peat
 results** — treat them as the motivation for the proposal. The durable lesson, true before any fix
 lands: on a degraded, high-latency link, latency and write cadence — not just throughput — shape how
 fast a mesh converges.
@@ -397,7 +400,7 @@ Three implementations plug into the same interface — and **only these three ar
 > [Proposed] only** — no crate, no module; the `LoRa`/`Satellite` variants resolve to "no transport
 > registered" (`transport/manager.rs:1317`). `WifiDirect` likewise has no backing impl. Multi-transport
 > PACE failover is README "Phase-2 Planned" = **[Proposed]**, not shipped. *(Note: ADR-052's draft
-> specifies ChaCha20-Poly1305, which conflicts with PEAT's FIPS-only rule and must be changed to an
+> specifies ChaCha20-Poly1305, which conflicts with Peat's FIPS-only rule and must be changed to an
 > approved cipher before any LoRa code lands — see §3.6.)*
 
 **Cross-transport document bridging** goes through a `Translator` trait
@@ -421,7 +424,7 @@ re-encoded and forwarded over QUIC and vice-versa. The trait and codec **[Shippe
 | `relay-n0-hosted` | **off** | Opt-in to n0's hosted Iroh relay pool + DNS/pkarr discovery (off by default for tactical no-phone-home) |
 
 The `node` composition and the `kubernetes → rustls` dependency are confirmed in `Cargo.toml`
-(`:185-186`). PEAT's `rustls` is backed by `aws-lc-rs`, which carries the FIPS-approved crypto
+(`:185-186`). Peat's `rustls` is backed by `aws-lc-rs`, which carries the FIPS-approved crypto
 provider (next paragraph).
 
 **Crypto / FIPS posture (ADR-060):** the code has already migrated to **FIPS-approved primitives** —
@@ -434,8 +437,10 @@ the code is clean.**
 > **Honest FIPS caveat.** "FIPS-approved primitives" is *not* the same as "FIPS-validated module."
 > The `aes-gcm`/`p256` crates are pure-Rust RustCrypto implementations — correct algorithms, but
 > **not a CMVP-certified cryptographic module.** For a genuine FIPS 140 boundary, the validated path
-> is the KMS/Vault HSM backends on the gateway side; migrating the local crypto to `aws-lc-rs` is
-> **[In-flight]** (peat-btle#75). P-384 is not in the code (only P-256). The ARM-without-crypto-extensions
+> is the KMS/Vault HSM backends on the gateway side — that is where the FIPS-140 module boundary
+> actually lives. There is no plan to swap the local mesh/BLE crypto to a validated module; the
+> local primitives stay RustCrypto (FIPS-approved algorithms, unvalidated). P-384 is not in the code
+> (only P-256). The ARM-without-crypto-extensions
 > performance envelope is **unbenchmarked** (peat-mesh#126). Do not tell a customer "FIPS 140-3
 > validated."
 
@@ -481,7 +486,7 @@ and reconnecting to the wider mesh on egress (one of the curriculum's five refer
   genuinely-missing deltas transfer — not the full history (unless the collection is in
   `FullHistory` sync mode).
 
-This offline-first reconcile-on-reconnect path is the strongest shipped story in PEAT. The one
+This offline-first reconcile-on-reconnect path is the strongest shipped story in Peat. The one
 caveat lives at the embedded edge: **peat-btle reconnect re-delivery of pending CRDT state is
 [In-flight] (peat-btle#73)**, so the BLE leg may not re-deliver everything queued during a long
 outage; the QUIC/peat-node path is the robust one. Tombstone retention (168 h / 7-day default)

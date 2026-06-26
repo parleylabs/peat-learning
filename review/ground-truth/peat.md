@@ -18,16 +18,16 @@ Labels: **Shipped** (in code/tested) · **In-flight** (open issue/epic) · **Pro
 
 | Member crate | Role | Status |
 |---|---|---|
-| `peat-protocol` | Core: cell formation, hierarchy, QoS, security re-exports, CoT, discovery, distribution | Shipped (WIP, `0.9.0-rc.25`) |
+| `peat-protocol` | Core: cell formation, hierarchy, QoS, security re-exports, CoT, discovery, distribution | Shipped (WIP, `0.9.0-rc.27`) |
 | `peat-schema` | Protobuf wire definitions (`prost`) | Shipped |
 | `peat-transport` | HTTP/REST (Axum) + TAK/CoT TCP bridge | Shipped |
 | `peat-persistence` | Storage abstraction over peat-mesh | Shipped |
-| `peat-ffi` | UniFFI + JNI Kotlin/Swift bindings | Shipped (`0.2.7`) |
+| `peat-ffi` | UniFFI + JNI Kotlin/Swift bindings | Shipped (`0.2.8`) |
 | `peat` | Reserved facade | Placeholder, no deps |
 
 **Retired:** `peat-discovery` removed under peat#919 (members comment in `peat/Cargo.toml`). Discovery now lives in `peat_mesh::discovery`.
 
-**The networking, CRDT engine, and crypto are NOT in this repo.** They live in the **external** `peat-mesh` crate (`Cargo.lock`: `peat-mesh 0.9.0-rc.42`), which `peat-protocol` pulls in and **re-exports**. peat-protocol's `security/*` modules (`device_id.rs`, `encryption.rs`, `formation_key.rs`, `keypair.rs`) are **thin `pub use peat_mesh::security::…::*` shims** (e.g. `peat-protocol/src/security/encryption.rs:7`). Likewise `IrohTransport` is a re-export shim (`peat-protocol/src/network/iroh_transport.rs:25` → `pub use peat_mesh::network::iroh_transport::*`).
+**The networking, CRDT engine, and crypto are NOT in this repo.** They live in the **external** `peat-mesh` crate (`Cargo.lock`: `peat-mesh 0.9.0-rc.43`), which `peat-protocol` pulls in and **re-exports**. peat-protocol's `security/*` modules (`device_id.rs`, `encryption.rs`, `formation_key.rs`, `keypair.rs`) are **thin `pub use peat_mesh::security::…::*` shims** (e.g. `peat-protocol/src/security/encryption.rs:7`). Likewise `IrohTransport` is a re-export shim (`peat-protocol/src/network/iroh_transport.rs:25` → `pub use peat_mesh::network::iroh_transport::*`).
 
 > **Assumption logged:** peat-mesh / peat-btle / peat-lite source is *not* present in this clone (they are external crates.io deps). Claims about their internals below are corroborated via gbrain's indexed copies + the comments/tests in this repo's re-export shims, not by reading their source in this tree. Where a peat-mesh internal could not be opened directly it is marked **(via re-export/gbrain)**.
 
@@ -72,17 +72,17 @@ Cargo.lock contains exactly three transport crates: `peat-mesh 0.9.0-rc.42`, `pe
 
 ## 4 · Hierarchy vocabulary & roles
 
-**Two enums named with hierarchy levels; one already migrated to ADR-066 vocab, the other not — and the proto/schema still uses legacy military terms. The rename is mid-flight.**
+**Two enums named with hierarchy levels; one already migrated to ADR-066 vocab, the other not. The `peat-schema` proto has also migrated off the `Squad*` names (see below). The rename is mid-flight.**
 
 - **`HierarchyLevel`** (`peat-protocol/src/security/authorization.rs:331-343`): `Node, Cell, Cohort, Federation, Coalition` — **already the ADR-066 abstract vocabulary**, with doc-comments explicitly noting "was previously squad/platoon/company." So the security-layer enum is ahead of the ADR's formal status.
-- **ADR-066 (abstract hierarchy vocabulary) Status: Proposed.** Map: `Platform→Platform, Squad→Cell, Platoon→Cohort, Company→Federation, Battalion→Coalition`. Because the ADR is Proposed but `authorization.rs` already uses the new names while `peat-schema/proto/` still ships `SquadSummary`/`squad_id` etc., the workspace is **internally inconsistent mid-rename**.
+- **ADR-066 (abstract hierarchy vocabulary) Status: Proposed.** Map: `Platform→Platform, Squad→Cell, Platoon→Cohort, Company→Federation, Battalion→Coalition`. The ADR is Proposed but `authorization.rs` already uses the new names, and at HEAD `8a94796` `peat-schema/proto/hierarchy.proto` has also been renamed — it now defines `CellSummary`/`CohortSummary`/`FederationSummary`/`CoalitionSummary` with **zero `Squad`/`squad_id`** (`hierarchy.proto:24,71,72,122,172`). The earlier "schema still ships `SquadSummary`/`squad_id`" claim is **stale**. (peat-btle `src/lib.rs` still uses legacy `Platform`/`Squad` — keep that distinct.)
 - **ADR-068 (Node base-unit vocabulary) Status: Proposed** — proposes renaming `Platform`→`Node` at the base unit. Open epics **#968** (converge base unit on Node) and **#904** (workspace-wide military→abstract rename) and **#970** (ADR-068 follow-ups) track this. So vocabulary is actively churning: a reader will see `Platform`, `Squad`/`Cell`, `cohort_id`, `platform_id` all coexisting.
 - `CellState` already carries `cohort_id` (`peat-protocol/src/hierarchy/maintenance.rs:374` uses `cell.cohort_id`).
 
 **RBAC roles — DOCUMENTATION/CODE MISMATCH (high-risk finding):**
 - The **actual** `Role` enum (`peat-protocol/src/security/authorization.rs:50-64`) has **five variants: `Leader, Member, Observer, Commander, Admin`.**
 - **README §Layer-3 (README.md:262) claims the five RBAC levels are "Observer, Member, Operator, Leader, and Supervisor."** **`Operator` and `Supervisor` are NOT in the `Role` enum.** This is a factual error in the README — the count (five) is right but two names are wrong.
-- Separately, `CellRole` (`peat-protocol/src/models/role.rs:14-24`) is a *different* concept — capability assignment, variants `Leader, Sensor, Compute, Relay, Strike, Follower` — not the RBAC privilege model. Curriculum must not conflate `Role` (RBAC) with `CellRole` (capability).
+- Separately, `CellRole` (`peat-protocol/src/models/role.rs:14-29`) is a *different* concept — capability assignment, seven variants `Leader, Sensor, Compute, Relay, Strike, Support, Follower` — not the RBAC privilege model. Curriculum must not conflate `Role` (RBAC) with `CellRole` (capability).
 - A third axis: `AuthorityLevel` (`peat-schema/proto/node.proto:61-67`): `UNSPECIFIED, OBSERVER, ADVISOR, SUPERVISOR, COMMANDER` — the human-machine-teaming authority ladder. This is likely where README's "Supervisor"/"Observer" leaked in; the README conflated `AuthorityLevel` with `Role`.
 
 ---
@@ -120,7 +120,7 @@ README §Layer-4 (README.md:266) states cells use **MLS (RFC 9420)** with cipher
 
 - **Leader election is deterministic / selection-criteria-based, NOT consensus.** `peat-protocol/src/hierarchy/maintenance.rs` selects via priority-ordered scoring (capacity, same-zone preference, smaller-cell load balance — `find_merge_candidate`, lines ~336-388). No Raft/Paxos. **Shipped.** The actual cell-leader election logic also lives in peat-mesh's formation path (via re-export); the maintenance module here handles cell merge/split/rebalance and re-election triggers ("Leaders will be re-elected", lines 227/252/312).
 - **Formation handshake = HMAC challenge-response.** `FORMATION_HANDSHAKE_ALPN = b"peat/formation-auth/1"` (`network/formation_handshake.rs:49`); 30 s timeout; pre-shared formation key proven via HMAC-SHA-256, key never crosses the wire (README:262, `subtle = "2.6"` constant-time compare in manifest). **Shipped.**
-- Routing: cell leaders route upward to zone level; non-leaders cannot cross-cell or reach zone (`hierarchy/router.rs:19-20, 90-91, 140`). **Shipped.**
+- Routing: cell leaders route upward to zone level; non-leaders cannot cross-cell or reach zone (`peat-mesh/src/routing/router.rs:246, 362-433`). **Shipped.**
 
 ---
 
@@ -142,8 +142,8 @@ Three integration depths (README:124-126): Shallow REST/HTTP (~500-1000 LOC, ~50
 | "O(n log n) vs O(n²) flat mesh" | README:234 | **Structurally supported** by whitepaper connection table (full mesh O(n²) 9,120 conns vs hierarchical ~384 at scale; `Whitepaper:291-293`). Design/analytical claim, not a runtime benchmark. |
 | "Priority 1 latency <5 s end-to-end" | README:232 | **Target, not validated.** QoS enforcement (TTL/bandwidth) is **in-progress** per roadmap (gbrain conversation note). Mark **unverified / in-flight**. |
 | "Simulation validated 1,000+ nodes; 24-node lab" | README:233,340 | **Traceable to whitepaper:** single-machine validated to **1000 nodes** with a **1023 hard limit** (Linux bridge), lab experiments E11-E13 at 2-1000 nodes (`Whitepaper:13,163,213`). README's "24-node lab" aligns with the platoon-scale (24-node) figures. **Verified against whitepaper** (itself a single-machine simulation, not a field deployment). Note open epic **#724/#725/#726/#727** still targets 900/1.2K/10K validation — so "1,000+" is the *current* ceiling, not exceeded. |
-| SBD ~1,960 B MO / ~1,890 B MT, 5-20 s, $0.04-0.13/msg | (constrained track / ADR-051) | **Unverifiable from this repo** — peat-sbd is proposal-only; 1,960 B is an Iridium SBD hardware limit cited in gbrain `quic-iridium-sbd-feasibility`, not a PEAT measurement. |
-| LoRa 7-87 km, 1.5-9.1 kB/s; BLE 100-400 m ~2 Mbps | (ADR-052 / ADR-039) | **Hardware-spec assumptions**, not PEAT measurements. Mark as external hardware facts. |
+| SBD ~1,960 B MO / ~1,890 B MT, 5-20 s, $0.04-0.13/msg | (constrained track / ADR-051) | **Unverifiable from this repo** — peat-sbd is proposal-only; 1,960 B is an Iridium SBD hardware limit cited in gbrain `quic-iridium-sbd-feasibility`, not a Peat measurement. |
+| LoRa 7-87 km, 1.5-9.1 kB/s; BLE 100-400 m ~2 Mbps | (ADR-052 / ADR-039) | **Hardware-spec assumptions**, not Peat measurements. Mark as external hardware facts. |
 | Automerge ~10 MB vs peat-lite 256 KB | — | peat-lite 256 KB RAM target is real (ADR-035, gbrain firmware/readme memory budget). Automerge "~10 MB" footprint is **unverified** in this repo. |
 
 ---
@@ -190,7 +190,7 @@ Three integration depths (README:124-126): Shallow REST/HTTP (~500-1000 LOC, ~50
 2. **MLS presented as shipped but unimplemented** — relabel Proposed (ADR-044); or implement under a FIPS suite. Large.
 3. **`command_log` CRDT does not exist** — any teaching material must mark Speculative; peat-lite has only Lww/G/PN/OrSet.
 4. **peat-sbd / peat-lora are ADR-only** (051/052) — no crates; 052 carries a ChaCha20 FIPS conflict to fix before any impl.
-5. **Hierarchy vocabulary mid-rename** — `HierarchyLevel` uses new terms, proto still uses Squad/Platoon/Company; epics #904/#968 open.
+5. **Hierarchy vocabulary mid-rename** — `HierarchyLevel` uses new terms and `peat-schema`'s hierarchy proto is already renamed (`CellSummary`/`CohortSummary`/`FederationSummary`/`CoalitionSummary`, no `Squad`/`squad_id`); only `peat-btle/src/lib.rs` is still fully legacy `Platform/Squad/Platoon/Company`; epics #904/#968 open.
 6. **QoS enforcement (TTL/bandwidth, "<5s P1") in-flight**, not validated — ADR-019 framework present (`qos/` modules) but enforcement incomplete.
 7. **"93-99%" bandwidth claim** not stated verbatim in the whitepaper (whitepaper: 79%/60-95%/95%+) — reconcile the number.
 8. **peat-btle wire crypto** possibly ChaCha20 (gbrain note) — needs direct peat-btle audit against FIPS rule; if true, a shipped violation.

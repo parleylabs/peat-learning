@@ -1,6 +1,6 @@
 # Ground Truth — `peat-gateway`
 
-**Repo:** `peat-gateway` (subdir `./peat-gateway` of the PEAT umbrella)
+**Repo:** `peat-gateway` (subdir `./peat-gateway` of the Peat umbrella)
 **Audited HEAD:** `8d16824` — `chore(ci): add dependabot config; group /ui (pnpm) updates into one PR (#134)`
 **Branch:** `main`, up to date with `origin/main` (`git rev-list --count HEAD..@{u}` = 0). No pull/modify performed.
 **Crate version:** `0.1.0` (`Cargo.toml:3`)
@@ -12,7 +12,7 @@
 
 ## 1. What this repo actually is
 
-`peat-gateway` is the **enterprise control plane** for PEAT meshes (ADR-055). It is a Rust binary + library (`peat_gateway`) plus a SvelteKit admin UI (`ui/`), a Helm chart (`chart/`), a Zarf manifest (`zarf.yaml`), and a UDS bundle (`bundle/`).
+`peat-gateway` is the **enterprise control plane** for Peat meshes (ADR-055). It is a Rust binary + library (`peat_gateway`) plus a SvelteKit admin UI (`ui/`), a Helm chart (`chart/`), a Zarf manifest (`zarf.yaml`), and a UDS bundle (`bundle/`).
 
 **Critical framing (README.md:26-29, verified in code):** the gateway is **NOT a mesh node and NOT a data plane.** It does not run mesh transports, does not sync CRDTs, and does not sit in the peer-to-peer data path. It *observes and manages*. This is enforced structurally:
 - It depends on `peat-mesh` as a **library** for `MeshGenesis`, `MeshCertificate`, `MeshBrokerState`, and `DocumentStore` types — it does not open QUIC/Iroh endpoints itself.
@@ -24,7 +24,7 @@ So for the transport question the headline is: **peat-gateway implements zero wi
 
 ## 2. Transports — what this repo implements
 
-**Verdict: the gateway implements no PEAT mesh transports (QUIC/Iroh, BLE, peat-lite, SBD, LoRa).** None appear in `src/` and none are dependencies. This is correct and by design (§1).
+**Verdict: the gateway implements no Peat mesh transports (QUIC/Iroh, BLE, peat-lite, SBD, LoRa).** None appear in `src/` and none are dependencies. This is correct and by design (§1).
 
 What it *does* speak, as a control-plane service, are **enterprise integration protocols** — all of which are **Shipped** unless noted:
 

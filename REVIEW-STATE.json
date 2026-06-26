@@ -1,7 +1,7 @@
 {
-  "review": "PEAT learning-curriculum hardening to enterprise-onboarding grade",
+  "review": "Peat learning-curriculum hardening to enterprise-onboarding grade",
   "prompt": "learning/PROMPT-peat-training-doc-improvement.md",
-  "date": "2026-06-22",
+  "date": "2026-06-26",
   "last_full_run": "2026-06-18",
   "status": "complete",
   "phases_completed": [
@@ -48,10 +48,15 @@
     "peat-addressing-transport-sync.md"
   ],
   "gbrain_pages": {
-    "created": ["peat-current-state"],
-    "updated_in_place": ["peat-hierarchy-vocabulary", "peat-open-issues-snapshot"],
+    "created": [
+      "peat-current-state"
+    ],
+    "updated_in_place": [
+      "peat-hierarchy-vocabulary",
+      "peat-open-issues-snapshot"
+    ],
     "deleted": [],
-    "note": "All writes to the default source. No PEAT doc page deleted (memory: keep-peat-docs-in-gbrain-default). Pages cross-linked with wikilinks; put_page reported created_or_updated + write_through.written:true for all three."
+    "note": "All writes to the default source. No Peat doc page deleted (memory: keep-peat-docs-in-gbrain-default). Pages cross-linked with wikilinks; put_page reported created_or_updated + write_through.written:true for all three."
   },
   "audited_commits": {
     "peat": {
@@ -89,33 +94,84 @@
       "subject": "fix(attachments): mirror outbox layout in peat-cli + test inbox sinks (#173) + docs/version-minimums (#175)",
       "version": "0.4.8 (peat-cli crate 0.4.5)",
       "origin_status": "advanced bbe3b68->9fcdabd this run (v0.4.8: inbox mirrors sender outbox layout w/ path re-sanitisation #173, post-write blob_size validation, startup version banner, --print-config/PEAT_NODE_PRINT_CONFIG). proto/sidecar.proto unchanged — RPC count still 27."
+    },
+    "peat-flutter": {
+      "head": "369f05d",
+      "subject": "feat: reconnect-supervisor bindings + facade (putRaw, peerTransportStates, origin decode, enableN0Relay fix) (#13)",
+      "version": "0.0.1 (pre-1.0); native peat-flutter-ffi 0.1.0; binds peat-ffi =0.2.9 from crates.io via UniFFI 0.28",
+      "origin_status": "FIRST TRACKED 2026-06-25 (initial read-only audit). Flutter/Dart binding layer wrapping peat-ffi; hand-maintained UniFFI bindings (contract v30). Transitively bundles peat-btle 0.4.0 + peat-mesh. FIPS FLAG: bundled libpeat_ffi pulls chacha20poly1305 + x25519-dalek at the BLE layer (rust/Cargo.lock, via peat-btle 0.4.0) — VERIFY against peat-btle source. Ground truth: review/ground-truth/peat-flutter.md."
+    },
+    "peat-sapient": {
+      "head": "8ec24d4",
+      "subject": "fix(detection): handle deprecated SAPIENT v7 feet coordinate systems; clarify MGRS status (#27)",
+      "version": "0.1.0; SAPIENT BSI Flex 335 v2.0 (proto pinned to dstl 244a741); depends peat-schema =0.9.0-rc.24 (trails umbrella rc.27 by 3)",
+      "origin_status": "FIRST TRACKED 2026-06-25 (initial read-only audit). Rust lib bridging the SAPIENT sensor protocol into Peat via peat-schema (the sensor-standard analog of peat-transport's TAK/CoT bridge). Depends on peat-schema ONLY. Crypto FLAG: plain TCP, NO TLS — ships no transport security. Ground truth: review/ground-truth/peat-sapient.md."
     }
   },
   "open_todos": [
-    "ADR-059 NUMBER COLLISION (peat#997, 2026-06-22): docs/adr/059-data-as-a-capability.md was added with the same number as the existing docs/adr/059-cross-transport-document-bridging.md. The curriculum's ADR-059 citations (Module 1 §1.5 'Amendment 4' cycle-break, Module 3 §3.5, diagram M-025) refer to the cross-transport-bridging ADR and remain correct; the new data-as-a-capability ADR (Proposed) is logged but deliberately NOT woven into prose to avoid conflating the two. Re-audit if the source repo renumbers one, or if data-as-a-capability gains code (then surface it where capability advertisement / ADR-018 is taught).",
-    "ADR-072 (Proposed, peat#996): synced-folder lifecycle & file-handling policy (deletion / idempotent re-drop / version ordering on the ADR-071 distribution document). No code. Re-audit Module 3 §3.4b / Module 8 when a lifecycle policy field lands on the distribution document and peat-node begins honoring it (flips from Proposed to Shipped).",
-    "ADR-071 Phase-1 follow-on: the convergence path is wired but inert — publish writes collection:None (file_distribution.rs ~963 TODO) and no NeedEvaluator is attached by default. Re-audit Module 3 §3.4b / Module 2 when the sidecar starts binding a collection on publish and registering durable subscriptions (the gRPC surface), which will flip interest-driven delivery from Proposed-seam to Shipped",
-    "Track ADR-071 Phases 2-3 (version-gap need, capability advertisement) — not yet in code; curriculum currently shows only the subscription input",
-    "Resolve CellRole Support discrepancy: merged ground-truth peat.md omits Support, but direct read of peat-protocol/src/models/role.rs:25 confirms it exists (7 variants). Per decision D1 source wins and Support was retained; reconcile the ground-truth doc to match",
-    "File/link a tracking issue for leader-election score-over-message convergence (leader_election.rs:340-345 follows higher node id with an in-code 'future work' comment; no issue located)",
-    "Confirm operator-guide config against compiled code: [security.pki] X.509 device-cert flow, CoT bind_port 8087 / type strings / command_authority enum surface (currently labeled Documented, not Shipped)",
-    "Verify quickstart node-count/latency by an actual Module 8 build/test run (audit was read-only per decision D3)",
-    "Verify crates.io / Maven Central publication status of PEAT crates (registries not checked)",
-    "Confirm standalone-repo existence/status: peat-sim, peat-registry, peat-sdk-go, a standalone peat-android repo"
+    "gbrain refresh PENDING (the user's next step): apply C1 (BLE FIPS published-vs-source split), C2 (drop peat-btle#75/aws-lc-rs), C11 (peat-schema proto renamed off Squad*), C12 (11 Accepted ADRs incl ADR-070 SAPIENT), C13 (ADR-006/044 FIPS-amended) — plus the two new repos + tombstone-GC-shipped + ADR-count-78 — to peat-current-state, peat-hierarchy-vocabulary, and peat-open-issues-snapshot.",
+    "Curriculum integration of the two new repos: write Module '04c client bindings' (peat-flutter) and a Module 7 SAPIENT-bridge case study (peat-sapient) — note ADR-070 (SAPIENT Protocol Bridge) is ACCEPTED, so peat-sapient is a first-class accepted integration, not speculative.",
+    "peat-node QUICKSTART.md (root = node/container) + crates/peat-cli/QUICKSTART.md (CLI) — route into Module 8 + a getting-started callout in Module 0/0b (Kit, 2026-06-24).",
+    "Leader-election score-over-message convergence (peat-protocol/src/cell/leader_election.rs ~340-345): code carries a 'follows higher node id' tiebreak + 'future work' comment; NO tracking issue located — file one upstream or log as a known design gap.",
+    "peat-sapient peat-schema pin (=0.9.0-rc.24) trails the umbrella (rc.27) by 3 rc's; re-check each sync (a bump may rename transform fields, e.g. NodeState.health).",
+    "ADR-044 MLS key-exchange: X25519 still flagged for FIPS review (amendment 2026-05-18 prefers ECDH-P256/P384 'where the design has a choice'; tracked as MLS-integration follow-up) — watch for resolution."
   ],
   "unverifiable_claims": [
-    "2026-06-22 delta read-only: ADR-072 (synced-folder lifecycle) and ADR-059 (data-as-a-capability) are Proposed with no code. peat-ffi connect_peer_nowait (lib.rs:1222) + relay-n0-hosted facade forward (peat-protocol/Cargo.toml:123, peat-ffi/Cargo.toml:109) and peat-node v0.4.8 inbox layout-mirror + path re-sanitisation + post-write blob_size check (src/attachments/inbox.rs:79-123) read from source/CHANGELOG, not exercised by a live run",
-    "ADR-071 collection plumbing: publish writes collection:None (file_distribution.rs ~963 TODO), so the interest-driven convergence path is wired but never exercised end-to-end at this HEAD — the seam (NeedEvaluator, CollectionSubscriptionNeed, with_need_evaluator) is unit/single-process tested only; no live multi-node interest-driven delivery confirmed",
-    "Provider-gossip runtime behaviour (peat/blob-announce/1): DEFAULT_ANNOUNCE_TTL=3-hop epidemic convergence, re-announce-on-acquire, and relay/holepunch dial to a non-adjacent holder are read from source + e2e test names (3 real-iroh tests) but not independently benchmarked for actual multi-hop reach under partition",
-    "peat-node attachment outbox watcher: PEAT_NODE_ATTACHMENT_OUTBOX_WATCH env gate and poll-based stability/dedup read from src/attachments/outbox.rs; not exercised by a live run this read-only audit",
-    "Existence at the audited HEAD of a peat-quickstart binary; peat-mesh-node production-vs-demo status; PEAT_BIND_PORT 4040 / PEAT_HTTP_PORT 8080 defaults; PEAT_CONNECTION_RECYCLE_SECS env var and its 60s/5s behavior",
-    "Exact SyncMessageType discriminant byte values; connection-health RTT/loss thresholds; discovery 60s candidate-pool timeout; specific Prometheus metric names and /api/v1/... endpoints; stream-ID range enforcement at runtime",
-    "External-spec / design-target numbers (flagged, not asserted): BLE rate/range; LoRa/Iridium SBD figures; ~10 MB Automerge / 256 KB / ~40x memory comparison; <5s P1 latency; 1,000+ node validation (1023 sim ceiling, #724-#727); 20-node-plateau thesis; 500,000/4,000 vs 9,120/384 connection-model disagreement",
-    "Operator-guide config not traced into compiled code: [security.pki] X.509 device-cert flow; CoT bind_port 8087 / type strings; command_authority enum surface (labeled Documented)",
-    "crates.io / Maven Central publication of any PEAT crate; peat-sim, peat-registry, peat-sdk-go, standalone peat-android repo existence (only ADR/epic anchors corroborate: ADR-054, #724, Phase-3 roadmap)",
-    "Spec-defined, implementation unconfirmed: Automerge ActorId byte construction; access-level ladder Public(0)..Critical(4) + audit retention tiers (90d/1y/2y); partition original-leader-keeps-Cell-ID rule; leader-election score-over-message convergence; EdgeIntelligence variant / >=3-sensor WideAreaObservation threshold (dropped/softened); spec line count ~3,750 (dropped)"
+    "EXTERNAL (registry): crates.io / Maven Central publication status of any Peat crate — needs registry access. NOTE the verified version-collision: the crates.io-published peat-btle 0.4.0 (checksum a57dd351) ships non-FIPS ChaCha20/X25519 while local git 0.4.0 (3d70f48) is FIPS-clean (commit c8b013e) — same version string, FIPS migration never re-published.",
+    "EXTERNAL: standalone repos peat-sim / peat-registry / peat-sdk-go / standalone peat-android are NOT present as local dirs under ~/code/peat; existence/status needs GitHub. (peat-sim is referenced by ADR-057 'peat-sim scaling plans', Accepted — so it is at least a planned/accepted artifact.)",
+    "EXTERNAL hardware specs: LoRa 7-87 km / 1.5-9.1 kB/s and Iridium SBD ~1960 B / ~$0.04-0.13/msg are vendor/spec numbers (ADR-052 LoRa Proposed). CONFIRMED from code: there is NO LoRa or SBD transport implementation (Proposed only).",
+    "NEEDS_RUNTIME: '1,000+ node' validation is a single-machine SIM ceiling (1023), per Peat-Lab-Experiments-Whitepaper — not a field result; needs a live run to re-confirm.",
+    "NEEDS_RUNTIME: '<5s P1 latency' (README:232) and the bandwidth-reduction % figures are targets/benchmarks — require a live build/benchmark, not a code read. QoS BandwidthAllocation shares ARE in code (peat-mesh/src/qos/bandwidth.rs:250-300) but enforcement/latency is not.",
+    "NEEDS_RUNTIME: provider-gossip multi-hop reach under partition (peat/blob-announce/1, DEFAULT_ANNOUNCE_TTL=3) — code paths CONFIRMED (blob_announce.rs, BlobPeerIndex, iroh_blob_store.rs:1544-1663) but actual multi-hop delivery under partition is not benchmarked.",
+    "NEEDS_RUNTIME: peat-node attachment outbox watcher + inbox layout-mirror + post-write blob_size validation + path re-sanitisation — code paths CONFIRMED (src/attachments/*); runtime behavior not exercised live.",
+    "DECLARED-CONSTANT (not measured): peat-btle BLE rate/range (~100-400 m, 125 kbps-2 Mbps) are capability constants in code, not measured field results."
   ],
   "run_log": [
+    {
+      "when": "2026-06-26",
+      "mode": "fix-application (2 workflows + manual convergence)",
+      "repos_changed": {
+        "(none)": "doc corrections only; no code repo advanced"
+      },
+      "docs_touched": [
+        "All 12 reader modules + index.html + peat-constrained-networking.html + review/ground-truth.md + review/ground-truth/{peat,peat-node,peat-btle,peat-mesh,peat-flutter}.md + review/ledger/09-specs.md",
+        "REVIEW-STATE.json (corrections C1-C25 marked applied; converged=true; ledgers_note added; open_todos updated; this run_log entry)"
+      ],
+      "claims_changed": "Applied the 25-item verified correction backlog. Headlines now in the docs: BLE FIPS published-vs-source split (source FIPS-clean via RustCrypto aes-gcm/p256 commit c8b013e; crates.io 0.4.0 still non-FIPS ChaCha20/X25519 — never re-published); NO peat-btle#75 / aws-lc-rs BLE migration (aws-lc-rs is the TLS provider only); CellRole = 7 incl Support; peat-schema proto renamed off Squad*; 11 Accepted ADRs incl ADR-070 SAPIENT; ADR-006/044 FIPS-amended; peat-node single-port PEAT_NODE_LISTEN=50051 (no 4040/8080/broker/recycle vars); RPC 27/27; tombstone-GC + per-collection config Shipped; ADR count 78; PowerProfile +Custom; QoS doc-vs-shipped caveat; agent-watcher; Document 0x07 flags byte; beacon dual-layout; eight-repo inventory; ground-truth crate versions.",
+      "diagrams_touched": "SVG/text labels in index.html updated for CellRole, ADR count, repo inventory, RPC count, FIPS — no base64/wordmark/#fb touched (verified intact).",
+      "notes": "Two fix workflows (peat-apply-corrections: 44 edits/16 files; peat-converge-fixes: 34 edits/12 files) + 5 manual convergence edits. Final grep sweep clean across reader-facing + canonical ground-truth. gbrain pages deliberately NOT touched (user's explicit next step). Dated audit ledgers left as history (see ledgers_note). The curriculum is now fully code-verified at the audited HEADs."
+    },
+    {
+      "when": "2026-06-26",
+      "mode": "verification (workflow)",
+      "repos_changed": {
+        "(none)": "verification pass only — 8 repos read at audited HEADs; no repo advanced"
+      },
+      "docs_touched": [
+        "REVIEW-STATE.json (open_todos curated; unverifiable_claims reclassified to genuinely-external/runtime; NEW verification_2026-06-26 block with 25-item verified correction backlog)"
+      ],
+      "claims_changed": "No curriculum prose changed yet — this pass VERIFIED the open_todos + unverifiable_claims against code (33-agent workflow + adversarial re-verification + 3 discovery rounds) and catalogued 25 code-confirmed corrections (C1-C25) for application. Headline: shipped (crates.io) peat-btle 0.4.0 BLE crypto is NON-FIPS (ChaCha20/X25519) though source migrated; 11 ADRs Accepted incl ADR-070 SAPIENT; peat-schema hierarchy proto renamed off Squad*; peat-node is single-port (50051) with several curriculum env vars/ports that don't exist; tombstone-GC + per-collection config now Shipped; ADR-006/044 FIPS-amended; CellRole=7 incl Support.",
+      "diagrams_touched": "none",
+      "notes": "Per user: complete the review-state + todos with everything verified against code BEFORE refreshing gbrain. Discovery did NOT converge (11/14/11 per round) — corrections must be applied, then discovery re-run to dry. gbrain refresh deferred until corrections land. All contradictory-to-prior-belief findings (Squad rename, 11 Accepted ADRs, ADR-006/044 amendment, tombstone-GC, single-port, ADR count 78) were self-re-verified by direct grep."
+    },
+    {
+      "when": "2026-06-25",
+      "mode": "manual",
+      "repos_changed": {
+        "peat-flutter": "FIRST TRACKED at 369f05d (v0.0.1)",
+        "peat-sapient": "FIRST TRACKED at 8ec24d4 (v0.1.0)"
+      },
+      "docs_touched": [
+        "ALL reader pages: brand pass — PEAT -> Peat (Peat is a name, not an acronym), 328 replacements across 47 files (PEAT_ env vars and base64 data-URIs protected); 'Name trivia' box in 01-architecture-overview.md + index.html rewritten (HIVE is the backronym for the FORMER name, not a Peat acronym)",
+        "index.html / peat-constrained-networking.html / changelog.html: Peat wordmark inlined as base64 in the header (self-contained); learning/assets/peat-wordmark.png added + <img width=200> banner prepended to all 13 markdown modules",
+        "review/ground-truth/peat-flutter.md (NEW), review/ground-truth/peat-sapient.md (NEW)",
+        "REVIEW-STATE.json (audited_commits += peat-flutter, peat-sapient; 6 new open_todos; 1 new unverifiable_claim; this run_log entry)",
+        "CLAUDE.md + PROMPT-peat-curriculum-refresh.md + PROMPT-peat-training-doc-improvement.md (six -> eight repos; routing rows for peat-flutter + peat-sapient; 'Peat is a name not an acronym' naming rule)"
+      ],
+      "claims_changed": "No code-fact claims changed — this was a brand/naming pass plus bringing two new repos under tracking with initial read-only audits. New FIPS finding logged (peat-flutter bundles non-FIPS BLE crypto via peat-btle 0.4.0) pending verification against peat-btle source.",
+      "diagrams_touched": "none re-derived (SVG <text> 'PEAT' labels were renamed to 'Peat' by the brand pass; no facts changed).",
+      "notes": "Manual, human-driven change (NOT the scheduled refresh). Two new repos (peat-flutter, peat-sapient) cloned locally and added to tracking; the cloud refresh routine's clone list + the prompt routing tables were updated so future syncs diff all EIGHT repos. peat-node QUICKSTART docs (Kit) noted for consumption next sync. Curriculum integration of the two new repos (Module 4c client bindings; Module 7 SAPIENT case study) left as open_todos for the next full sweep."
+    },
     {
       "when": "2026-06-22",
       "mode": "ci",
@@ -174,5 +230,314 @@
       "diagrams_touched": "M-038 added (provider-gossip sequence, 03-peat-mesh.md §3.4b). Spot-checked + advanced to 2026-06-19: M-019 (SyncMessageType wire bytes — unchanged; blob-announce rides a separate ALPN, adds no tag), M-020/M-021 (negentropy/transport — unchanged), M-007/M-009/M-010 (peat-protocol phases/enums — unchanged), M-035 (peat-node proto:342-373 — RPC count still 27, unchanged), H-006/H-007 (hub mesh — prose cards added)",
       "notes": "Incremental CI refresh. No full sweep due (last_full_run 2026-06-18, < 30d). All §0b gates run (fact-check, house-rules, cohesion, diagram, blast-radius). Resolved prior open_todo (peat-node 5-commits-ahead): RPC count held at 27, gRPC auth #38 did NOT land, tombstone/RBAC unchanged. New open_todos + unverifiable_claims logged for ADR-071 inert seam and provider-gossip runtime behaviour."
     }
-  ]
+  ],
+  "verification_2026-06-26": {
+    "method": "8-repo verification workflow (33 agents): 7 subsystem verifiers + adversarial re-verification of high-stakes/label-changing findings + 3 discovery rounds. Repos read at audited HEADs. 67 verdicts (43 confirmed, 18 refuted/corrected, 6 external/runtime); 36 discovery issues. All contradictory-to-prior-belief findings self-re-verified by grep.",
+    "converged": true,
+    "convergence_note": "CONVERGED for the reader-facing curriculum (12 modules + index.html + peat-constrained-networking.html) and the canonical ground-truth (review/ground-truth.md + review/ground-truth/*.md). Two fix workflows (16 + 12 agents) applied 44 + 34 edits; a final grep sweep for the five recurring stale tokens (CellRole-6, SquadSummary-still-shipping, peat-btle#75/aws-lc-rs, peat-mesh hierarchy/router.rs, RPC 28/27) returns clean. NOTE: peat-protocol/src/hierarchy/router.rs (is_route_valid:101) is a REAL file and its citations are correct. gbrain corrections (C1/C2/C11/C12/C13 -> peat-current-state §5/§6/§9, peat-hierarchy-vocabulary, peat-open-issues-snapshot) are deferred to the gbrain-refresh step.",
+    "corrections": [
+      {
+        "id": "C1",
+        "sev": "high",
+        "what": "Shipped BLE crypto is NOT FIPS-clean (published-vs-source split)",
+        "truth": "peat-btle SOURCE (HEAD 3d70f48) is FIPS-clean: AES-256-GCM + ECDH P-256 (migration commit c8b013e). But the crates.io-PUBLISHED peat-btle 0.4.0 (checksum a57dd351) that peat-flutter builds still depends on chacha20poly1305 + x25519-dalek. Same version string, FIPS migration never re-published.",
+        "evidence": "peat-btle/Cargo.toml:106,116; src/security/mesh_key.rs:23-25, peer_key.rs:33,93; peat-flutter/rust/Cargo.lock:3542-3575,630-631,6451-52",
+        "targets": [
+          "gbrain peat-current-state §6",
+          "04-peat-btle-and-lite.md",
+          "09-protocol-specs.md",
+          "review/ground-truth/peat-btle.md",
+          "review/ground-truth/peat-flutter.md"
+        ],
+        "status": "applied (curriculum + ground-truth); gbrain pages PENDING (next step)"
+      },
+      {
+        "id": "C2",
+        "sev": "high",
+        "what": "No peat-btle#75 / aws-lc-rs basis",
+        "truth": "No '#75' or 'aws-lc-rs' reference exists in peat-btle. aws-lc-rs in peat-flutter's lock is a TLS-stack transitive dep (rustls/rustls-webpki/tokio-websockets), unrelated to BLE crypto.",
+        "evidence": "grep over peat-btle (zero hits); peat-flutter/rust/Cargo.lock:321-322 (aws-lc-rs via rustls)",
+        "targets": [
+          "gbrain peat-current-state §6",
+          "09-protocol-specs.md"
+        ],
+        "status": "applied (curriculum + ground-truth); gbrain pages PENDING (next step)"
+      },
+      {
+        "id": "C3",
+        "sev": "med",
+        "what": "peat-mesh bypass.rs ChaCha20 is a stale doc comment",
+        "truth": "peat-mesh shipping crypto is FIPS-clean (ADR-060 §5, PR #870). bypass.rs:365/:450 ChaCha20-Poly1305 mentions are STALE COMMENTS; the code encrypts with AES-256-GCM.",
+        "evidence": "peat-mesh/src/transport/bypass.rs:365,450 (comments) vs AES-256-GCM impl",
+        "targets": [
+          "review/ground-truth/peat-mesh.md"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C4",
+        "sev": "high",
+        "what": "CellRole has 7 variants INCLUDING Support",
+        "truth": "CellRole = {Leader, Sensor, Compute, Relay, Strike, Support, Follower} = 7 variants. The earlier ground-truth claiming 6 without Support is WRONG.",
+        "evidence": "peat-protocol/src/models/role.rs:14-29",
+        "targets": [
+          "review/ground-truth/peat.md",
+          "02b-formation-and-leadership.md"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C5",
+        "sev": "med",
+        "what": "command_authority is a config string, not an enum; access ladder/retention are doc-only",
+        "truth": "command_authority is a TOML operator-config string (C2_ONLY/ANY_TAK_USER, OPERATOR_GUIDE.md:931) — NOT a Rust enum. The Public(0)..Critical(4) access-level ladder and 90d/1y/2y audit-retention tiers are documentation-only (no code).",
+        "evidence": "grep all *.rs: zero CommandAuthority enum / zero access-level ladder code",
+        "targets": [
+          "09-protocol-specs.md",
+          "review/claim-ledger.md"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C6",
+        "sev": "med",
+        "what": "Partition 'original-leader-keeps-Cell-ID' is spec-only, NOT implemented",
+        "truth": "Spec defines it (004-coordination.md:902-906) but peat-mesh only DETECTS partitions; cell-splitting / Cell-ID retention / minority-side new-ID are NOT implemented.",
+        "evidence": "peat/docs/spec/004-coordination.md:902-906; peat-mesh partition code (detect only)",
+        "targets": [
+          "09-protocol-specs.md",
+          "REVIEW-STATE (was 'impl unconfirmed' -> 'NOT implemented')"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C7",
+        "sev": "med",
+        "what": "Automerge ActorId DeviceId[0:8]||SessionCounter is spec-only, NOT implemented",
+        "truth": "Spec (002-sync.md:144-151) defines that construction; code uses Automerge's DEFAULT random ActorId (Automerge::new()/fork()), no DeviceId derivation.",
+        "evidence": "peat/docs/spec/002-sync.md:144-151 vs peat-mesh Automerge usage",
+        "targets": [
+          "09-protocol-specs.md:116-117",
+          "review/ledger/09-specs.md:37"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C8",
+        "sev": "high",
+        "what": "peat-node is SINGLE-PORT (PEAT_NODE_LISTEN=50051); the 4040/8080/broker/recycle env vars do NOT exist",
+        "truth": "peat-node binds one endpoint via PEAT_NODE_LISTEN (default tcp://0.0.0.0:50051) serving Connect+gRPC+gRPC-Web. There is NO PEAT_BIND_PORT(4040), PEAT_HTTP_PORT(8080), PEAT_BIND_ADDRESS, PEAT_BROKER_PORT, or PEAT_CONNECTION_RECYCLE_SECS. 8080 appears only as an example PEAT_NODE_AGENT_ADDR. It is brokerless P2P over Iroh QUIC.",
+        "evidence": "peat-node/src/main.rs:38; docs/CONFIGURATION.md:11; grep zero for the named vars",
+        "targets": [
+          "08-running-and-operating.md §8.2/§8.4",
+          "06-data-flows.md"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C9",
+        "sev": "high",
+        "what": "peat-node RPC count = 27 defined / 27 implemented (full parity)",
+        "truth": "proto/sidecar.proto defines exactly 27 RPCs; service.rs implements all 27. NOT 28/27 and NOT 25.",
+        "evidence": "peat-node/proto/sidecar.proto (27 'rpc ' lines); src/service.rs (27 impls)",
+        "targets": [
+          "06-data-flows.md:248",
+          "07-repo-links-and-gaps.md:75",
+          "ground-truth/peat-node (if present)"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C10",
+        "sev": "high",
+        "what": "peat-node has NO X.509/PKI device-cert, NO CoT bind_port 8087, NO command_authority surface",
+        "truth": "None of these exist in peat-node (not compiled, not documented). The only cert code is outbound TLS client trust. The PKI/CoT-8087/command_authority material belongs to a different component (peat-transport/operator guide) or is Speculative.",
+        "evidence": "grep peat-node *.rs/*.toml/*.proto/*.md for pki|x509|8087|cursor.on.target|command_authority: zero",
+        "targets": [
+          "08-running-and-operating.md",
+          "09-protocol-specs.md"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C11",
+        "sev": "high",
+        "what": "peat-schema hierarchy proto RENAMED — no SquadSummary/squad_id",
+        "truth": "peat-schema/proto/hierarchy.proto now defines CellSummary/CohortSummary/FederationSummary/CoalitionSummary; zero Squad/squad_id. The 'peat-schema still ships SquadSummary' claim is STALE at HEAD 8a94796. (peat-btle src/lib.rs DOES still use legacy Platform/Squad — keep that distinct.)",
+        "evidence": "peat/peat-schema/proto/hierarchy.proto:24,71,72,122,172",
+        "targets": [
+          "00b-the-big-idea.md §5",
+          "01-architecture-overview.md §1.2",
+          "gbrain peat-current-state §5",
+          "gbrain peat-hierarchy-vocabulary",
+          "ground-truth"
+        ],
+        "status": "applied (curriculum + ground-truth); gbrain pages PENDING (next step)"
+      },
+      {
+        "id": "C12",
+        "sev": "high",
+        "what": "11 ADRs Accepted (not only ADR-041); ADR-070 SAPIENT bridge is Accepted",
+        "truth": "Accepted ADRs: 002, 009, 015, 016, 023, 024, 030, 041, 047, 057, 070 (=11). 'ADR-041 is the only Accepted ADR' is FALSE. ADR-070 (SAPIENT Protocol Bridge) is Accepted — peat-sapient is a first-class accepted integration.",
+        "evidence": "grep '**Status**: Accepted' over peat/docs/adr/*.md (11 files)",
+        "targets": [
+          "07-repo-links-and-gaps.md §7.6",
+          "gbrain peat-current-state §9",
+          "ground-truth"
+        ],
+        "status": "applied (curriculum + ground-truth); gbrain pages PENDING (next step)"
+      },
+      {
+        "id": "C13",
+        "sev": "high",
+        "what": "ADR-006 + ADR-044 are FIPS-amended (2026-05-18, PR #870)",
+        "truth": "Both amended: ChaCha20-Poly1305 superseded by AES-256-GCM; ADR-044 MLS ciphersuite -> MLS_128_DHKEMP256_AES128GCM_SHA256_P256 (X25519 KE flagged for FIPS review). 'still carries pre-FIPS ChaCha20' is stale for 006/044. 048/049 + the peat-mesh/peat-btle READMEs are the still-stale docs.",
+        "evidence": "peat/docs/adr/006-...:3,8,560; 044-...:3,8,14",
+        "targets": [
+          "07-repo-links-and-gaps.md §7.6/§7.7",
+          "09-protocol-specs.md §9.5/§9.6",
+          "gbrain peat-current-state §6"
+        ],
+        "status": "applied (curriculum + ground-truth); gbrain pages PENDING (next step)"
+      },
+      {
+        "id": "C14",
+        "sev": "high",
+        "what": "Tombstone-GC is SHIPPED in peat-node (not In-flight)",
+        "truth": "peat-node ships tombstone GC: PEAT_NODE_TOMBSTONE_TTL_HOURS, gc_interval_secs, gc_batch_size (main.rs:109-122, wired :519-521, node.rs). peat-node#136 closed. Module 8 §8.8 'In-flight' is stale.",
+        "evidence": "peat-node/src/main.rs:109-122,519-521; src/node.rs",
+        "targets": [
+          "08-running-and-operating.md §8.8"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C15",
+        "sev": "med",
+        "what": "Per-collection deletion-policy config is a Shipped RPC surface (ADR-016)",
+        "truth": "SetCollectionConfig/GetCollectionConfig/ListCollectionConfigs are Shipped RPCs (sidecar.proto:134-145) persisting DeletionPolicy+TTLs (ADR-016/peat-node#55) — distinct from #136. Module 8 conflates them.",
+        "evidence": "peat-node/proto/sidecar.proto:129-145,706-737; src/service.rs",
+        "targets": [
+          "06-data-flows.md §6.3",
+          "08-running-and-operating.md §8.8"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C16",
+        "sev": "med",
+        "what": "ADR file count = 78 (not 75)",
+        "truth": "ls peat/docs/adr/*.md = 78 (74 numbered ADRs + 4 reference docs).",
+        "evidence": "ls peat/docs/adr/*.md | wc -l = 78",
+        "targets": [
+          "01-architecture-overview.md:243,417",
+          "07-repo-links-and-gaps.md:174"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C17",
+        "sev": "med",
+        "what": "PowerProfile has 4 variants incl Custom",
+        "truth": "PowerProfile = Aggressive, Balanced(default), LowPower, Custom (config.rs:73). Module 4 says only 3. The 'no UltraLow code path' point still holds (UltraLow is not a variant).",
+        "evidence": "peat-btle/src/config.rs:73-87",
+        "targets": [
+          "04-peat-btle-and-lite.md:39,48-49,62"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C18",
+        "sev": "med",
+        "what": "QoS bandwidth shares: doc-comment vs shipped allocation differ",
+        "truth": "Module 2.6 cites 40/30/20/8/2 (a doc-comment in qos/mod.rs). The shipped BandwidthAllocation uses guaranteed/burst shares (P1 20%/80% burst, P2 30%/60%, P3 20%/40%, ...) in qos/bandwidth.rs:250-300. Note the discrepancy.",
+        "evidence": "peat-protocol src/qos/mod.rs:41-45 vs peat-mesh/src/qos/bandwidth.rs:250-300",
+        "targets": [
+          "02-peat-protocol.md §2.6"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C19",
+        "sev": "high",
+        "what": "Routing-enforcement file citation is wrong (file doesn't exist)",
+        "truth": "Module 00b cites 'peat-mesh hierarchy/router.rs:19-20,90-91,140' (no such file) in 5 places. Real file: peat-mesh/src/routing/router.rs (route :246, Up/Down/Lateral :362-433, next-hop :487-533).",
+        "evidence": "peat-mesh/src/routing/router.rs:246,362-433,487-533",
+        "targets": [
+          "00b-the-big-idea.md:147,181,184,204,448"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C20",
+        "sev": "med",
+        "what": "peat-node Remote Agent Watcher subsystem undocumented",
+        "truth": "peat-node ships an opt-in agent watcher (off unless PEAT_NODE_AGENT_ADDR set) polling a local UDS Remote Agent over Connect RPC (watcher.rs, main.rs:127-145,584-599). Absent from Module 8.",
+        "evidence": "peat-node/src/watcher.rs; src/main.rs:127-145,584-599",
+        "targets": [
+          "08-running-and-operating.md §8.2/§8.3"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C21",
+        "sev": "med",
+        "what": "peat-lite Document 0x07 wire layout leads with a flags byte",
+        "truth": "Document 0x07 envelope = flags(1) | collection_len(1) | collection | doc_id... ; flags bit0=tombstone(0x01), bit1=encrypted(0x02), bits2-7 reserved (encoder rejects). Module 4 §4B.2 omits the leading flags field.",
+        "evidence": "peat-lite/src/protocol/document.rs:23-34,75-96",
+        "targets": [
+          "04-peat-btle-and-lite.md §4B.2"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C22",
+        "sev": "med",
+        "what": "peat-btle beacon: two distinct advertising layouts",
+        "truth": "beacon.rs documents manufacturer-data (40B) vs service-data (21B) layouts; the 16-byte body fits the 31-byte legacy limit as Service Data (3+18=21). Module 4 conflates them and reaches a wrong conclusion for the service-data case.",
+        "evidence": "peat-btle/src/discovery/beacon.rs:36-49,314",
+        "targets": [
+          "04-peat-btle-and-lite.md:144-152"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C23",
+        "sev": "med",
+        "what": "ground-truth/peat.md §0 stale crate versions",
+        "truth": "§0 table says peat-protocol older + Cargo.lock peat-mesh rc.42; actual at HEAD: workspace rc.27, peat-ffi 0.2.8, Cargo.lock peat-mesh rc.43.",
+        "evidence": "peat/Cargo.toml:67; peat/peat-ffi/Cargo.toml:52; peat/Cargo.lock (peat-mesh rc.43)",
+        "targets": [
+          "review/ground-truth/peat.md:21,25,30"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C24",
+        "sev": "med",
+        "what": "Repo inventory still says 'six repositories'",
+        "truth": "Module 1 §1.4 + Module 7 §7.1 enumerate six repos; should be eight (add peat-flutter, peat-sapient). peat-sapient is ADR-070 Accepted.",
+        "evidence": "peat-sapient/Cargo.toml (0.1.0); peat/docs/adr/070 (Accepted)",
+        "targets": [
+          "01-architecture-overview.md §1.4",
+          "07-repo-links-and-gaps.md §7.1"
+        ],
+        "status": "fix-applied"
+      },
+      {
+        "id": "C25",
+        "sev": "low",
+        "what": "Low-severity citation/labeling drift batch",
+        "truth": "Misc: Module 2b FormationKey API source lines; Module 3 MeshCertificate wire format + transitive-gossip put_with_origin cite; Module 4 OTA lite_ota.rs location + per-profile battery framing + peat-lite header-byte labels. Fix citations/labels; low impact.",
+        "evidence": "see discovery low-severity items in workflow result",
+        "targets": [
+          "02b",
+          "03-peat-mesh.md",
+          "04-peat-btle-and-lite.md"
+        ],
+        "status": "fix-applied"
+      }
+    ],
+    "ledgers_note": "The dated audit-trail docs — review/ledger/*, review/claim-ledger.md, review/assumptions.md, review/gaps-contributions.md, review/CHANGELOG-review.md, review/diagrams.md — are point-in-time adversarial records. A few of their findings are now SUPERSEDED by this verification block (e.g. 'CellRole has no Support', 'sidecar.proto 28/27', 'peat-btle#75 aws-lc-rs'). They are intentionally LEFT as history (not rewritten); verification_2026-06-26 + the canonical ground-truth are authoritative."
+  }
 }

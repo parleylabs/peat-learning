@@ -1,4 +1,4 @@
-# PEAT Curriculum Review — Change Log
+# Peat Curriculum Review — Change Log
 
 Per-document change log for the curriculum rewrite. Each entry records what was corrected in
 that document and why, assembled from the 14 per-document rewrite passes. All rewrites were done
@@ -43,7 +43,7 @@ Pulled from every rewrite pass. A human should resolve these against live source
   values, connection-health RTT/loss thresholds, the discovery 60 s candidate-pool timeout, specific
   Prometheus metric names and `/api/v1/...` endpoints, stream-ID range *enforcement* at runtime.
 - **Quantitative claims that are external specs or design targets (flagged, not asserted):** BLE
-  rate/range, LoRa/Iridium SBD figures (datasheet specs, not PEAT measurements); "~10 MB Automerge /
+  rate/range, LoRa/Iridium SBD figures (datasheet specs, not Peat measurements); "~10 MB Automerge /
   256 KB / ~40×" memory comparison (256 KB is an unenforced design target; the 10 MB figure has no
   source in code); the "<5 s P1" latency and "1,000+ node" validation (single-machine ~1023-node
   simulation ceiling, epics #724–#727); the "20-node plateau" industry premise (whitepaper thesis,
@@ -51,7 +51,7 @@ Pulled from every rewrite pass. A human should resolve these against live source
 - **Operator-guide config not traced into compiled code:** `[security.pki]` X.509 device-cert flow,
   CoT `bind_port 8087` / type strings, the `command_authority` enum surface — all labeled
   *Documented*, not *Shipped*.
-- **Standalone-repo existence/publication:** crates.io / Maven Central publication of any PEAT crate;
+- **Standalone-repo existence/publication:** crates.io / Maven Central publication of any Peat crate;
   peat-sim, peat-registry, peat-sdk-go, a standalone peat-android repo (only ADR/epic anchors
   corroborate these — ADR-054, #724, Phase-3 roadmap).
 - **Spec-defined, implementation unconfirmed:** Automerge `ActorId` byte construction; access-level
@@ -258,7 +258,7 @@ all source-layout types; three shipped transports; n0-relay-off default + rc.42 
 levels. Added legends to both Mermaid diagrams + a worked disaster-response example.
 
 **Flagged:** negentropy "O(log n) rounds" and the Automerge-sync arxiv claim are the algorithms' own
-analytical claims, not PEAT benchmarks; the ADR-063 cadence model is the proposal's reasoning;
+analytical claims, not Peat benchmarks; the ADR-063 cadence model is the proposal's reasoning;
 `ADR-034` is cited in code comments but absent from the umbrella ADR index.
 
 File: `/Users/bryanbui/code/peat/learning/03-peat-mesh.md`
@@ -409,7 +409,7 @@ Rewritten in place. Added a spec-vs-code contract banner + per-capability labels
 the four real schemes. **RBAC:** spec's `Observer/Member/Operator/Leader/Supervisor` → shipped
 `Leader/Member/Observer/Commander/Admin` (`authorization.rs:50-64`); explained Operator/Supervisor leaked
 from `AuthorityLevel` (`node.proto:61-66`). **peat-lite & BLE wire:** spec 001 §6/§7 flagged
-aspirational; gave shipped peat-lite (`"PEAT"` magic, 16-B header, port 5555, `Document` 0x07, u32
+aspirational; gave shipped peat-lite (`"Peat"` magic, 16-B header, port 5555, `Document` 0x07, u32
 NodeId) and BLE GATT code-of-record `0xA1B2` (spec's `0x1826` is the Fitness Machine UUID). **Leader
 election** split into two formulas; human-authority weighting labeled Proposed/spec-layer. **MLS**
 relabeled Proposed (ADR-044, no `openmls`/`mls-rs`). **FIPS:** AES-256-GCM/ECDH-P256/Ed25519 under

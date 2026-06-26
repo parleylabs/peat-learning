@@ -1,8 +1,8 @@
-# Prompt — Harden the PEAT learning curriculum to enterprise-onboarding grade
+# Prompt — Harden the Peat learning curriculum to enterprise-onboarding grade
 
-> Reusable prompt for an agent (or a multi-agent workflow) tasked with improving PEAT's
+> Reusable prompt for an agent (or a multi-agent workflow) tasked with improving Peat's
 > learning material. Copy the section below the line into the agent. It is deliberately
-> opinionated and PEAT-specific: it must not drift into generic documentation advice.
+> opinionated and Peat-specific: it must not drift into generic documentation advice.
 >
 > **Run it as a multi-agent workflow on the latest, most capable model (Opus-class)** — one agent
 > per role in §2, with independent fact-check and validation gates (the gates are enumerated in
@@ -19,8 +19,8 @@
 You are a combined **analytics + engineering documentation team** producing onboarding
 material that will train new engineers at a defense-technology prime (Anduril-scale:
 skeptical staff engineers, FIPS/air-gap requirements, 1,000+ node deployments, contested
-comms). Your job is to make the PEAT learning curriculum **correct, current, honest, and
-genuinely instructive** for that audience, anchored line-by-line in the latest PEAT code.
+comms). Your job is to make the Peat learning curriculum **correct, current, honest, and
+genuinely instructive** for that audience, anchored line-by-line in the latest Peat code.
 
 **Primary documents to improve (the curriculum):**
 
@@ -41,10 +41,10 @@ modules). Keep ADR references consistent with `peat/docs/adr/`.
   status accurately, and propose corrections. It is a consistency check, not a primary
   rewrite target.
 
-**Feed the findings back into gbrain** (see §9) so the brain captures PEAT's current,
+**Feed the findings back into gbrain** (see §9) so the brain captures Peat's current,
 verified state for future chats.
 
-The bar: **the material must survive a skeptical staff engineer reading it with the PEAT
+The bar: **the material must survive a skeptical staff engineer reading it with the Peat
 source open in another window.** If a claim cannot be traced to code or an authoritative
 source, it is fixed, cited, or explicitly flagged as unverified — never left implying more
 certainty than exists.
@@ -118,7 +118,8 @@ Apply each lens; in a workflow, assign one agent each.
 
 For each repo — `peat` (incl. `peat-protocol`, `peat-schema`, `peat-transport`,
 `peat-persistence`, `peat-ffi`), `peat-mesh`, `peat-btle`, `peat-lite`, `peat-gateway`,
-`peat-node`:
+`peat-node`, `peat-flutter` (Flutter/Dart client binding over `peat-ffi`), `peat-sapient`
+(SAPIENT/BSI Flex 335 v2.0 sensor bridge over `peat-schema`):
 
 1. Confirm you are on the latest development: `git fetch && git status && git log -n 5`.
    Pull if behind. Record the commit/branch you audited against.
@@ -176,7 +177,7 @@ Each module maps to a subsystem — verify against that subsystem's code:
 - Hierarchy vocabulary — confirm current names (ADR-066: Platform/Cell/Cohort/Federation/
   Coalition) and that the material isn't using legacy terms without flagging them.
 - Iridium `+SBDIX` MO+MT-in-one-pass — cite the external source; mark as a hardware
-  assumption, not a PEAT fact.
+  assumption, not a Peat fact.
 
 For each claim, emit a **Claim Ledger** row:
 
@@ -276,13 +277,13 @@ claim; the `run_log` entry records how many diagrams were verified.
 1. **Cross-check `peat-addressing-transport-sync.md`** against the Ground-Truth Appendix.
    Emit a discrepancy list (claim → reality → correction) and update the note's status labels
    so it stays an honest ADR candidate.
-2. **Update gbrain to capture PEAT's current state** (this is how future chats inherit
+2. **Update gbrain to capture Peat's current state** (this is how future chats inherit
    reality):
    - Write/refresh a canonical current-state page in the `default` source via `put_page`
      (e.g. a transport shipped-vs-proposed matrix, the ground-truth model, the gaps map).
    - **Update existing pages in place** where they already cover a topic (e.g.
      `peat-open-issues-snapshot`, `peat-hierarchy-vocabulary`) rather than duplicating.
-   - **Never delete** PEAT doc pages in the `default` source — they're used across chats;
+   - **Never delete** Peat doc pages in the `default` source — they're used across chats;
      correct via update/config, not deletion. (See memory: keep-peat-docs-in-gbrain-default.)
    - Link the new/updated pages to the existing ones with `[[wikilinks]]`.
 
@@ -324,7 +325,7 @@ claim; the `run_log` entry records how many diagrams were verified.
 
 ## Appendix · Anchors to start from
 
-- Repos: `peat`, `peat-mesh`, `peat-btle`, `peat-lite`, `peat-gateway`, `peat-node`
+- Repos: `peat`, `peat-mesh`, `peat-btle`, `peat-lite`, `peat-gateway`, `peat-node`, `peat-flutter`, `peat-sapient`
   (+ proposed external `peat-sbd`, `peat-lora`).
 - Key ADRs: 011 (Automerge+Iroh), 032 (pluggable transport), 035 (peat-lite), 039 (btle),
   041 (multi-transport embedded), 046 (targeted delivery), 051 (SBD), 052 (LoRa),

@@ -23,7 +23,7 @@ design** — that is correct for a design note, but the note does not flag it as
    `transport::NodeId` is a `pub struct NodeId(String)` — a transport-assigned string, **not a
    hash**. iroh uses the raw Ed25519 `EndpointId` (no SHA-256 wrap). Spec 001/005's "32 bytes of
    SHA-256" is itself spec drift the code contradicts.
-   **Correction:** state that PEAT's mesh crypto identity is `DeviceId` = first **16 bytes** of
+   **Correction:** state that Peat's mesh crypto identity is `DeviceId` = first **16 bytes** of
    SHA-256(Ed25519 pubkey) (`peat-mesh/src/security/device_id.rs:33,39-47`); that `NodeId` is a
    separate transport-string type; and that identity is **not** unified across layers. Drop the
    "ADR-006 / canonical NodeId = full SHA-256" framing.
@@ -50,7 +50,7 @@ design** — that is correct for a design note, but the note does not flag it as
 
 ## B. Transport (Layer 2)
 
-4. **Claim** (line 67): "PEAT already treats this as pluggable via the `MeshTransport` /
+4. **Claim** (line 67): "Peat already treats this as pluggable via the `MeshTransport` /
    `Transport` traits (`peat-protocol/src/transport/`, ADR-032)."
    **Reality** (ground truth §1, §2): the transport traits and impls live in **`peat-mesh`**;
    `peat-protocol`'s transport/network modules are thin `pub use peat_mesh::…` re-export shims.
@@ -152,10 +152,10 @@ design** — that is correct for a design note, but the note does not flag it as
 
 15. **Assumption** (lines 148-149): "An Iridium `+SBDIX` session sends MO and receives MT in a
     single satellite pass."
-    **Reality** (ground truth §8): this is an **external Iridium hardware fact, not a PEAT fact**;
+    **Reality** (ground truth §8): this is an **external Iridium hardware fact, not a Peat fact**;
     peat-sbd is Proposed-only and there is no `+SBDIX` code (grep clean).
     **Correction:** label it explicitly as a hardware assumption (cite
-    `research/quic-iridium-sbd-feasibility`), not a PEAT capability.
+    `research/quic-iridium-sbd-feasibility`), not a Peat capability.
 
 ---
 

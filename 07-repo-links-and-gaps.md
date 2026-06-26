@@ -1,3 +1,5 @@
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
+
 # Module 7 — Repo Map, Capability Gaps & Links to Add
 
 **Goal:** two maps in one. First, *what code lives where* — which repos are in this folder, which
@@ -23,7 +25,7 @@ the source on the audited HEAD, the source wins.
 
 ## 7.1 What's local (in this folder)
 
-These six directories are present and are what the rest of this track covers. The fifth column gives
+These eight directories are present and are what the rest of this track covers. The fifth column gives
 each one's role in a sentence so you know why you'd open it.
 
 | Local dir | Upstream | What it is |
@@ -34,6 +36,8 @@ each one's role in a sentence so you know why you'd open it.
 | `peat-lite/` | https://github.com/defenseunicorns/peat-lite | The embedded/microcontroller tier: a 16-byte-header UDP wire codec and small CRDTs for ESP32-class devices. Bridged into the mesh by peat-mesh's `lite-bridge` feature. |
 | `peat-gateway/` | https://github.com/defenseunicorns/peat-gateway | The enterprise **control plane** — binary, library, web UI, and Helm/Zarf/UDS packaging. It is **not a mesh node and not in the data path**; it observes and manages. Server-side, not an SDK crate. |
 | `peat-node/` | https://github.com/defenseunicorns/peat-node | The deployable **production node**: a gRPC / Connect / gRPC-Web sidecar that embeds `peat-mesh` + `peat-protocol` and exposes them on one port. Iroh QUIC only — no BLE path. (See §7.2 for how it differs from the in-`peat-mesh` demo binary.) |
+| `peat-flutter/` | https://github.com/defenseunicorns/peat-flutter | The **Flutter/Dart client binding** over `peat-ffi` (hand-maintained UniFFI bindings). Wraps the native crate for mobile consumers; transitively bundles peat-btle + peat-mesh. |
+| `peat-sapient/` | https://github.com/defenseunicorns/peat-sapient | The **SAPIENT sensor-standard bridge** — a Rust lib bridging the SAPIENT sensor protocol into Peat via `peat-schema` (ADR-070, Accepted). The sensor-standard analog of peat-transport's TAK/CoT bridge. |
 
 > **Note on registries.** Whether `peat-protocol`, `peat-schema`, `peat-btle`, and `peat-lite` are
 > *published* to crates.io, and `peat-ffi` to Maven Central, is **not verified in this audit**. The
@@ -45,7 +49,7 @@ each one's role in a sentence so you know why you'd open it.
 
 ## 7.2 Referenced but NOT present locally — pull these down
 
-These are PEAT repos referenced in code comments, `Cargo.toml`s, READMEs, or ADRs that are **not**
+These are Peat repos referenced in code comments, `Cargo.toml`s, READMEs, or ADRs that are **not**
 checked out here. Listed roughly by how useful they'd be to someone onboarding.
 
 | Repo / component | GitHub | Why it's referenced | Status / priority |
@@ -68,8 +72,8 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 > - **`peat-node`** (its own repo, audited at v0.4.8) is the **production sidecar**: it embeds
 >   peat-mesh + peat-protocol and exposes them as a gRPC / Connect / gRPC-Web API on a single port. It
 >   is the Kubernetes sidecar pattern's node, it ships a Helm chart plus Zarf and UDS bundles, and it
->   is the UDS Remote Agent integration target. The proto defines **28 RPCs** and `service.rs`
->   implements **27** (the "25 RPCs" you may see in older docs is outdated). It speaks **Iroh QUIC
+>   is the UDS Remote Agent integration target. The proto defines **27 RPCs** and `service.rs`
+>   implements all **27** (the "25 RPCs" you may see in older docs is outdated). It speaks **Iroh QUIC
 >   only** — a `docs/DESIGN.md` diagram labels "BLE" aspirationally, but there is no BLE code path in
 >   peat-node.
 >
@@ -77,9 +81,9 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 
 ---
 
-## 7.3 External (non-PEAT) dependencies worth a bookmark
+## 7.3 External (non-Peat) dependencies worth a bookmark
 
-Not repos to clone, but the upstreams whose docs you'll read while working in PEAT:
+Not repos to clone, but the upstreams whose docs you'll read while working in Peat:
 
 - **Iroh** (QUIC P2P) — https://github.com/n0-computer/iroh — the heart of the `peat-mesh` transport.
   Pinned with the `tls-aws-lc-rs` provider so the TLS stack uses FIPS-approved AES, not `ring`.
@@ -87,7 +91,7 @@ Not repos to clone, but the upstreams whose docs you'll read while working in PE
   (cited in `peat-mesh/src/storage/automerge_sync.rs`).
 - **negentropy** (set reconciliation) — the shipped sync optimization. It is the lesson applied from
   **ADR-040, whose on-disk title is `040-nostr-protocol-lessons.md`** (issue #435); "negentropy set
-  reconciliation" is what PEAT took *from* that ADR, not the ADR's own title. Its "O(log n) rounds"
+  reconciliation" is what Peat took *from* that ADR, not the ADR's own title. Its "O(log n) rounds"
   property is an **algorithmic / module-doc claim, not an independently measured benchmark.**
 - **redb** — the pure-Rust embedded key-value store used for persistence (peat-mesh's
   `automerge-backend` feature and peat-gateway's default state backend).
@@ -99,7 +103,7 @@ Not repos to clone, but the upstreams whose docs you'll read while working in PE
 - **Axum** — the HTTP/WS framework behind peat-mesh's broker, peat-gateway's API, and
   peat-transport's REST bridge.
 - **TAK / Cursor-on-Target / MIL-STD-2525** — the tactical interop standards the CoT layer targets.
-  CoT is a public protocol name; MIL-STD-2525 is the symbology standard CoT references, not a PEAT
+  CoT is a public protocol name; MIL-STD-2525 is the symbology standard CoT references, not a Peat
   module.
 
 ---
@@ -169,26 +173,29 @@ open.
 
 ## 7.6 The ADR archive — your deepest primary source
 
-`peat/docs/adr/` holds **75 Architecture Decision Records (and growing)** — confirmed by a file count,
+`peat/docs/adr/` holds **78 files (74 numbered ADRs + 4 reference docs), and growing** — confirmed by a file count,
 not the "~60" an earlier draft estimated; open issue #695 ("triage 22 Proposed ADRs before public
 release") shows the count trending up. `peat-mesh/docs/adr/` (14) and `peat-btle/docs/adr/` (6) hold
 more. When you want to know *why* something is the way it is, these beat any summary — including this
 one.
 
-**An essential reading habit: check each ADR's status, because PEAT's code is frequently ahead of its
+**An essential reading habit: check each ADR's status, because Peat's code is frequently ahead of its
 ADRs.** Almost every foundational ADR below is formally **Proposed** even though the code already
-ships the decision. **ADR-041 (multi-transport embedded integration) is the only Accepted ADR in the
-core set.** High-value starting ADRs:
+ships the decision. **Eleven ADRs are Accepted — 002, 009, 015, 016, 023, 024, 030, 041, 047, 057,
+070** (so ADR-041 multi-transport embedded integration is *one of* the Accepted set, not the only
+one; ADR-070 SAPIENT Protocol Bridge is Accepted, which makes peat-sapient a first-class accepted
+integration). High-value starting ADRs:
 
 - **ADR-007 / ADR-011** — the CRDT backend choice (Automerge + Iroh). The choice is **Shipped**, but
   **ADR-011 is formally Proposed** — a clear example of code-ahead-of-ADR.
 - **ADR-006 / ADR-048** — security architecture and membership certificates. Membership-cert /
-  enrollment work is open epic #592. **ADR-006 predates the FIPS rule and still carries ChaCha20
-  references** — queued for amendment, not shipped behavior. (The shipped crypto is AES-256-GCM; see
-  Module 9 and the gap in §7.8 below.)
+  enrollment work is open epic #592. **ADR-006 was FIPS-amended on 2026-05-18 (PR #870):**
+  ChaCha20-Poly1305 is superseded by AES-256-GCM, matching shipped behavior. (ADRs 048/049 and the
+  peat-mesh/peat-btle READMEs are the docs still carrying stale ChaCha20 references; see Module 9 and
+  the gap in §7.8 below.)
 - **ADR-019** — QoS classification. The framework is **Shipped**; cross-class enforcement is
   **In-flight** (Module 2/3 cover the nuance).
-- **ADR-040** — `040-nostr-protocol-lessons.md`. Negentropy set reconciliation is the lesson PEAT
+- **ADR-040** — `040-nostr-protocol-lessons.md`. Negentropy set reconciliation is the lesson Peat
   applied from it (issue #435), **Shipped**.
 - **ADR-049** & peat-mesh **ADR-0002** — the peat-mesh extraction; explains why the dependency arrow
   flips (networking/CRDT/crypto live in external peat-mesh, and peat-protocol re-exports them).
@@ -217,11 +224,11 @@ full contribution map, with sizes and starting points, is in
 | **Targeted message delivery** (send a command only to `role:strike`, not the whole cell) | **In-flight** | Today a command propagates to the cell and receivers filter; `CapableScope` is reserved-but-rejected in peat-node v1. | ADR-046 (Proposed); epic #853 (+#854–#859); binary-distribution epic #780 |
 | **Satellite (SBD) and LoRa transports** | **Proposed** | No crate, no module. `TransportType::{Satellite, LoRa}` are enum variants that resolve to "no transport registered" (`peat-mesh/src/transport/manager.rs:1317`). The entire constrained / "Off the Grid" PACE story rests on transports that aren't built. | ADR-051 (SBD); ADR-052 (LoRa) |
 | **Single-burst anti-entropy digest** for one-shot constrained links | **Speculative** | The shipped reconciliation is **negentropy over interactive Iroh QUIC** (multiple round trips). A satellite/LoRa link (one ~1,960-byte frame, 5–20 s one-way) needs a single-burst digest scheme; version-vector, snapshot-since-T, hierarchical-digest, and IBLT designs are teaching-only, not implemented. | ADR-040 (negentropy, Shipped); ADR-063 (Proposed, #935) |
-| **MLS group key agreement** (forward secrecy, RFC 9420) | **Proposed** | Documented as a shipped Layer-4 mechanism, but there is no `openmls`/`mls-rs` anywhere. Group-key rotation today is leader distribution. A security overclaim until relabeled. | ADR-044 (Proposed; itself carries pre-FIPS ChaCha20) |
+| **MLS group key agreement** (forward secrecy, RFC 9420) | **Proposed** | Documented as a shipped Layer-4 mechanism, but there is no `openmls`/`mls-rs` anywhere. Group-key rotation today is leader distribution. A security overclaim until relabeled. | ADR-044 (Proposed; FIPS-amended 2026-05-18, PR #870 — MLS ciphersuite is now `MLS_128_DHKEMP256_AES128GCM_SHA256_P256`, with X25519 KE flagged for FIPS review) |
 | **QoS end-to-end enforcement** ("<5 s P1", cross-class preemption) | **In-flight** | The QoS framework ships (5 classes, allocation, eviction) and peat-node orders relay fanout by class, but a Critical bundle does **not** pause an in-flight Bulk transfer in v1, and "<5 s P1" is a target, not a validated SLA. | ADR-019; peat-node v1 caveats (`sidecar.proto:551-578`) |
 | **Tombstone retention / sync-reliability GC** | **In-flight** | GC knobs exist in peat-node (168 h / 7-day default), but per-collection deletion-policy enforcement through peat-mesh is not wired, and several sync-reliability bugs are open. This governs what re-syncs after a long offline window. | peat-node #136; sync bugs #850/#829/#873 (**not** #857 — #857 is ADR-046 Phase-4 selectors) |
 | **Control-plane and node authentication** | **In-flight** | peat-node's gRPC surface is unauthenticated (#38); peat-gateway's ingress AuthZ is a permissive stub (#99) with no broker ACLs (#97) or NATS auth/TLS (#124/#125), and enrollment validates a pubkey for length only (no proof-of-possession). The admin API is fully open when `PEAT_ADMIN_TOKEN` is unset. Feature-rich, but not production-secure yet. | peat-node #38; peat-gateway #99/#97/#124/#125 |
-| **Hierarchy vocabulary rename** (military → abstract; leaf `Node` vs `Platform`) | **In-flight** | The workspace mixes vocabularies: peat-mesh and peat-protocol use **`Node`** as the leaf; peat-btle is fully legacy `Platform/Squad/Platoon/Company`; peat-schema proto still ships `SquadSummary`. ADR-066 (the abstract vocabulary) and ADR-068 (the base-unit name) are both **Proposed**. No shipped enum uses `Platform` as the leaf. | ADR-066, ADR-068; epics #904, #968, #970 |
+| **Hierarchy vocabulary rename** (military → abstract; leaf `Node` vs `Platform`) | **In-flight** | The workspace mixes vocabularies: peat-mesh and peat-protocol use **`Node`** as the leaf; peat-btle is fully legacy `Platform/Squad/Platoon/Company`; peat-schema's hierarchy proto has already been renamed to the abstract vocabulary (`CellSummary/CohortSummary/FederationSummary/CoalitionSummary`, no `Squad`/`squad_id`). ADR-066 (the abstract vocabulary) and ADR-068 (the base-unit name) are both **Proposed**. No shipped enum uses `Platform` as the leaf. | ADR-066, ADR-068; epics #904, #968, #970 |
 
 ## 7.8 The FIPS posture in one place (the most important caveat)
 
@@ -236,8 +243,10 @@ suggest, and it is exactly what a defense-prime security auditor will probe:
 - **But "FIPS-approved algorithm" is not "FIPS-validated module."** The `aes-gcm` and `p256` crates
   are pure-Rust RustCrypto implementations, **not CMVP-validated cryptographic modules.** An auditor
   will reject "FIPS 140-3" for software that isn't in a validated module. For a real FIPS 140 boundary
-  the path is the KMS/Vault HSM backends in peat-gateway; migrating peat-btle's crypto to `aws-lc-rs`
-  is **In-flight (peat-btle #75)**.
+  the path is the KMS/Vault HSM backends in peat-gateway. peat-btle's own crypto is already
+  FIPS-clean at the *algorithm* level (it uses RustCrypto `aes-gcm`/`p256`), so the open gap there
+  is not the algorithms but the absence of a CMVP-validated module — the same module-vs-algorithm
+  distinction, not a pending library swap.
 - **The one real FIPS *conflict* is in a Proposed ADR, not shipped code.** **ADR-052 (peat-LoRa,
   Proposed) specifies ChaCha20-Poly1305.** Since LoRa is a constrained link, the right fix before any
   implementation is an object-security envelope (an OSCORE / AES-CCM profile) rather than propagating
@@ -250,11 +259,11 @@ suggest, and it is exactly what a defense-prime security auditor will probe:
 
 ## Checkpoint
 
-- Which six repos are local, and what is each one's role in a sentence?
+- Which eight repos are local, and what is each one's role in a sentence?
 - Why is peat-node a first-class component rather than a mirror of `peat-mesh-node`?
 - Name three capabilities the docs describe that are **not Shipped**, and give each its status label
   and a place to contribute.
-- A reviewer asks "is PEAT's crypto FIPS-validated?" — what's the precise, honest answer?
+- A reviewer asks "is Peat's crypto FIPS-validated?" — what's the precise, honest answer?
 
 ---
 

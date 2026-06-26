@@ -1,4 +1,4 @@
-# gbrain update summary — PEAT current verified state
+# gbrain update summary — Peat current verified state
 
 Updated 2026-06-18. All writes to the `default` source. No page deleted. Pages cross-linked with
 `[[wikilinks]]`. Source of truth for content: `learning/review/ground-truth.md` and
@@ -19,7 +19,7 @@ Updated 2026-06-18. All writes to the `default` source. No page deleted. Pages c
 
 ## Pages deleted
 
-None. (Per memory `keep-peat-docs-in-gbrain-default`: never delete PEAT doc pages in `default`;
+None. (Per memory `keep-peat-docs-in-gbrain-default`: never delete Peat doc pages in `default`;
 correct via update/config only.)
 
 ## Wikilink graph

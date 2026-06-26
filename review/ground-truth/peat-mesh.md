@@ -159,10 +159,13 @@ Strategies: `StaticHierarchyStrategy`, `DynamicHierarchyStrategy`, `HybridHierar
 **Verdict on the FIPS/ChaCha20 high-risk claim:** In **peat-mesh source**, ChaCha20-Poly1305 and
 X25519 have been **removed** and replaced with FIPS-approved AES-256-GCM + ECDH-P256. There is
 **no FIPS violation in peat-mesh's encryption module.** The ChaCha20 violation the contract warns
-about lives in **peat-btle and ADR-052 (LoRa)** — sibling repos/ADRs — not here. The only residual
-"ChaCha20" mentions in peat-mesh are in the deprecation comments in `Cargo.toml` and `encryption.rs`
-documenting the swap. Curriculum claiming peat-mesh "uses ChaCha20-Poly1305" (and the README) is
-**Outdated/Wrong** as of rc.42.
+about lives in **peat-btle and ADR-052 (LoRa)** — sibling repos/ADRs — not here. The residual
+"ChaCha20" mentions in peat-mesh are all **stale comments**, not live crypto: the deprecation notes
+in `Cargo.toml` and `encryption.rs` documenting the swap, plus two stale doc comments in
+`src/transport/bypass.rs:365,450` ("Encrypt payload with formation key (ChaCha20-Poly1305)" / "ChaCha20-Poly1305
+encryption key") — the code there actually encrypts with `Aes256Gcm` (`bypass.rs:525,541`), per the
+FIPS-posture swap noted at `bypass.rs:67-68` (ADR-060 §5, PR #870). Curriculum claiming peat-mesh
+"uses ChaCha20-Poly1305" (and the README) is **Outdated/Wrong** as of rc.42.
 
 Open follow-up (In flight): **peat-mesh#126** — benchmark AES-256-GCM + ECDH-P256 on
 ARM-without-crypto-extensions; `encryption.rs:13-24` warns AES-GCM in software on pre-ARMv8-crypto
@@ -248,7 +251,7 @@ backend themselves.
   7-node failover lab, CHANGELOG rc.37).
 - AES-256-GCM/ECDH-P256 ARM performance envelope — explicitly unbenchmarked (issue #126).
 - `TransportCapabilities::quic()` advertises 100 Mbps / 10 ms latency (`capabilities.rs:150-160`) —
-  these are **hardcoded advertisement defaults**, not measured values; do not cite as PEAT
+  these are **hardcoded advertisement defaults**, not measured values; do not cite as Peat
   performance facts.
 
 ---

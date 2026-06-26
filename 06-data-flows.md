@@ -1,3 +1,5 @@
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
+
 # Module 6 — Cross-Cutting Data Flows
 
 **Goal:** tie the repos together by tracing real data end-to-end. Concepts only stick once you can
@@ -95,7 +97,7 @@ sequenceDiagram
    to the parent; persisted to redb. (Negentropy is re-exported through
    `peat-protocol/src/storage/negentropy_sync.rs` → `peat_mesh::storage::negentropy_sync`;
    ADR-040 applied the lesson, tracked by peat-mesh #435.) Note: negentropy's "O(log n) rounds" is
-   an **algorithmic claim from the paper, not a PEAT benchmark**.
+   an **algorithmic claim from the paper, not a Peat benchmark**.
 5. `peat-protocol/src/hierarchy/` — the parent's `HierarchicalAggregator` (in
    `hierarchy/aggregation_coordinator.rs`, surfaced via `update_cell_summary`) folds this cell's
    `CellDelta` in with its siblings; the `HierarchicalRouter` (`hierarchy/router.rs`) enforces that
@@ -278,7 +280,7 @@ messaging or leader-mediated up/down routing — never cross-cell direct message
 (`peat-protocol/src/hierarchy/router.rs`). Adding more nodes does not create more direct links;
 traffic is always funneled through the tier structure, which keeps the connection count growing far
 slower than a full mesh. The architecture for that is real and Shipped. **Scale claim, labeled:**
-PEAT has been exercised to **~1,000 nodes in single-machine simulation** (a 1023 hard ceiling on a
+Peat has been exercised to **~1,000 nodes in single-machine simulation** (a 1023 hard ceiling on a
 Linux-bridge harness), **not** a fielded 1,000-node deployment; the largest code-side lab on record
 is a 7-node failover lab (CHANGELOG rc.37), and open epics **#724–#727** still *target*
 900 / 1.2K / 10K validation. So the routing invariant that lets 5 nodes scale to many is genuine;

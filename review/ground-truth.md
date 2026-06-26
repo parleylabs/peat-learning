@@ -1,4 +1,4 @@
-# PEAT Ground Truth — Merged Authoritative Current-State Model
+# Peat Ground Truth — Merged Authoritative Current-State Model
 
 Synthesized from the six per-repo audits in `learning/review/ground-truth/` (`peat.md`,
 `peat-mesh.md`, `peat-btle.md`, `peat-lite.md`, `peat-gateway.md`, `peat-node.md`). Every
@@ -10,7 +10,7 @@ Status labels (used throughout): **Shipped** (in code, tested) · **In-flight** 
 · **Proposed** (ADR in `Proposed` status, no implementation) · **Speculative** (teaching-only design,
 not in any repo).
 
-> **The single recurring pattern:** PEAT's code is *ahead of* its formal ADRs and *ahead of* its
+> **The single recurring pattern:** Peat's code is *ahead of* its formal ADRs and *ahead of* its
 > own READMEs/specs in some places (FIPS crypto swap, hierarchy enum) and *behind* its docs in
 > others (MLS, SBD/LoRa, command_log). Almost every requested foundational ADR (011/032/035/039/
 > 060/063/066) is formally **Proposed** even where the code already ships the decision. **Only
@@ -127,7 +127,7 @@ the leaf name). The rename is **mid-flight and the workspace mixes vocabularies*
 | `peat-mesh/src/beacon/types.rs:56-67` | `HierarchyLevel { Node=0, Cell=1, Cohort=2, Federation=3, Coalition=4 }` | leaf is **`Node`, NOT `Platform`**; upper four match ADR-066. Sizing comments: Cell 4–13 nodes, Cohort 2–4 cells, Federation 2–4 cohorts (design-intent, not enforced) |
 | `peat-protocol/src/security/authorization.rs:331-343` | `HierarchyLevel { Node, Cell, Cohort, Federation, Coalition }` | also **`Node`**, already migrated upper tiers; doc-comment notes "was previously squad/platoon/company" |
 | `peat-btle/src/lib.rs:495-525` | `HierarchyLevel { Platform=0, Squad=1, Platoon=2, Company=3 }` | **fully LEGACY military vocabulary** — does NOT track ADR-066 |
-| `peat-schema/proto/` | `SquadSummary`, `squad_id`, etc. | **still legacy** Squad/Platoon/Company |
+| `peat-schema/proto/` | `CellSummary`, `CohortSummary`, `FederationSummary`, `CoalitionSummary` (no `Squad`/`squad_id`) | **renamed** to abstract vocabulary (`hierarchy.proto:24,71,72,122,172`) — only `peat-btle/src/lib.rs` is still fully legacy |
 | `peat-lite` | (no hierarchy enum at all) | n/a — codec + CRDTs only |
 | `peat-node/proto/sidecar.proto:272-302` | `Cell` message (no `HierarchyLevel` enum of its own) | on the **new** vocabulary; enum is upstream |
 
@@ -143,8 +143,8 @@ enum is wrong on two counts: the enum says `Node`, and ADR-066 is Proposed.
   Leader, Supervisor"** — `Operator` and `Supervisor` are NOT in the enum (a high-risk factual error
   that the spec 005 enum and several modules repeat). Authorization model deferred pending Layer-1
   device identity (peat#941, open).
-- **`CellRole`** (capability axis, `peat-protocol/src/models/role.rs:14-28`): **`Leader, Sensor,
-  Compute, Relay, Strike, Follower`** (6). **`Support` is NOT a variant** (curriculum invented it).
+- **`CellRole`** (capability axis, `peat-protocol/src/models/role.rs:14-29`): **`Leader, Sensor,
+  Compute, Relay, Strike, Support, Follower`** (7). `Support` **is** a variant.
 - **`AuthorityLevel`** (human-machine teaming ladder, `peat-schema/proto/node.proto:61-67`):
   `UNSPECIFIED, OBSERVER, ADVISOR, SUPERVISOR, COMMANDER` (5). This is likely where README's
   "Supervisor"/"Observer" leaked in. The whitepaper's six-level Root/Cluster/Formation/Group/Team/Node
@@ -169,7 +169,7 @@ Two distinct deterministic implementations exist:
 30 s timeout, pre-shared formation key proven via **HMAC-SHA-256**, key never crosses the wire,
 constant-time compare (`subtle`) (`peat-protocol/src/network/formation_handshake.rs:49`;
 `peat-mesh/src/security/formation_key.rs`). **Shipped.** Routing: cell leaders route upward; non-leaders
-cannot cross-cell or reach zone (`hierarchy/router.rs:19-20,90-91,140`).
+cannot cross-cell or reach zone (`peat-mesh/src/routing/router.rs`: `route` :246, Up/Down/Lateral :362-433).
 
 ---
 
@@ -193,9 +193,11 @@ The READMEs are stale; the code is clean.**
 
 **Residual FIPS gaps (honest caveats):**
 - **Algorithm choice is FIPS-approved; the modules are NOT CMVP-validated.** The `aes-gcm`/`p256`
-  crates are pure-Rust RustCrypto implementations, not certified cryptographic modules. **peat-btle#75
-  (migrate to aws-lc-rs) is OPEN** — In-flight. For a real FIPS 140 boundary the path is the
-  KMS/Vault HSM backends (peat-gateway); the local-KEK path uses non-validated software AES.
+  crates are pure-Rust RustCrypto implementations, not certified cryptographic modules. There is
+  **no `peat-btle#75` and no `aws-lc-rs` BLE-crypto migration** (grep over peat-btle = zero hits); the
+  `aws-lc-rs` elsewhere is the rustls/iroh TLS provider, unrelated to the BLE AEAD/key-agreement. For a
+  real FIPS 140 boundary the path is the KMS/Vault HSM backends (peat-gateway); the local-KEK path uses
+  non-validated (FIPS-approved-algorithm) software AES.
 - **The only ChaCha20 FIPS *conflict* in code-adjacent form is in PROPOSED ADRs**, not shipped code:
   **ADR-052 (peat-lora, Proposed)** references ChaCha20-Poly1305 — design-only, no crate. Pre-FIPS
   ADRs 006/044/048/049 and the **READMEs** (peat-mesh `:16,173`; peat-btle `:196,218,242,282`) still
@@ -233,8 +235,8 @@ The READMEs are stale; the code is clean.**
   aspirationally; there is no BLE code path). Discovery: mDNS, Kubernetes EndpointSlice, static
   peering (+ offline `derive-id`). AES-256-GCM encryption at rest (opt-in). QoS-priority relay fanout
   (Critical=1…Bulk=5; `commands`/`contact-reports`/`alerts`→Critical). **The gRPC surface is
-  currently unauthenticated** (#38, In-flight). RPC count: README/proto say "25 RPCs" but the proto
-  defines **28** / `service.rs` implements **27** — the "25" figure is outdated. v1 honesty caveats:
+  currently unauthenticated** (#38, In-flight). RPC count: README says "25 RPCs" but the proto
+  defines **27** / `service.rs` implements all **27** (full parity) — the "25" figure is outdated. v1 honesty caveats:
   attachment priority does NOT enforce wire-level preemption; `DistributionStatus` is sender-side
   only; `CapableScope` is reserved-but-rejected; collection-config deletion policy persisted but not
   yet enforced.
@@ -246,7 +248,7 @@ The READMEs are stale; the code is clean.**
 **Verified against code/spec:**
 - Streaming transfer profiles: datacenter 1 MiB/60 s, tactical 256 KiB/30 s, edge 64 KiB/10 s
   (peat-mesh `StreamingTransferConfig`, ADR-055).
-- peat-lite wire: 16-byte fixed header (MAGIC `"PEAT"`, version 1, type, flags 2B LE, node_id 4B LE,
+- peat-lite wire: 16-byte fixed header (MAGIC `"Peat"`, version 1, type, flags 2B LE, node_id 4B LE,
   seq 4B LE); `DEFAULT_PORT = 5555`; multicast `239.255.72.76`; `MAX_PACKET_SIZE = 512`
   (`MAX_PAYLOAD 496`); OTA chunk 448B; unsigned canned msg 22B / signed 86B / sig 64B; ACK event 24B
   base +12B/ACK (max 792B); Document field caps collection 255B / doc_id 65535B / body 65535B; TTL
@@ -293,7 +295,7 @@ The READMEs are stale; the code is clean.**
 - peat-btle battery hours (~6/12/20/36h), "18–24h", "3–4h competitor", "<5% / 20%+ duty cycle" —
   uncited README marketing; UltraLow (36h) profile has **no code path** (not in the `PowerProfile`
   enum: `Aggressive/Balanced/LowPower` only).
-- Iridium `+SBDIX` MO+MT-in-one-pass — an external hardware fact, not a PEAT fact.
+- Iridium `+SBDIX` MO+MT-in-one-pass — an external hardware fact, not a Peat fact.
 - `TransportCapabilities::quic()` advertises 100 Mbps / 10 ms — **hardcoded advertisement defaults**,
   not measured.
 - Integration-depth LOC/latency (Shallow ~500–1000 LOC/~500ms+, Medium ~2000–5000/<50ms, Deep
@@ -331,7 +333,7 @@ Triage epic **#695** ("triage 22 Proposed ADRs before public release").
 **Spec files (`peat/docs/spec/`)** are all **Draft (2025-01-07)** — EXCEPT spec **005-security was
 amended 2026-05-18 (rev 0.2.0) to AES-256-GCM** and is now FIPS-clean. Spec values that the code
 contradicts: Device ID 32B (code: 16B), Role enum Observer/Member/Operator/Leader/Supervisor (code:
-Leader/Member/Observer/Commander/Admin), peat-lite wire magic `0xCAFE`/CRC-16 (code: `"PEAT"`, no
+Leader/Member/Observer/Commander/Admin), peat-lite wire magic `0xCAFE`/CRC-16 (code: `"Peat"`, no
 CRC), BLE GATT `0x1826` (code: `0xA1B2`), leader-election weights 0.30/0.25/… (mesh uses a different
 formula). The IRTF DINRG draft `peat/spec/draft-peat-protocol-00.md` exists alongside the per-layer
 working specs.
@@ -352,8 +354,8 @@ working specs.
 - **#592** membership certificates/enrollment (+#588-#591); **#547** ADR-045 Zarf/UDS; **#950**
   ADR-064 ARM64 CI; **#695** triage 22 Proposed ADRs; **#941** authorization model deferred.
 - peat-mesh: **#106** turnkey DataSyncBackend; **#55** blob resume; **#126** ARM crypto bench.
-- peat-btle: **#75** CMVP/aws-lc-rs; **#26** chat-send originate; **#73** reconnect re-delivery;
-  **#45** peer_link_info.
+- peat-btle: **#26** chat-send originate; **#73** reconnect re-delivery; **#45** peer_link_info.
+  (No `#75` / `aws-lc-rs` issue exists; the source is already FIPS-clean RustCrypto `aes-gcm`/`p256`.)
 - peat-gateway: **#99** ingress AuthZ; **#97** broker ACLs; **#124/#125** NATS auth/TLS; **#55**
   zeroize genesis; **#53** Postgres CI; **#119** DLQ replay API.
 - peat-node: **#38** gRPC auth; **#53** targeted-delivery proto; **#100** ReconnectionManager;

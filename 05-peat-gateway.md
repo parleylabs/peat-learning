@@ -1,6 +1,8 @@
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
+
 # Module 5 — The Control Plane: `peat-gateway`
 
-**Goal:** understand the *enterprise* side of PEAT. The mesh itself is decentralized and needs no
+**Goal:** understand the *enterprise* side of Peat. The mesh itself is decentralized and needs no
 server. But an organization that fields meshes still has to onboard teams, plug into its own identity
 system, manage cryptographic material, and feed mesh events into its analytics and audit pipelines.
 That work happens in the gateway. Repo path: [`peat-gateway/`](../peat-gateway/) (crate `0.1.0`,
@@ -338,7 +340,7 @@ above:
   *Small–medium.*
 - **FIPS module path** — the local KEK uses non-validated software AES; the validated path is KMS/Vault.
   Documenting and defaulting accredited deployments to the HSM backends is enterprise-readiness work
-  (related: peat-gateway#55 zeroize, peat-btle#75 aws-lc-rs migration). *Medium.*
+  (related: peat-gateway#55 zeroize). *Medium.*
 - **Postgres CI** (peat-gateway#53) and **DLQ replay API** (peat-gateway#119). *Small.*
 
 ---

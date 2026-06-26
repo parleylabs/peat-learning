@@ -1,3 +1,5 @@
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
+
 # Module 2 — The SDK Facade: `peat-protocol`
 
 **Goal:** understand the crate you actually program against. This is the biggest, richest
@@ -11,8 +13,8 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > what is real:
 > **Shipped** (in code, tested) · **In-flight** (open issue/PR/epic) · **Proposed** (an ADR in
 > `Proposed` status, no implementation) · **Speculative** (a teaching model, not in any repo).
-> The single most useful habit when reading PEAT docs: when code, an ADR, a README, or this
-> curriculum disagree, **the code wins.** Several PEAT READMEs and specs lag the code (crypto,
+> The single most useful habit when reading Peat docs: when code, an ADR, a README, or this
+> curriculum disagree, **the code wins.** Several Peat READMEs and specs lag the code (crypto,
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
@@ -49,7 +51,7 @@ the ones to learn first. All of these are **Shipped** unless noted:
 | `cot` | Cursor-on-Target translation (TAK interop), MIL-STD-2525 symbols (ADR-020, ADR-028) |
 | `event` | Event routing & aggregation with priority queues (ADR-027) |
 | `distribution` | AI model distribution: deployment directives, manifests (ADR-012, ADR-026) |
-| `mesh_integration` | Adapters bridging generic `peat-mesh` interfaces to PEAT domain types |
+| `mesh_integration` | Adapters bridging generic `peat-mesh` interfaces to Peat domain types |
 | `policy` | Generic conflict-resolution engine (`Conflictable` trait, LWW / highest-attribute) |
 | `storage` | Document store + Automerge backend re-exports (`AutomergeBackend`, capability traits) |
 | `credentials` | Credential handling used by the security layer |
@@ -94,7 +96,7 @@ pub const DEFAULT_HIERARCHY_DEPTH: usize = 4;      // (node -> cell -> zone -> n
 
 > **Vocabulary caveat (read this once, it recurs everywhere).** That last comment is copied
 > verbatim from the source, and it uses **legacy** tier names — "zone", "network". The hierarchy
-> enum the code actually ships does **not** use those words; see §2.7. PEAT is mid-rename from
+> enum the code actually ships does **not** use those words; see §2.7. Peat is mid-rename from
 > military vocabulary to an abstract one, and the workspace currently mixes both. Whenever you see
 > "zone" or "squad/platoon/company" in a comment, treat it as legacy and check the enum.
 
@@ -162,7 +164,7 @@ should I form a cell with*, not how the radio finds them.
 
 ## 2.3 Phase 2 — Cells & leader election (`src/cell/`)
 
-This is the conceptual heart of PEAT. **For the full code-level walkthrough — the formation
+This is the conceptual heart of Peat. **For the full code-level walkthrough — the formation
 authentication handshake, the election state machine with its exact defaults, role assignment, the
 readiness check, and partition-merge semantics — see [Module 2·5](02b-formation-and-leadership.md).**
 The essentials are below; the deep dive is there. Key files (**Shipped**):
@@ -175,7 +177,7 @@ The essentials are below; the deep dive is there. Key files (**Shipped**):
 
 ### Leader election is deterministic (Shipped)
 
-This is the design decision most worth understanding, because it is what lets PEAT survive a
+This is the design decision most worth understanding, because it is what lets Peat survive a
 network partition without stalling. There is **no Raft, no Paxos, no vote-counting round.** Every
 node computes the *same* score for every candidate from that candidate's advertised capabilities,
 so all nodes independently arrive at the same ordering and the same winner (ties broken
@@ -211,7 +213,7 @@ and Phase 3 (`src/cell/coordinator.rs:14,53,77,97,140-144`).
 
 > **Autonomy under human authority.** That human-approval gate is not incidental. A formation that
 > would run a mission-critical capability without a human in the loop is held in
-> `AwaitingApproval` rather than allowed to proceed autonomously (`coordinator.rs:22,38-39`). PEAT
+> `AwaitingApproval` rather than allowed to proceed autonomously (`coordinator.rs:22,38-39`). Peat
 > places the human *within* the hierarchy at the level where the decision belongs; the machine
 > acts autonomously only inside the authority it has been granted. This framing recurs in §2.7.
 
@@ -320,7 +322,7 @@ above it (`router.rs:90-91,140`). State flows **up** (node → cell → cohort �
 coalition, aggregating at each tier); commands flow **down**; peers handle handoffs
 **horizontally**.
 
-This upward-aggregation pattern is also why PEAT's connection count scales sub-quadratically: a
+This upward-aggregation pattern is also why Peat's connection count scales sub-quadratically: a
 node syncs with its cell, not with every node in the deployment. The whitepaper models this as
 roughly O(n log n) connections versus O(n²) for a full mesh (e.g. ~384 vs ~9,120 links at one
 sizing) — that is an **analytical/design claim from the whitepaper's connection-count model, not a
@@ -336,17 +338,17 @@ pub struct HierarchicalAggregator {
 ```
 
 The whole subsystem is written against a `trait`, not a concrete database. This "traits over
-implementations" pattern shows up everywhere in PEAT — get comfortable with it.
+implementations" pattern shows up everywhere in Peat — get comfortable with it.
 
 ---
 
 ## 2.5 State & sync (`src/sync/`)
 
-PEAT state is a set of **CRDT documents** grouped into named **collections** (e.g. `"tracks"`,
+Peat state is a set of **CRDT documents** grouped into named **collections** (e.g. `"tracks"`,
 `"missions"`). CRDTs (Conflict-free Replicated Data Types) merge automatically, so every node
 converges to the same state without a coordinator — and operations succeed locally first, syncing
 when connectivity returns (offline-first). This offline-first convergence is **Shipped** and is the
-backbone of PEAT's disconnected-operation story.
+backbone of Peat's disconnected-operation story.
 
 > **What the CRDT engine actually is (Shipped).** `peat-protocol` stores everything as **Automerge
 > documents** — a single CRDT family that internally provides observed-remove maps and RGA
@@ -413,7 +415,7 @@ types in `peat-lite` — `LwwRegister`, `GCounter` — and even there `PnCounter
 
 ## 2.6 Quality of Service (`src/qos/`)
 
-Bandwidth in the field is scarce, so PEAT classifies every piece of data into one of five priority
+Bandwidth in the field is scarce, so Peat classifies every piece of data into one of five priority
 classes and lets the system order high-priority traffic ahead of low-priority traffic. The five
 classes and their configured targets are verbatim from `src/qos/mod.rs:41-45` (ADR-019):
 
@@ -424,6 +426,14 @@ classes and their configured targets are verbatim from `src/qos/mod.rs:41-45` (A
 | P3 Normal | | ~60 s | 20% | health status |
 | P4 Low | | ~300 s | 8% | routine telemetry |
 | P5 Bulk | lowest | no limit | 2% | archival |
+
+> **Bandwidth-share caveat — the table column is a doc-comment, not the shipped allocator.** Those
+> 40/30/20/8/2 percentages come from the doc-comment table in `peat-protocol/src/qos/mod.rs:41-45`.
+> The *shipped* `BandwidthAllocation` in `peat-mesh/src/qos/bandwidth.rs:250-300` actually allocates
+> a **guaranteed + burst** pair per class — P1 20% guaranteed / 80% burst (preemption enabled),
+> P2 30% / 60% (preemptive), P3 20% / 40%, P4 15% / 30%, P5 5% / 20% (last three non-preemptive).
+> So the single-number share in the table and the two-number guaranteed/burst split in code do not
+> match; cite the bandwidth.rs values when an allocation is what's being discussed.
 
 > **Shipped (framework) / In-flight (enforcement) — read this carefully.** The numbers above are
 > **configured policy targets** (`QoSRegistry::default_military()`), not measured or enforced
@@ -473,17 +483,17 @@ Layered, and partly delegated to `peat-mesh` for the low-level primitives. All o
 > off** ChaCha20-Poly1305 + X25519 to AES-256-GCM + ECDH-P256 (peat-mesh rc.12, dated 2026-05-18,
 > recorded in ADR-060 §5 and `encryption.rs`). The **READMEs and several pre-FIPS ADRs still
 > advertise ChaCha20/X25519 — those docs are stale; the code is clean.** If you see ChaCha20 in a
-> PEAT README, it is a documentation lag, not shipped behavior. (The one place a ChaCha20 reference
+> Peat README, it is a documentation lag, not shipped behavior. (The one place a ChaCha20 reference
 > is *forward-looking* rather than stale is **ADR-052 (peat-lora), which is Proposed** and would
 > introduce a real FIPS conflict if implemented as written — flagged for amendment before any LoRa
 > work.)
 >
 > **What is NOT done (honest caveats):**
 > - **Algorithm choice is FIPS-approved; the modules are not CMVP-validated.** The `aes-gcm` and
->   `p256` crates are pure-Rust RustCrypto implementations, not certified cryptographic modules. A
->   real FIPS 140-3 boundary requires the KMS/HSM-backed path (in `peat-gateway`) or a migration to
->   `aws-lc-rs` for the local crypto (peat-btle#75, **In-flight**). Tell an auditor "FIPS-approved
->   algorithms," never "FIPS 140-3 validated."
+>   `p256` crates are pure-Rust RustCrypto implementations — FIPS-approved algorithms, but not
+>   certified cryptographic modules. A real FIPS 140-3 boundary requires a CMVP-validated module
+>   behind the KMS/Vault HSM-backed path (in `peat-gateway`); that is where the FIPS-140 boundary
+>   lives, not in the BLE layer. Tell an auditor "FIPS-approved algorithms," never "FIPS 140-3 validated."
 > - **Only P-256 is in code.** Any "P-256/P-384" claim is unsupported — there is no P-384.
 > - **MLS (RFC 9420) is documented but not implemented.** The README's Layer-4 ciphersuite claim
 >   (`MLS_128_DHKEMP256_AES128GCM_SHA256_P256`) has no backing code (no `openmls`/`mls-rs` anywhere).
@@ -491,12 +501,12 @@ Layered, and partly delegated to `peat-mesh` for the low-level primitives. All o
 >   rotation today is leader-distribution, not MLS forward secrecy.
 
 The generic crypto types (`DeviceKeypair`, `EncryptionKeypair`, `FormationKey`) actually live in
-`peat-mesh::security` and are re-exported; `peat-protocol` adds the PEAT-specific policy layer on top
+`peat-mesh::security` and are re-exported; `peat-protocol` adds the Peat-specific policy layer on top
 (its `security/*` modules are thin `pub use peat_mesh::security::…` shims).
 
 ### Human-machine authority — "trust as data"
 
-PEAT keeps humans in the loop by placing them **within** the hierarchy at the right level. Three
+Peat keeps humans in the loop by placing them **within** the hierarchy at the right level. Three
 properties to recognize when reading `security` + `command`:
 
 - **Configurable authority boundaries (Shipped at the formation gate).** Each level defines what
@@ -549,8 +559,9 @@ pub enum HierarchyLevel {
 > 2. **ADR-066 (the abstract-vocabulary proposal) is `Proposed`, not canonical.**
 >
 > The rename is **In-flight and the workspace mixes vocabularies**: `peat-btle` still ships the
-> fully-legacy `Platform/Squad/Platoon/Company`, and `peat-schema`'s proto still has `SquadSummary`
-> / `squad_id`. The base-unit name itself (`Platform` vs `Node`) is still being decided in ADR-068.
+> fully-legacy `Platform/Squad/Platoon/Company`, while `peat-schema`'s proto has **already been
+> renamed** to `CellSummary` / `CohortSummary` / `FederationSummary` / `CoalitionSummary` with no
+> `Squad`/`squad_id` left. The base-unit name itself (`Platform` vs `Node`) is still being decided in ADR-068.
 > The churn is tracked by epics **#904** (military → abstract rename), **#968** / **#970** (converge
 > the base unit on `Node`). Do not present any single vocabulary as settled. The sizing comments
 > (Cell 4–13 nodes, Cohort 2–4 cells) are **design intent in doc comments, not enforced limits.**
@@ -562,8 +573,8 @@ gates membership.
 
 ## 2.8 Talking to the outside world: CoT / TAK (`src/cot/`)
 
-PEAT bridges to existing tactical systems rather than replacing them. The `cot` module translates
-PEAT domain messages (e.g. `TrackUpdate`, `CapabilityAdvertisement`) into **Cursor-on-Target** XML
+Peat bridges to existing tactical systems rather than replacing them. The `cot` module translates
+Peat domain messages (e.g. `TrackUpdate`, `CapabilityAdvertisement`) into **Cursor-on-Target** XML
 with MIL-STD-2525 military symbols, plus a custom `<_peat_>` detail extension. That XML is what any
 **CoT/TAK consumer** ingests. The HTTP/socket plumbing for an actual TAK Server bridge is in
 `peat-transport/src/tak/` (ADR-020/028/029) — see Module 5's neighbor, and the runnable
@@ -604,7 +615,7 @@ Interop            → src/cot/ (TAK), src/distribution/ (AI models)
   `peat-protocol` actually store everything in?
 - Name the five QoS classes and one example of each — and say which parts are enforced versus
   configured.
-- Where does the *generic* crypto live versus the PEAT-specific *policy*, and which crypto claims in
+- Where does the *generic* crypto live versus the Peat-specific *policy*, and which crypto claims in
   the README are stale?
 - What is the difference between `CellRole`, the RBAC `Role`, and `AuthorityLevel`?
 - What does the `cot` module produce, and who consumes it?

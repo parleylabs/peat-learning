@@ -1,10 +1,10 @@
-# PEAT — Concrete End-to-End Use Cases
+# Peat — Concrete End-to-End Use Cases
 
 Five worked use cases, each grounded in shipped code (`learning/review/ground-truth.md`) and
 explicitly labeled **Shipped / In-flight / Proposed / Speculative** leg by leg. Every transport,
 collection, hierarchy placement, and number is tied to ground truth; where a leg is not implemented
 it says so. Numbers that are external hardware specs or design targets are flagged, not presented as
-PEAT measurements.
+Peat measurements.
 
 **Shared facts used below (all from ground truth):** shipped transports are QUIC/Iroh, BLE (peat-btle,
 `bluetooth`), peat-lite UDP bridge (`lite-bridge`), HTTP/REST, TAK/CoT TCP. peat-lite wire: 16-byte
@@ -38,7 +38,7 @@ the command post consumes the common operating picture.
   is ordered ahead of position updates at congested hops (**but cross-class wire-level preemption is
   not enforced in v1 — In-flight**; "<5 s P1" is a target).
 - **Worked example.** A position update is a small Automerge change (tens of bytes of delta). Over BLE
-  at the declared 250 kB/s capability constant (a BLE-spec figure, *not* a PEAT measurement) the
+  at the declared 250 kB/s capability constant (a BLE-spec figure, *not* a Peat measurement) the
   intra-cell hop is sub-millisecond on the wire; the QUIC hop to the command post adds ~1–2 RTT after
   the formation handshake. The CoT encoding is a fixed XML transform. **Shipped end to end**, with the
   caveat that QoS preemption and the "<5 s" SLA are not yet enforced.
@@ -102,7 +102,7 @@ the line-of-sight link drops, falling back to satellite.
   channel and would not work over a 1,960 B one-shot frame as-is.
 - **Worked example (clearly labeled Proposed math).** A single Iridium SBD frame caps near **1,960 B
   MO / 1,890 B MT** (an *Iridium hardware limit* from gbrain `quic-iridium-sbd-feasibility`, **not a
-  PEAT measurement**) at **5–20 s** latency and **~$0.04–0.13/msg**. A round-trip summary exchange
+  Peat measurement**) at **5–20 s** latency and **~$0.04–0.13/msg**. A round-trip summary exchange
   would be **~40 s and two paid messages** — *illustrative arithmetic over an unbuilt transport.* The
   in-range QUIC legs are **Shipped and real**; the BLOS leg is a teaching design tied to ADR-051.
 
@@ -138,7 +138,7 @@ reconnects to the wider mesh and converges automatically.
   On reconnect, negentropy exchanges fingerprints in O(log n) rounds (an *algorithmic* claim, not
   benchmarked) and transfers only the ~200 missing deltas — not the full document history (unless the
   collection is `FullHistory` mode). Convergence is automatic; **this is the strongest shipped story
-  in PEAT.**
+  in Peat.**
 
 ---
 
@@ -173,7 +173,7 @@ aggregates them into the full Automerge mesh.
   A `GCounter` over 32 nodes is ~260 B (a *design-budget* figure consistent with the type, not a
   measured RAM figure — the **256 KB total budget is a design target, ADR-035, not enforced**). The
   embedded→bridge→mesh path is **Shipped**; a LoRa variant of the first leg (7–87 km, 1.5–9.1 kB/s —
-  *external LoRa hardware specs, not PEAT measurements*) is **Proposed**.
+  *external LoRa hardware specs, not Peat measurements*) is **Proposed**.
 
 ---
 

@@ -1,6 +1,6 @@
 # Ground truth — `peat-lite`
 
-**Repo:** `peat-lite` (subdirectory `./peat-lite` of the PEAT umbrella)
+**Repo:** `peat-lite` (subdirectory `./peat-lite` of the Peat umbrella)
 **Audited at HEAD:** `7a8a8fb` — *refactor: rename hierarchy tiers to abstract vocabulary (ADR-066) (#28)*
 **Prior commit:** `dee6616` — chore: bump version to 0.2.5 (#27)
 **Branch:** `main`. `git fetch` ran clean; working tree NOT modified. `git rev-list --left-right --count origin/main...HEAD` = `0 0` — local main is exactly even with origin/main (origin not ahead).
@@ -12,7 +12,7 @@
 
 ## 1. What this repo actually is
 
-`peat-lite` is the **lightweight CRDT + wire-protocol building block** for resource-constrained PEAT nodes. It is `no_std`-capable (default feature `std`; disable for embedded) with a single runtime dependency: `heapless` 0.8 for fixed-capacity collections (Cargo.toml:38). It is **not** a transport, a mesh, or a networking stack — it is a codec + bounded data-structure library that other crates (peat-mesh, peat-btle, firmware) consume.
+`peat-lite` is the **lightweight CRDT + wire-protocol building block** for resource-constrained Peat nodes. It is `no_std`-capable (default feature `std`; disable for embedded) with a single runtime dependency: `heapless` 0.8 for fixed-capacity collections (Cargo.toml:38). It is **not** a transport, a mesh, or a networking stack — it is a codec + bounded data-structure library that other crates (peat-mesh, peat-btle, firmware) consume.
 
 The repo is a Cargo workspace (Cargo.toml:1-8) with members `.` (core) and `android-ffi`. **Workspace-excluded** (own toolchain / Cargo.toml): `firmware/` (ESP32), `android/` (Gradle), `fuzz/` (cargo-fuzz).
 
@@ -104,7 +104,7 @@ The `DOC_FLAG_ENCRYPTED` bit (document.rs:94) is **reserved and rejected by the 
 
 The canonical Peat-Lite binary protocol (ADR-035) is **shipped** in `src/protocol/`:
 
-- **16-byte fixed header** (`src/protocol/header.rs:5-10`, `HEADER_SIZE = 16` constants.rs:19): `MAGIC "PEAT"` (4B, constants.rs:4) + version (1B, `PROTOCOL_VERSION = 1` constants.rs:7) + type (1B) + flags (2B LE) + node_id (4B LE) + seq_num (4B LE). Decode validates magic, version, message type (header.rs:45-67).
+- **16-byte fixed header** (`src/protocol/header.rs:5-10`, `HEADER_SIZE = 16` constants.rs:19): `MAGIC "Peat"` (4B, constants.rs:4) + version (1B, `PROTOCOL_VERSION = 1` constants.rs:7) + type (1B) + flags (2B LE) + node_id (4B LE) + seq_num (4B LE). Decode validates magic, version, message type (header.rs:45-67).
 - **Message types** (`src/protocol/message_type.rs:13-49`, `#[non_exhaustive]`): `Announce=0x01, Heartbeat=0x02, Data=0x03, Query=0x04, Ack=0x05, Leave=0x06, Document=0x07, OtaOffer=0x10 … OtaAbort=0x16`.
   - **README discrepancy (minor):** README.md:59 lists "Message types: Announce, Heartbeat, Data, Query, Ack, Leave, OTA (0x10-0x16)" and **omits `Document` (0x07)**, which IS implemented and re-exported. The README's "OTA (0x10-0x16)" also collapses 7 distinct OTA variants. Flag as outdated README.
 - **CrdtType byte** (crdt_type.rs): LwwRegister/GCounter/PnCounter/OrSet (see §3a caveat).

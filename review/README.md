@@ -1,8 +1,8 @@
-# PEAT Curriculum Review — Artifact Index
+# Peat Curriculum Review — Artifact Index
 
-This directory holds the deliverables of the PEAT learning-curriculum hardening review (prompt:
+This directory holds the deliverables of the Peat learning-curriculum hardening review (prompt:
 `learning/PROMPT-peat-training-doc-improvement.md`). The review audited the curriculum claim by claim
-against the latest PEAT source, rewrote every document in place, and fed the verified current state
+against the latest Peat source, rewrote every document in place, and fed the verified current state
 back into gbrain. The rewritten curriculum lives in `learning/` (the parent directory); this directory
 holds the evidence trail, working artifacts, and the pristine originals.
 
@@ -52,5 +52,5 @@ cp learning/review/originals/peat-addressing-transport-sync.md learning/
 ```
 
 gbrain changes are **not** reverted by the above — see `gbrain-update-summary.md`. Per memory
-`keep-peat-docs-in-gbrain-default`, PEAT doc pages in the `default` source are never deleted; correct
+`keep-peat-docs-in-gbrain-default`, Peat doc pages in the `default` source are never deleted; correct
 them via `put_page` update, not deletion.
