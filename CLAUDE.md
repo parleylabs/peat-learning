@@ -66,14 +66,24 @@ These come from the Peat repos and the review prompts. Violating them is the mai
 - **Code over everything.** When the Peat code, an ADR, a README, or existing curriculum prose
   disagree, the **code wins**. Cite `path:line`, ADR number, issue number, or commit. The Peat
   READMEs and specs lag the code (notably on crypto, role names, and versions) — never "fix" the
-  curriculum to match a stale doc.
+  curriculum to match a stale doc. **But for a crate consumed by a *published* version pin, the
+  shipped truth is the published release (read a consumer lockfile + checksum), not just the git HEAD
+  — flag when they diverge** (e.g. crates.io `peat-btle 0.4.0` shipped non-FIPS crypto its source had
+  already migrated off). **Verify any cited `repo#NNN` against the repo before repeating it, and
+  re-derive ADR status/counts each pass — never carry forward an unconfirmed issue, status, or count.**
 - **Label every capability** with one of four visible tags: **Shipped** (in code, tested),
   **In-flight** (open issue/PR/epic), **Proposed** (an ADR in `Proposed` status, no code), or
   **Speculative** (invented for teaching, not anywhere). Presenting a proposal as if it ships is
   the worst error. Quantitative figures are cited or explicitly flagged as unverified.
-- **FIPS-approved cryptographic primitives only.** Peat shipped AES-256-GCM, ECDH P-256, Ed25519,
-  HKDF-SHA-256, HMAC-SHA-256. References to ChaCha20-Poly1305 / X25519 are **stale docs**, not
-  shipped behavior — do not reintroduce them.
+- **FIPS-approved cryptographic primitives only.** Peat's *source* uses AES-256-GCM, ECDH P-256,
+  Ed25519, HKDF-SHA-256, HMAC-SHA-256. ChaCha20-Poly1305 / X25519 in the READMEs are **stale docs** —
+  never reintroduce them into prose — but they can still ride in a **published-but-not-re-published**
+  crate (crates.io `peat-btle 0.4.0`), so distinguish *source* from *published artifact* precisely
+  rather than claiming a blanket "FIPS-clean." Note also: FIPS-*approved algorithm* ≠ CMVP-validated
+  *module* (the RustCrypto crates are the former, not the latter).
+- **"Peat" is a name, not an acronym.** Never write all-caps `PEAT` for the protocol; only the
+  `PEAT_` environment-variable prefix and the peat-lite `PEAT` wire-MAGIC literal are legitimately
+  uppercase. The former project name was **HIVE** (a backronym), not a Peat expansion.
 - **No vendor/consumer names in generic protocol prose** (use "consumer", "CoT consumer";
   protocol names like CoT/TAK are fine).
 - **Preserve the "autonomy under human authority" framing** for any tasking/command content.
