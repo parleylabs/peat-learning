@@ -334,13 +334,18 @@ and a human approves the merge — never loosen or remove a gate autonomously.
 2. **Classify each miss** and ask the operative question: *"what single check, in which gate, would have
    caught this automatically?"* — the question that produced §1c. Fold recurring misses into one
    proposed check each.
-3. **Write proposals; do not self-edit the methodology.** Append to `REVIEW-STATE.json`
-   `self_improvement.proposed_amendments`: `{ when, observed_miss, evidence (path:line / issue / run),
-   proposed_check, target ("§1c" | "incremental gate" | "CLAUDE.md" | "routing table"),
-   status: "proposed" }`, and summarize them in the PR body for human approval. **Low-risk mechanical
-   amendments may be applied in the same PR** (a new repo added to the routing table; a corrected
-   count); **methodology changes — new or strengthened gates — are proposed only** and wait for a human
-   to merge.
+3. **Write proposals; do not self-edit the methodology.** For each proposed check, do BOTH:
+   (a) append to `REVIEW-STATE.json` `self_improvement.proposed_amendments`:
+   `{ when, observed_miss, evidence (path:line / issue / run), proposed_check,
+   target ("§1c" | "incremental gate" | "CLAUDE.md" | "routing table"), status: "proposed", issue }`;
+   and (b) **file a dedicated GitHub issue** (GitHub MCP create-issue, or `gh issue create -R
+   parleylabs/peat-learning`) **labeled `prompt-amendment`** — title = the proposed check, body = the
+   miss + evidence + target + "awaiting human approval" — and record its number in the entry's `issue`
+   field. Filing a separate labeled issue (instead of burying it in the refresh PR body) is what makes
+   the proposal **notify you and stay tracked**; the refresh PR body just links the issue numbers.
+   **Low-risk mechanical amendments may be applied in the same PR** (a new repo added to the routing
+   table; a corrected count); **methodology changes — new or strengthened gates — are proposed-only**
+   and wait for a human to merge the change.
 4. **Record the trend.** Append a `quality_trend` snapshot and set
    `self_improvement.last_retrospective` to the run date. If a trend line is going the wrong way
    (unverifiable claims rising, feedback piling up), **say so explicitly in the PR** — that is the loop
@@ -364,8 +369,8 @@ evidence for "sharper" lives in the trend, not in a feeling.
 9. **Diagram registry** (`review/diagrams.md`): every diagram with id, file, concept, the
    `path:line`/ADR it derives from, and the commit it was last verified against.
 10. **Self-improvement proposals** (§9b): the `self_improvement.proposed_amendments` written this
-    sweep (miss → evidence → proposed check → target), surfaced in the PR for human approval, plus the
-    updated `quality_trend`.
+    sweep (miss → evidence → proposed check → target), **each filed as a dedicated `prompt-amendment`
+    GitHub issue** (linked from the PR) for human approval, plus the updated `quality_trend`.
 
 ## 11 · Definition of done
 
