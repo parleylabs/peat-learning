@@ -88,6 +88,38 @@ This task must finish unattended. Operate under these rules:
 - **Self-verify before declaring done.** Check the result against §11 Definition of Done; if
   any item fails, iterate until it passes or is logged as a hard blocker with a reason.
 
+## 1c · Verification discipline (encoded lessons — 2026-06-26)
+
+These checks come from a code-verification pass that caught drift earlier sweeps missed. Apply them in
+Phase 1 (ground truth) and Phase 2 (audit) — they are what keep "verified" honest.
+
+- **Published artifact ≠ source.** "Code wins" means the **shipped** code, and for a crate that
+  downstream repos consume by a *published* version pin the shipped artifact is the **crates.io/Maven
+  release**, not the git HEAD. Read a consumer's lockfile (e.g. `peat-flutter/rust/Cargo.lock` — package
+  + checksum + dep list) and compare it to the dependency's source. **Flag any
+  same-version-string-different-deps / unpublished migration** (the 2026-06-26 case: peat-btle source
+  is FIPS-clean but the published `0.4.0` still ships ChaCha20/X25519). When source and the published
+  artifact diverge, the **Shipped** label must state which.
+- **Verify references; never carry them forward.** Every cited `repo#NNN` must be grep-confirmable
+  in-repo (or in the tracker), else drop it or mark it unverifiable — a phantom `peat-btle#75`/aws-lc-rs
+  reference had propagated for weeks. **Re-derive ADR status and counts every sweep** (re-grep every
+  `docs/adr/*.md` `**Status**:` header and `ls docs/adr/*.md | wc -l`); never trust the prior pass's
+  "only ADR-X Accepted" or "N ADRs" figure.
+- **Fact-wide occurrence sweep.** A single fact lives in many places — module prose, the `index.html`
+  hub mirror, the constrained track, ground-truth, the ledgers. When you correct a recurring fact,
+  `grep` **all** artifacts for **every** occurrence and fix or flag each; do not stop at the routed file
+  (CellRole / SquadSummary / RPC-count each needed 5–12 edits in the 2026-06-26 pass).
+- **Adversarially re-verify any finding that contradicts a prior-firm fact or a gbrain page** before
+  asserting or applying it (e.g. "schema renamed off `Squad*`", "11 ADRs Accepted" — both held, but
+  only because they were independently re-checked).
+- **Detect new sibling repos.** List the workspace siblings and flag any not in `REVIEW-STATE.json`
+  `audited_commits`; audit and add them (this pass added peat-flutter, peat-sapient).
+- **Drive discovery to convergence.** A single pass does not converge — loop the discovery /
+  blast-radius check until two consecutive rounds surface nothing new.
+- **Ledgers are point-in-time.** Prior `review/ledger/*` verdicts may be superseded by a later
+  verification block; canonical truth is the latest `REVIEW-STATE.json` verification + the
+  `review/ground-truth/` docs, not an old ledger row.
+
 ## 2 · Team roles (lenses every claim must pass)
 
 Apply each lens; in a workflow, assign one agent each.

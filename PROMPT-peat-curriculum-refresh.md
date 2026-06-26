@@ -51,6 +51,16 @@ This work is about understanding complex systems code, so quality beats cost.
    twins agree, SVG well-formed and self-contained (no CDN/script/fetch), legend present, and the
    `review/diagrams.md` row advanced.
 5. **Regression / blast-radius gate.** No edit silently broke another section (the §4b checks).
+6. **Published-artifact & reference gate.** For a consumed crate pinned by a *published* version, the
+   shipped truth is the release, not git HEAD — check a consumer lockfile (package + checksum + deps)
+   against source and flag same-version-different-deps / unpublished migrations. Every cited `repo#NNN`
+   must be in-repo-confirmable or flagged unverifiable; re-derive ADR status/counts rather than trusting
+   the prior pass.
+7. **Fact-wide occurrence gate.** When a changed fact recurs (the hub mirrors modules; ground-truth
+   echoes prose), grep ALL artifacts and fix/flag every occurrence — not just the routed file.
+
+(Gates 6–7 are the cheap, high-value subset of the full prompt's **§1c · Verification discipline**,
+which this refresh inherits in full.)
 
 A gate failure **blocks the commit**: fix and re-run the gate, or log the issue to
 `REVIEW-STATE.json` `open_todos` if it is real but out of scope. Only after all gates pass do you
