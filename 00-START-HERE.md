@@ -1,25 +1,27 @@
-# PEAT — Engineer Onboarding & Learning Path
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
 
-Welcome. This folder is a self-contained learning track for the **PEAT** open-source
+# Peat — Engineer Onboarding & Learning Path
+
+Welcome. This folder is a self-contained learning track for the **Peat** open-source
 mesh protocol. It is written for an engineer who has never seen the codebase before —
 accessible enough to follow without deep Rust or distributed-systems background, but
 exact enough to survive reading with the source open in another window. By the end you
 should be able to read any of the core repos, understand how they fit together, and
 trace a piece of data from a sensor toward a command post.
 
-> **What is PEAT in one sentence?**
+> **What is Peat in one sentence?**
 > A decentralized mesh protocol that coordinates heterogeneous systems — phones,
 > servers, sensors, embedded devices — into one synchronized whole over a **pluggable
 > transport layer**, and keeps working when the network is degraded or denied.
 >
-> The team's mental model is *"TCP/IP for autonomy"*: PEAT aims to provide reliable
+> The team's mental model is *"TCP/IP for autonomy"*: Peat aims to provide reliable
 > synchronization and coordination primitives the way TCP/IP provides reliable
 > communication primitives. Treat that as the project's framing, not a delivered SLA —
 > the convergence layer (Automerge + negentropy) ships and is the strongest part of the
 > system, but priority/QoS *enforcement* (the "<5 s for Priority-1 traffic" target) is
 > still in flight, not validated. We will be precise about that distinction throughout.
 
-PEAT is built by [Defense Unicorns](https://github.com/defenseunicorns) and is
+Peat is built by [Defense Unicorns](https://github.com/defenseunicorns) and is
 Apache-2.0 licensed.
 
 ---
@@ -27,7 +29,7 @@ Apache-2.0 licensed.
 ## The one label that runs through everything: shipped vs. proposed
 
 This curriculum makes a hard promise: **for every capability it describes, it tells you
-whether the capability actually exists.** A defense engineer evaluating PEAT needs to
+whether the capability actually exists.** A defense engineer evaluating Peat needs to
 know what they can deploy today versus what is a design on paper. We use four labels,
 and you will see them on individual claims throughout the modules:
 
@@ -47,7 +49,7 @@ Two consequences worth internalizing before you read another line:
   categories, but that is a *taxonomy*, not an inventory of what is implemented. When you
   read "any transport" anywhere, read "the pluggable transport seam, with three real
   backends today."
-- **Crypto.** PEAT's code already migrated to FIPS-approved primitives — **AES-256-GCM**,
+- **Crypto.** Peat's code already migrated to FIPS-approved primitives — **AES-256-GCM**,
   **ECDH P-256**, **Ed25519**, **HKDF-SHA-256**, **HMAC-SHA-256** (peat-mesh rc.12,
   2026-05-18). Several READMEs and a few *Proposed* ADRs still mention ChaCha20-Poly1305
   and X25519; those are **stale docs, not shipped behavior**, and are queued for
@@ -78,7 +80,7 @@ resources are loaded, so it works offline and on air-gapped machines.
 | # | Module | File | What you'll learn |
 |---|--------|------|-------------------|
 | 0 | Start Here | `00-START-HERE.md` (this file) | The lay of the land and how to study it |
-| 1·5 | The Big Idea (Why PEAT exists) | [`00b-the-big-idea.md`](00b-the-big-idea.md) | The whitepaper's argument: the scaling crisis, the missing coordination layer, the hierarchy insight, open architecture |
+| 1·5 | The Big Idea (Why Peat exists) | [`00b-the-big-idea.md`](00b-the-big-idea.md) | The whitepaper's argument: the scaling crisis, the missing coordination layer, the hierarchy insight, open architecture |
 | 1 | Architecture Overview | [`01-architecture-overview.md`](01-architecture-overview.md) | The layer models (two lenses), the core repos, and how they depend on each other |
 | 2 | The SDK Facade — `peat-protocol` | [`02-peat-protocol.md`](02-peat-protocol.md) | The one crate you depend on; cells, hierarchy, security, QoS, the three phases |
 | 2·5 | Forming a Cell & Electing Leaders | [`02b-formation-and-leadership.md`](02b-formation-and-leadership.md) | Code-level deep dive: formation auth handshake, deterministic election, roles, failover |
@@ -95,7 +97,7 @@ resources are loaded, so it works offline and on air-gapped machines.
 - **Orient (Modules 0, 1·5, 1):** Get the big picture. Start Here, then **The Big Idea**
   (the *why* — read the whitepaper distillation before any code), then the Architecture
   Overview (the *shape*).
-- **Core (Modules 2, 2·5, 3):** This is the heart of PEAT. Spend the most time here.
+- **Core (Modules 2, 2·5, 3):** This is the heart of Peat. Spend the most time here.
   `peat-protocol` is what an app developer touches; Module 2·5 deep-dives cell formation
   and leader election; `peat-mesh` is what actually moves the bytes.
 - **Reach (Modules 4–5):** The extremes of the spectrum — tiny embedded devices on one
@@ -115,7 +117,7 @@ resources are loaded, so it works offline and on air-gapped machines.
 
 ## The repos you'll be reading
 
-PEAT is not one repository — it is a small constellation. The curriculum and the
+Peat is not one repository — it is a small constellation. The curriculum and the
 ground-truth audit behind it cover **six code repos**. Knowing the boundaries up front
 saves confusion later, because some pieces people expect to be together actually live
 apart.
@@ -141,7 +143,7 @@ A couple of these boundaries trip up almost everyone:
 
 ---
 
-## Five concrete things you can build with PEAT today
+## Five concrete things you can build with Peat today
 
 Abstract protocol descriptions are hard to hold onto. Here are five end-to-end use
 cases, each labeled by what actually ships. Module 6 traces them in code; Module 7 maps
@@ -179,7 +181,7 @@ exotic transports and the autonomy-tasking primitive are not yet built.**
    scoring, **no quorum, so no split-brain stall**), accumulates state offline, then
    reconnects and converges automatically. Negentropy reconciles the document sets and
    transfers only the genuinely-missing deltas; Automerge merges deterministically. This
-   offline-first convergence is the backbone of PEAT and is **fully Shipped** — with one
+   offline-first convergence is the backbone of Peat and is **fully Shipped** — with one
    caveat: BLE-path reconnect re-delivery of pending state is **In-flight (peat-btle#73)**;
    the QUIC/peat-node path is the robust one.
 
@@ -199,13 +201,13 @@ the control-plane gateway.
 
 ## A note on accuracy & sources
 
-This material was built by reading the **source across the PEAT repos** — not just the
+This material was built by reading the **source across the Peat repos** — not just the
 READMEs — and cross-checking it against `Cargo.toml` dependency declarations, the ADRs in
 `peat/docs/adr/`, and the open-issue tracker. Where a crate's internals live in a sibling
 repo rather than the umbrella tree, that is noted. **The operating rule is code over
 docs:** when the code, an ADR, a doc, or a README disagree, the code wins, and the
 discrepancy is called out rather than smoothed over. This matters here specifically,
-because PEAT's READMEs and several specs lag the code — on crypto (they still say
+because Peat's READMEs and several specs lag the code — on crypto (they still say
 ChaCha20), on role names, on version numbers, and on wire details. Quoting a stale doc is
 exactly how an error survives, so the curriculum quotes the code.
 

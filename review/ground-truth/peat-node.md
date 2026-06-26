@@ -63,7 +63,7 @@ All primitives in this repo are **FIPS-approved** — no violation found in peat
 
 The wire contract is `proto/sidecar.proto` — service `peat.sidecar.v1.PeatSidecar`, served over Connect + gRPC + gRPC-Web on a single port (default `tcp://0.0.0.0:50051`; UDS also supported). Compiled by `connectrpc-build` (`build.rs`, `Cargo.toml:138,197`).
 
-**RPC count discrepancy:** README and the proto/header say **"25 RPCs"** (`README.md:132`, `proto/sidecar.proto:14`-region), but the proto actually defines **28 RPCs** and `src/service.rs` implements **27** `async fn` handlers (grep counts). The gap: the 3 Collection-Lifecycle-Config RPCs (`SetCollectionConfig`/`GetCollectionConfig`/`ListCollectionConfigs`, `proto/sidecar.proto:129-145`, peat-node#55 / ADR-016) were added after the "25 RPCs" prose was written. **The "25 RPCs" figure is outdated — real count is 28 defined / 27 implemented.** (The 1-RPC gap between 28 defined and 27 impl handlers is worth a deeper check, but all README-listed categories have handlers; the discrepancy is most likely a streaming-RPC counting nuance, flagged as needing a line-by-line map.)
+**RPC count discrepancy:** README and the proto/header say **"25 RPCs"** (`README.md:132`, `proto/sidecar.proto:14`-region), but the proto actually defines **27 RPCs** and `src/service.rs` implements **27** `async fn` handlers (grep counts) — full parity. The 3 Collection-Lifecycle-Config RPCs (`SetCollectionConfig`/`GetCollectionConfig`/`ListCollectionConfigs`, `proto/sidecar.proto:129-145`, peat-node#55 / ADR-016) were added after the "25 RPCs" prose was written and are included in the 27. **The "25 RPCs" figure is outdated — real count is 27 defined / 27 implemented (full parity).**
 
 RPC groups (`proto/sidecar.proto`, `src/service.rs`):
 - **Lifecycle:** `GetStatus`.
@@ -82,7 +82,7 @@ Operator CLI **`peat`** (`crates/peat-cli`) ships in the same image at `/usr/loc
 **Shipped (verified in code at 4e1b5c8):**
 - Iroh QUIC mesh participation embedded via peat-mesh.
 - Automerge CRDT sync of JSON documents across peers; transitive gossip with echo suppression (`src/node.rs:963-999`).
-- gRPC/Connect/gRPC-Web API on single port (28 RPCs defined).
+- gRPC/Connect/gRPC-Web API on single port (27 RPCs defined / 27 implemented, full parity).
 - Generic + typed (Node/Cell/Track/Command) collections.
 - Server-streaming `Subscribe` with content-predicate filtering (top-level fields).
 - AES-256-GCM encryption at rest (opt-in).
@@ -113,7 +113,7 @@ Operator CLI **`peat`** (`crates/peat-cli`) ships in the same image at `/usr/loc
 
 ## Quantitative claims — verifiable vs not
 
-- **"25 RPCs"** (`README.md:132`) — **DISPROVEN at HEAD.** Proto defines 28; service.rs implements 27 handlers. Outdated.
+- **"25 RPCs"** (`README.md:132`) — **DISPROVEN at HEAD.** Proto defines 27; service.rs implements 27 handlers (full parity). Outdated.
 - Reconnect watchdog timings (5 s interval, 5 s min / 120 s max backoff) — **verified** in code constants (`src/node.rs:203-216`).
 - Tombstone defaults (168 h / 7-day, 300 s GC interval, 1000 batch) — **verified** in code/comments (`src/node.rs:64-71`).
 - Blob stall timeout default 30 s — **verified** (`src/node.rs:60`, CHANGELOG 0.4.0).
@@ -124,7 +124,7 @@ Operator CLI **`peat`** (`crates/peat-cli`) ships in the same image at `/usr/loc
 ## Assumptions / decisions logged
 
 - **Decision:** treated audited reality as `0.4.3` @ `4e1b5c8`; did not pull the 5 origin commits or inspect v0.4.4/v0.4.5 tags (instructed not to modify the tree). Their content is an **unverified delta** — a re-audit should check whether the "25 RPCs" doc fix or auth landed there.
-- **Decision:** the 28-defined-vs-27-implemented RPC gap is reported as-is; did not exhaustively line-map every proto RPC to a handler (all README categories are covered). Logged as a follow-up rather than a blocker.
+- **Decision:** the proto defines 27 RPCs and `src/service.rs` implements 27 handlers — full parity; did not exhaustively line-map every proto RPC to a handler (all README categories are covered).
 - **Assumption:** BLE in `docs/DESIGN.md:188` is an architecture-diagram aspiration, not implemented code — based on the complete absence of any BLE/btle dependency or code path. Holds unless a future peat-mesh feature adds it transparently.
 - **Assumption:** peat-node inherits peat-mesh's FIPS posture for the sync/transport AEAD (ADR-060 swap already done at mesh rc.12). peat-node itself only ever uses AES-256-GCM / HKDF-SHA256 / SHA-256 directly. Holds at this pin.
 
@@ -153,7 +153,7 @@ The prior "5 commits ahead" unverified delta is now audited. Releases v0.4.4–v
 - Release/CI plumbing (cargo-chef + rust-cache, Dockerfile, chart bumps) across #165/#166/#168.
 
 **Confirmed unchanged from the 0.4.3 audit:** `proto/sidecar.proto` still defines **27** `rpc`s in one
-`service PeatSidecar` (the curriculum's "~28/27" stands; README "25" still stale). gRPC auth #38 did
+`service PeatSidecar` (27 defined / 27 implemented, full parity; README "25" still stale). gRPC auth #38 did
 **not** land — the surface remains unauthenticated. Tombstone/RBAC details unchanged.
 
 **Not exercised (read-only audit):** the outbox watcher's poll/stability/dedup and the heartbeat were
@@ -179,4 +179,4 @@ read from source, not run live.
   (`build.rs:31-44` → `src/main.rs:391-396`). **Shipped.**
 - **`--print-config` / `PEAT_NODE_PRINT_CONFIG`.** Opt-in resolved-config dump at startup, secrets
   redacted (`src/main.rs:29-30,445-451`). **Shipped.**
-- **Confirmed unchanged:** `proto/sidecar.proto` not touched — still 27 `rpc`s ("~28/27" stands).
+- **Confirmed unchanged:** `proto/sidecar.proto` not touched — still 27 `rpc`s (27 defined / 27 implemented, full parity).

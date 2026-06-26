@@ -1,6 +1,8 @@
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
+
 # Module 9 — The Protocol Specifications
 
-**Goal:** read the **normative** layer — the IETF-RFC-style specs that describe PEAT precisely enough
+**Goal:** read the **normative** layer — the IETF-RFC-style specs that describe Peat precisely enough
 for an independent implementation. Source: [`peat/docs/spec/`](../peat/docs/spec/) (five per-layer
 specs `001`–`005` plus a README, written in RFC-2119 MUST/SHOULD/MAY language, positioned toward an
 IETF Informational RFC).
@@ -81,7 +83,7 @@ with the shipped value: **`DeviceId` is the first 16 bytes**; the spec is wider.
 - **Peat-Lite (constrained devices) — spec ≠ shipped.** Spec `001 §6` describes a toy framing: magic
   `0xCAFE`, a 4-byte truncated device ID, message types Register/Ack/Heartbeat/Data, CRC-16, sequence
   wraparound, a 100 ms ack timeout, 3 retries. **The shipped peat-lite 0.2.5 wire format is different**
-  and is the one to implement against: magic is the 4-byte ASCII `"PEAT"`, a fixed **16-byte header**,
+  and is the one to implement against: magic is the 4-byte ASCII `"Peat"`, a fixed **16-byte header**,
   default port **5555**, `MAX_PACKET_SIZE = 512` (`MAX_PAYLOAD = 496`), message types including
   `Announce / Heartbeat / Data / Query / Ack / Leave / Document (0x07) / OTA`, and a NodeId that is a
   **bare `u32`** (peat-lite `src/protocol/*`, `src/node_id.rs`). Read the peat-lite source, not
@@ -112,8 +114,9 @@ distinct mechanisms: Automerge's own sync protocol and **negentropy** set reconc
   `GCounter`, plus reserved bytes for `PnCounter`/`OrSet`) — a different, embedded type set covered in
   Module 4. **Operations (spec):** Put / Delete / Insert / Remove / Increment / SetRoot.
 - **Identity (spec):** Document ID = UUIDv4; Actor ID = `DeviceId[0:8] ‖ session counter` (128-bit,
-  `002-sync.md:144,314`). This is the spec's construction; confirm the exact `ActorId` against the
-  Automerge backend before asserting it byte-for-byte.
+  `002-sync.md:144-151`). **This is spec-only — the code does NOT build the ActorId this way.** The
+  shipped code uses Automerge's **default random ActorId** (`Automerge::new()` / `fork()`); there is no
+  `DeviceId` derivation of the actor id. Trust the random-ActorId reality, not the spec construction.
 - **Automerge sync flow (spec):** `SyncRequest { have: heads, want: bloom_filter }` →
   `SyncResponse { changes, heads, synced }`, repeated until `synced = true` (`002-sync.md:164-186`).
   Each Change carries a SHA-256 hash, parent `deps`, an actor, a per-actor `seq`, a timestamp, and
@@ -127,7 +130,7 @@ distinct mechanisms: Automerge's own sync protocol and **negentropy** set reconc
 - **Negentropy ([Shipped]):** range-fingerprint set reconciliation using `XOR(SHA256(item)[0:16])`,
   with an Init → Response → Finalize message exchange (`002-sync.md:364,389-393`). The code's
   doc-comment claims **O(log n) rounds** — an *algorithmic property of the algorithm*, not a number
-  benchmarked in PEAT. This is the basis of the wire types discussed in Module 3 §3.4.
+  benchmarked in Peat. This is the basis of the wire types discussed in Module 3 §3.4.
 
 **Tuning knobs:** zstd level 3 compression is confirmed in the spec (`002-sync.md:482`). The spec also
 mentions change bundling (e.g. 100 ms / 1 KB) and a subscription model. One label to fix: the shipped
@@ -148,10 +151,12 @@ Field-number ranges are reserved (`003-schema.md:93-97`): **1–99** core, **100
 extensions, **200–299** organization-specific, **1000+** application-defined. The shipped peat-schema
 crate compiles these protos via `prost`.
 
-> **Vocabulary caution [In-flight].** The shipped schema protos still use **legacy military terms** in
-> places — e.g. `SquadSummary` / `squad_id` — while the rest of the stack is migrating to the abstract
-> vocabulary (see §9.4). If you grep the proto for the new tier names you may not find them yet; that
-> rename is mid-flight (epics #904 / #968).
+> **Vocabulary caution [In-flight].** The hierarchy proto has already been **renamed to the abstract
+> vocabulary** — `hierarchy.proto` ships `CellSummary` / `CohortSummary` / `FederationSummary` /
+> `CoalitionSummary` with no `Squad` / `squad_id` left (`peat-schema/proto/hierarchy.proto:24,71,72,122,172`).
+> The rename is *not* uniform across the workspace, though: **peat-btle still ships fully legacy
+> military terms** (`Platform` / `Squad`, `peat-btle/src/lib.rs`). So which vocabulary you find depends
+> on which crate you grep; the migration is still mid-flight (epics #904 / #968).
 
 Highlights, verified against `003-schema.md`:
 
@@ -169,7 +174,7 @@ Highlights, verified against `003-schema.md`:
 - **CoT / TAK mapping ([Shipped] at the transport layer):** `track_id` → CoT `uid`; `position` → `point`;
   `affiliation` → the `@type` prefix (`a-f` friendly / `a-h` hostile / `a-n` neutral / `a-u` unknown);
   affiliation + dimension compose to a CoT type (e.g. `MEMBER + GROUND → a-f-G`, `003-schema.md:789-795`);
-  PEAT-specific fields ride in a **`<__peat>`** CoT detail extension (double underscore,
+  Peat-specific fields ride in a **`<__peat>`** CoT detail extension (double underscore,
   `003-schema.md:804-809` — *not* the `<_peat_>` form some prose uses). The bridge itself is real and
   shipped in peat-transport (`src/tak/`, ADR-020/028/029); confirm any specific field mapping against
   that code plus spec 003 §9 before quoting it as exact.
@@ -214,8 +219,10 @@ partition-handling rule (both sides elect; the original-leader side keeps the Ce
 on heal, `004-coordination.md §10`). The patterns are a formal **vocabulary**; whether matching a pattern
 **drives capability-based tasking** at runtime is **[In-flight]** — capability-gated *delivery* is the
 ADR-046 epic (#853), and `CapableScope` distribution is reserved-but-rejected in peat-node v1. Partition
-detection is shipped (peat-mesh `src/topology/`); the specific "original-leader keeps the Cell ID" merge
-rule is spec-defined — confirm it against the topology code before asserting it.
+**detection** is shipped (peat-mesh `src/topology/`), but the partition-handling *rule itself* is
+**spec-only — NOT implemented**: the cell-split, the "original-leader side keeps the Cell ID," and the
+minority-side new-Cell-ID generation (`004-coordination.md:902-906`) are described in the spec, but
+peat-mesh only detects partitions — none of that splitting/ID-retention logic is in code.
 
 > **Vocabulary caution [In-flight, mid-rename].** Spec 004 (2025-01-07) uses *older* level names
 > (Node / Team / Group / Formation / Cluster / Root). The intended abstract vocabulary is
@@ -223,7 +230,8 @@ rule is spec-defined — confirm it against the topology code before asserting i
 > not a ratified "current" enum.** And the rename is *not uniform across the workspace*: shipped
 > peat-mesh and peat-protocol use **`Node` as the leaf tier** (`Node / Cell / Cohort / Federation /
 > Coalition` — *not* `Platform`); peat-btle still ships fully **legacy** `Platform / Squad / Platoon /
-> Company`; the peat-schema proto still uses `Squad` / `squad_id`. So a reader who greps
+> Company`; the peat-schema hierarchy proto has already been **renamed** to `CellSummary / CohortSummary /
+> FederationSummary / CoalitionSummary` with no `Squad` / `squad_id` left. So a reader who greps
 > `HierarchyLevel` finds `Node`, not `Platform`, and the leaf name is itself contested (ADR-068, also
 > Proposed). Don't call any single vocabulary "the current enum" — it is mid-flight (epics #904 / #968).
 
@@ -267,9 +275,12 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
   axis — the `AuthorityLevel` ladder: `UNSPECIFIED / OBSERVER / ADVISOR / SUPERVISOR / COMMANDER`,
   `peat-schema/proto/node.proto:61-66` — which is the human-machine teaming ladder, not RBAC.) A reader
   who greps `enum Role` finds the code's five names; use those. The spec / README role list is a known
-  documentation error. Access levels Public(0) / Internal(1) / Restricted(2) / Sensitive(3) / Critical(4)
-  are a spec value — confirm before relying on them. The authorization model itself is partly deferred
-  pending Layer-1 device identity (peat#941, **[In-flight]**).
+  documentation error. The access-level ladder Public(0) / Internal(1) / Restricted(2) / Sensitive(3) /
+  Critical(4) is **documentation-only — there is no Rust code for it** (a grep of all `*.rs` finds no
+  access-level enum). Likewise, **`command_authority` is not a Rust enum** — it is a TOML operator-config
+  *string* (`C2_ONLY` / `ANY_TAK_USER`, `OPERATOR_GUIDE.md:931`); there is no `CommandAuthority` enum in
+  code. The authorization model itself is partly deferred pending Layer-1 device identity
+  (peat#941, **[In-flight]**).
 - **Encryption (FIPS-approved algorithms, ADR-060 §5, amended 2026-05-18) — [Shipped], with one
   important caveat.** The shipped suite is **AES-256-GCM** (SP 800-38D), **ECDH P-256** (SP 800-56A;
   swapped from X25519 in peat-mesh rc.12), **Ed25519** signatures, **SHA-256** (FIPS 180-4),
@@ -279,8 +290,13 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
   > **Algorithm vs. module — the distinction an auditor will press.** The *algorithms* are FIPS-approved,
   > but the `aes-gcm` / `p256` crates are pure-Rust RustCrypto implementations, **not CMVP-validated
   > cryptographic modules**. For a real FIPS 140 boundary the path is the KMS / Vault HSM backends in
-  > peat-gateway; the local-key path uses non-validated software AES. Migrating peat-btle's crypto to
-  > `aws-lc-rs` is **[In-flight]** (peat-btle#75). Also note the spec mentions **P-384** and lists X25519
+  > peat-gateway; the local-key path uses non-validated software AES. **One published-vs-source split to
+  > flag:** peat-btle *source* (HEAD `3d70f48`) is already FIPS-clean — `aes-gcm` + `p256` (AES-256-GCM,
+  > ECDH P-256), migrated in commit `c8b013e` (`peat-btle/Cargo.toml:106,116`). But the crates.io-published
+  > peat-btle 0.4.0 (checksum `a57dd351`) that downstream binaries like peat-flutter build against still
+  > depends on `chacha20poly1305` + `x25519-dalek` — same version string, the FIPS migration was never
+  > re-published. There is **no `aws-lc-rs` migration and no `peat-btle#75`** in the repo. Also note the
+  > spec mentions **P-384** and lists X25519
   > as "marginal, pending FIPS review" — **only ECDH P-256 is in the code**, so "P-256/384" overstates
   > what ships. ADR-060 is itself formally `Status: Proposed` even though its §5 is implemented.
   > This **supersedes** the ChaCha20-Poly1305 named in older prose (see §9.6 fact 8 for which docs are
@@ -288,15 +304,16 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
 - **Key management — group forward secrecy is [Proposed], not shipped.** Formation-key rotation on
   member departure with a 5-minute grace is real (`005-security.md:513`). But the spec's group-key
   forward-secrecy mechanism — **MLS (RFC 9420) tree ratcheting** — is **not implemented anywhere**: there
-  is no `openmls` / `mls-rs` in any Cargo.lock, and a grep for `rfc.?9420` / `DHKEMP256` is empty. **MLS
-  is [Proposed] (ADR-044)**, and ADR-044 itself still carries pre-FIPS ChaCha20 references. Today's group
-  rekey is **leader-distribution**, not ratcheting; MLS is the proposed future. Do not present MLS as a
+  is no `openmls` / `mls-rs` in any Cargo.lock, and a grep for `rfc.?9420` is empty. **MLS
+  is [Proposed] (ADR-044)**, though ADR-044 was FIPS-amended 2026-05-18 (PR #870): its MLS ciphersuite now
+  reads `MLS_128_DHKEMP256_AES128GCM_SHA256_P256` (ChaCha20-Poly1305 superseded by AES-256-GCM, X25519
+  key-exchange flagged for FIPS review). Today's group rekey is **leader-distribution**, not ratcheting; MLS is the proposed future. Do not present MLS as a
   shipped forward-secrecy property — it is the single most serious overclaim a security reviewer would
   catch.
-- **Audit — [spec-defined; implementation likely Phase-3]:** a hash-chained, signed `AuditLogEntry`
+- **Audit — [spec-defined; documentation-only]:** a hash-chained, signed `AuditLogEntry`
   ledger (tamper-evident) with tiered retention (auth 90 d, violations 1 y, key management 2 y,
-  `005-security.md §9`). These are spec values; confirm whether `AuditLogEntry` is implemented before
-  implying it ships.
+  `005-security.md §9`). These retention tiers are **documentation-only — no code implements them**;
+  confirm whether `AuditLogEntry` is implemented before implying it ships.
 
 ---
 
@@ -321,10 +338,13 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
 7. **Emergent capabilities are a formal spec vocabulary [spec-defined].** Pattern-driven *tasking* is
    largely **[In-flight]** (ADR-046 epic #853); it is not a shipped runtime mechanism yet.
 8. **Crypto uses FIPS-approved algorithms (AES-256-GCM / ECDH P-256 / Ed25519) under `aws-lc-rs`
-   [Shipped]** — but the modules are not CMVP-validated (peat-btle#75 In-flight), and only P-256 ships
-   (not P-384). The docs that *still* advertise ChaCha20-Poly1305 / X25519 are the **peat-mesh and
-   peat-btle READMEs** and **pre-FIPS ADRs 006/044/048/049** (plus **ADR-052 for LoRa, which carries a
-   live ChaCha20 FIPS conflict**) — **not** spec 005, which was already corrected on 2026-05-18.
+   [Shipped]** — but the modules are not CMVP-validated, and only P-256 ships (not P-384). One
+   published-vs-source split: peat-btle *source* (`3d70f48`) is FIPS-clean (`aes-gcm` + `p256`, commit
+   `c8b013e`), but the crates.io-published peat-btle 0.4.0 still ships ChaCha20/X25519 — never re-published.
+   The docs that *still* advertise ChaCha20-Poly1305 / X25519 are the **peat-mesh and peat-btle READMEs**
+   and **pre-FIPS ADRs 048/049** (plus **ADR-052 for LoRa, which carries a live ChaCha20 FIPS conflict**)
+   — **not** spec 005, which was already corrected on 2026-05-18, and **not** ADRs 006/044, which were
+   FIPS-amended on the same date.
 
 ## 9.7 Where these specs land in real deployments (worked use cases)
 
@@ -358,7 +378,7 @@ labeled by status so you know what actually runs. (Full set in the curriculum's 
   of pending CRDT state is [In-flight] (#73)**, so the QUIC/peat-node path is the robust one. (A
   satellite/SBD or LoRa fallback for beyond-line-of-sight is **[Proposed] — ADR-051 / ADR-052, no
   crate, no code**; the figures you may see, e.g. ~1,960 B Iridium SBD frames or 7–87 km LoRa, are
-  external *hardware* specs, not PEAT measurements.)
+  external *hardware* specs, not Peat measurements.)
 
 ## 9.8 Spec ↔ ADR traceability (where to go deeper)
 

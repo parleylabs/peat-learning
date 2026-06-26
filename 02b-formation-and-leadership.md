@@ -1,3 +1,5 @@
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
+
 # Module 2·5 — Forming a Cell & Electing Leaders
 
 **Goal:** a precise, code-level walkthrough of how independent nodes discover each other,
@@ -8,13 +10,13 @@ and the normative spec [`peat/docs/spec/004-coordination.md`](../peat/docs/spec/
 
 > **A note on labels.** Every capability below is tagged **Shipped** (in code, tested),
 > **In-flight** (open issue/PR/epic), **Proposed** (an ADR exists with no implementation), or
-> **Speculative** (a teaching design that exists nowhere yet). The operating rule throughout PEAT's
+> **Speculative** (a teaching design that exists nowhere yet). The operating rule throughout Peat's
 > material is **code over docs**: where a README, a spec, or an ADR disagrees with the source, the
 > source wins, and this module cites `path:line` so you can check. Almost everything in formation and
-> leader election is **Shipped** — this is one of the most complete subsystems in PEAT.
+> leader election is **Shipped** — this is one of the most complete subsystems in Peat.
 
 > **Why a whole module on this?** Formation plus leader election is the single most important runtime
-> behavior in PEAT, and it is the part newcomers most often misread. Two ideas trip people up:
+> behavior in Peat, and it is the part newcomers most often misread. Two ideas trip people up:
 > membership is not the same thing as reachability, and the election reaches a single answer without
 > any consensus round. The repo gives this its own guide; so do we.
 
@@ -149,8 +151,7 @@ let key = FormationKey::from_base64(formation_id, base64_shared_key)?;  // from 
 > **Ed25519** (identity), **AES-256-GCM** (transport AEAD). There is **no ChaCha20** anywhere on the
 > formation/leadership path — grep confirms it. One honesty caveat applies ecosystem-wide: these are
 > FIPS-*approved algorithms* running in pure-Rust crates that are **not themselves CMVP-validated
-> modules**; a true FIPS 140-3 boundary requires the KMS/HSM path in peat-gateway, and the
-> software-module migration to `aws-lc-rs` is **In-flight** (peat-btle#75). The governing decision is
+> modules**; a true FIPS 140-3 boundary requires the KMS/HSM path in peat-gateway. The governing decision is
 > **ADR-060, which is `Status: Proposed`** even though its §5 cryptographic choices are already
 > implemented in code (`peat/docs/adr/060-encryption-tiers.md:3`).
 
@@ -161,7 +162,7 @@ The handshake runs over a dedicated ALPN **before any state is exchanged**
 1. Initiator opens a stream on the handshake ALPN and sends its `formation_id`.
 2. Responder replies with a fresh random **32-byte nonce** (the challenge).
 3. Initiator returns `HMAC-SHA-256(key, nonce ‖ formation_id)`
-   (`formation_key.rs:147,162` — `respond_to_challenge` → `compute_response`).
+   (`formation_key.rs:147,163` — `respond_to_challenge` → `compute_response`).
 4. Responder recomputes the same MAC and compares in **constant time** (`subtle::ConstantTimeEq`,
    `formation_key.rs:152-157`). Match ⇒ admitted; mismatch ⇒ rejected.
 
@@ -455,7 +456,7 @@ vocabulary (`peat-schema/proto/hierarchy.proto:24,72,122` — `CellSummary` / `C
 
 - **Each tier elects/assigns its own coordinator** — a cohort coordinator is *not* a cell leader.
   Leaders route upward; non-leaders cannot cross-cell or reach the zone
-  (`peat-mesh/src/hierarchy/router.rs`).
+  (`peat-mesh/src/routing/router.rs`).
 - **Summaries sync cheaply** under the `LatestOnly` CRDT compaction mode (only the newest summary
   matters), as opposed to `FullHistory` (peat-mesh CRDT compaction modes).
 - **Commands flow down, state flows up.** Message priority **escalates on the way up**: a
@@ -477,7 +478,7 @@ All paths verified at the audited commits. Status: **Shipped** unless noted.
 
 | Concern | Type / fn | File · evidence |
 |---------|-----------|-----------------|
-| Formation key | `peat_mesh::security::FormationKey` (`new`, `from_base64`, `respond_to_challenge`, `verify_response`) | `peat-mesh/src/security/formation_key.rs:63,85,147,152` |
+| Formation key | `peat_mesh::security::FormationKey` (`new`, `from_base64`, `respond_to_challenge`, `verify_response`) | `peat-mesh/src/security/formation_key.rs:69,91,147,152` |
 | Handshake | `network::formation_handshake::{FORMATION_HANDSHAKE_ALPN, perform_initiator_handshake, perform_responder_handshake}` | `peat-protocol/src/network/formation_handshake.rs:49,74,186` |
 | Leadership score | `cell::LeadershipScore::{from_capabilities, compare}` (weights 0.30/0.25/0.20/0.15/0.10) | `peat-protocol/src/cell/leader_election.rs:80,119` |
 | Election state machine | `cell::LeaderElectionManager` (`Candidate→Leader\|Follower`, rounds, heartbeats) | `peat-protocol/src/cell/leader_election.rs:192` |
@@ -499,7 +500,7 @@ All paths verified at the audited commits. Status: **Shipped** unless noted.
    In-flight.
 3. In `peat-protocol/src/network/formation_handshake.rs`, find `FORMATION_HANDSHAKE_ALPN` (`:49`) and
    trace the 4-step challenge/response; confirm the MAC input `nonce ‖ formation_id` in
-   `formation_key.rs:162`.
+   `formation_key.rs:163`.
 4. In `peat-mesh/src/beacon/types.rs`, confirm the leaf enum value is `Node = 0` — then grep
    `peat-btle/src/lib.rs` to see the legacy `Platform/Squad/Platoon/Company` enum still in flight.
 

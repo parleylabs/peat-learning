@@ -1,6 +1,8 @@
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
+
 # Module 4 — The Edge: `peat-btle` & `peat-lite`
 
-**Goal:** understand how PEAT reaches the *smallest* and *most disconnected* devices — phones and
+**Goal:** understand how Peat reaches the *smallest* and *most disconnected* devices — phones and
 watches with no network, and microcontrollers running bare-metal with no operating system. Two
 crates: [`peat-btle/`](../peat-btle/) (Bluetooth LE mesh transport) and
 [`peat-lite/`](../peat-lite/) (`no_std` CRDT primitives + a tiny wire protocol).
@@ -15,7 +17,7 @@ crates: [`peat-btle/`](../peat-btle/) (Bluetooth LE mesh transport) and
 > **Mental model:** these are the two ends of "any device joins." `peat-btle` is a *transport* — it
 > moves bytes over the Bluetooth radio when there is no Wi-Fi, cell, or satellite link.
 > `peat-lite` is a *data-format and primitives* library small enough to run on bare metal. Both are
-> **standalone leaf crates**: they depend on nothing else in PEAT (beyond `peat-btle`'s one optional
+> **standalone leaf crates**: they depend on nothing else in Peat (beyond `peat-btle`'s one optional
 > link to `peat-lite`), and `peat-mesh` pulls them in only through opt-in Cargo features.
 
 **Audited against:** peat-btle `3d70f48` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `71fc3d5` /
@@ -33,8 +35,9 @@ feature (`peat-btle/src/transport.rs:159-324`; `peat-mesh/src/transport/btle.rs:
 *Proposed* — the ADR is still formally Proposed even though the crate ships).
 
 The design obsession is battery. Power savings come from the **`PowerProfile`** scan/advertise/
-connection timing in `peat-btle/src/power/profile.rs:76-114`, which exposes three profiles —
-`Aggressive`, `Balanced`, and `LowPower`. A lower duty cycle means the radio sleeps more between
+connection timing, which exposes four variants — `Aggressive`, `Balanced` (the default), `LowPower`,
+and `Custom { scan_interval_ms, scan_window_ms, adv_interval_ms, conn_interval_ms }` for hand-tuned
+timings (`peat-btle/src/config.rs:73-87`). A lower duty cycle means the radio sleeps more between
 sync windows. Two cautions for the skeptical reader:
 
 - The often-quoted "watch lasts 18–24 hours vs. 3–4 hours for traditional BLE-mesh SDKs, <5% vs.
@@ -42,9 +45,12 @@ sync windows. Two cautions for the skeptical reader:
   (`README.md:28-31`) — **[Unverifiable]**. There is no measurement harness output in the repo to
   back them. The defensible statement is narrower: the duty cycle a given profile produces is
   *computable* from the timing constants in `power/profile.rs:98-122`, but it has not been measured
-  on hardware in-repo.
+  on hardware in-repo. The per-profile estimates that *do* live in code — `Aggressive` ~20% duty /
+  ~6 h, `Balanced` ~10% / ~12 h, `LowPower` ~2% / ~20+ h watch battery (`config.rs:73-87`
+  doc-comments) — are likewise design estimates, not measured field results.
 - An "UltraLow / 36-hour" profile is sometimes cited; it has **no code path** — the `PowerProfile`
-  enum has only `Aggressive`, `Balanced`, and `LowPower` (`power/profile.rs:76-88`).
+  enum's variants are `Aggressive`, `Balanced`, `LowPower`, and `Custom` (`config.rs:73-87`).
+  `UltraLow` is not among them.
 
 ## 4A.1 Entry points
 
@@ -64,7 +70,7 @@ sync windows. Two cautions for the skeptical reader:
 - **`MeshManager`** — topology, parent selection, failover (`src/lib.rs:248`). **[Shipped]**
 - **`NodeId`** — a **32-bit** node id (`u32`, `src/lib.rs:367-371`), often derived from the BLE MAC
   (`NodeId::from_mac_address`, `src/lib.rs:408,446`). Note this is peat-btle's *own* identity type;
-  it is **not** the SHA-256-of-Ed25519 scheme used in the core mesh. PEAT runs **four different
+  it is **not** the SHA-256-of-Ed25519 scheme used in the core mesh. Peat runs **four different
   identity derivations** across the stack — see the cross-cutting note at the end of Part A.
   **[Shipped]**
 - **`BleAdapter` trait** — the platform abstraction every OS implements. **[Shipped]**
@@ -102,7 +108,7 @@ UniFFI generating the Rust↔Kotlin glue, so the Rust `AndroidAdapter` is a thin
 ## 4A.3 Sync over GATT (delta-based, chunked) **[Shipped]**
 
 BLE has tiny MTUs — the BLE spec's default ATT MTU is 23 bytes, leaving ~20 bytes of payload per
-write after the 3-byte ATT header (a BLE-spec default, not a PEAT constant). So documents are
+write after the 3-byte ATT header (a BLE-spec default, not a Peat constant). So documents are
 **chunked** and reassembled.
 
 - **`ChunkHeader`** — 8 bytes: `[message_id:4][chunk_index:2][total_chunks:2]`
@@ -141,13 +147,15 @@ exchange order is the `SyncMessageType` sequence: `SyncVector` → `Document` ch
 
 ### Discovery beacons
 
-Discovery uses a compact **16-byte `PeatBeacon` body** (`discovery/beacon.rs:60`, `BEACON_SIZE = 16`)
+Discovery uses a compact **16-byte `PeatBeacon` body** (`discovery/beacon.rs`, `BEACON_SIZE = 16`)
 carrying version, capability flags, node id, hierarchy level, a **24-bit geohash** (~600 m
-precision, `:78`), battery %, and a sequence number for dedup. Be precise about framing: the 16-byte
-figure is the beacon *body*, carried in BLE Service Data. The *complete* advertised frame is about
-40 bytes (`3 + 18 + (3 + 16)`, `beacon.rs:42`) and therefore **requires extended advertising** — it
-does **not** fit the legacy 31-byte advertising limit as a single frame
-(`beacon.rs:20,45`). **[Shipped]**
+precision), battery %, and a sequence number for dedup. Be precise about framing: the 16-byte figure
+is the beacon *body*, and `beacon.rs:36-49` documents **two distinct advertising layouts** for it.
+Wrapped as **Manufacturer Data**, the complete frame is `3 + 18 + (3 + 16) = 40` bytes and
+**requires extended advertising** — too big for the legacy 31-byte limit. Wrapped as **Service
+Data**, the same body fits: `3 + 18 = 21` bytes, comfortably **inside the legacy 31-byte
+advertising limit** as a single frame (`beacon.rs:42-49`). So whether extended advertising is
+required depends on the layout chosen, not on the body itself. **[Shipped]**
 
 ### Security — FIPS-clean in code
 
@@ -160,15 +168,21 @@ Security is two-phase (`security/`):
 
 Every one of these is a **FIPS-approved** primitive (ADR-060, *Proposed* — but §5 of the ADR is
 already implemented in code; the crate migrated off ChaCha20-Poly1305 / X25519 to AES-256-GCM /
-ECDH-P256 on 2026-05-18). This module reflects the **code reality**; the peat-btle **README is
-stale** and still advertises ChaCha20/X25519 (`README.md:196,218,242,282`). Two honest caveats for
-a defense-prime auditor:
+ECDH-P256 on 2026-05-18, commit `c8b013e`). This module reflects the **source reality**; the
+peat-btle **README is stale** and still advertises ChaCha20/X25519 (`README.md:196,218,242,282`).
+Two honest caveats for a defense-prime auditor:
 
+- **Published-vs-source split — the shipped crate is not yet FIPS-clean.** The FIPS-clean code above
+  is the *source* at HEAD `3d70f48` (`Cargo.toml:106,116`; `src/security/mesh_key.rs:23-25`,
+  `peer_key.rs:33,93`). The peat-btle 0.4.0 **published to crates.io** (checksum `a57dd351`) — the
+  one a downstream consumer like peat-flutter actually builds — still depends on `chacha20poly1305`
+  + `x25519-dalek` (`peat-flutter/rust/Cargo.lock:3542-3575,630-631,6451-52`). Same version string,
+  same `0.4.0`: the FIPS migration landed in git but was **never re-published**. So a build that
+  pulls peat-btle 0.4.0 from the registry today gets the non-FIPS BLE crypto.
 - **The algorithms are FIPS-approved; the modules are not CMVP-validated.** `aes-gcm` and `p256` are
-  pure-Rust RustCrypto crates, not a certified FIPS 140-3 cryptographic module. Migrating
-  `src/security/*` to `aws-lc-rs` to get a validated boundary is **[In-flight]** (peat-btle#75). For
-  a real FIPS 140 boundary today, the path is the KMS/Vault HSM backends in peat-gateway (Module 5),
-  not this local software AES.
+  pure-Rust RustCrypto crates, not a certified FIPS 140-3 cryptographic module. For a real FIPS 140
+  boundary today, the path is the KMS/Vault HSM backends in peat-gateway (Module 5), not this local
+  software AES.
 - peat-btle's `NodeId` derivation hashes the Ed25519 public key with **BLAKE3**, which is **not a
   FIPS algorithm**. This is addressing-only (it picks a `u32` id, `src/security/identity.rs:141`),
   **not** a security boundary, so it does not affect the FIPS posture of the encrypted channel.
@@ -262,7 +276,7 @@ That is the essence of a CRDT in a dozen lines: order does not matter, duplicate
 every node that sees the same set of updates lands in the same state. **What these types do *not*
 cover is just as important:** none of them is safe for *orders*. peat-lite is built for facts and
 counts (a position, a reading, an event tally), not for causally-ordered tasking. There is no
-`command_log` CRDT anywhere in PEAT — see the cross-cutting note at the end of Part B.
+`command_log` CRDT anywhere in Peat — see the cross-cutting note at the end of Part B.
 
 ## 4B.2 The wire protocol (ADR-035, *Proposed*) **[Shipped]**
 
@@ -270,7 +284,7 @@ Under `peat-lite/src/protocol/`. A fixed **16-byte header**, then a payload
 (`peat-lite.md` ground truth §6; `constants.rs`):
 
 ```
-0–3   MAGIC "PEAT" (0x50 0x45 0x41 0x54)
+0–3   MAGIC bytes 0x50 0x45 0x41 0x54 (ASCII "PEAT", per constants.rs:3-4)
 4     PROTOCOL_VERSION (0x01)
 5     MESSAGE_TYPE
 6–7   flags (u16 LE)        // FLAG_HAS_TTL = 0x0001 appends a 4-byte TTL
@@ -289,9 +303,14 @@ Under `peat-lite/src/protocol/`. A fixed **16-byte header**, then a payload
 - Default UDP gossip port is **5555**, multicast group `239.255.72.76`; `MAX_PACKET_SIZE = 512`
   (`MAX_PAYLOAD = 496`) (`constants.rs:13,22`).
 
-The **`Document 0x07`** type carries a *universal* document envelope (collection + doc_id +
-timestamp + a length-prefixed, opaque body). Be precise about ownership: the **envelope codec is
-peat-lite's own** (`protocol/document.rs:1-47`) — peat-lite defines, owns, and tests it (this is the
+The **`Document 0x07`** type carries a *universal* document envelope. The envelope body (after the
+16-byte header) leads with a **1-byte flags field**, then `collection_len(1) | collection | doc_id`
+and on through timestamp and the length-prefixed opaque body
+(`flags(1) | collection_len(1) | collection | doc_id_len(2 LE) | doc_id | timestamp_ms(8 LE) | body_len(2 LE) | body`,
+`protocol/document.rs:23-34`). The flags carry `bit0 = tombstone (0x01)`, `bit1 = encrypted (0x02)`,
+with bits 2–7 reserved and rejected by the encoder (`document.rs:75-96`). Be precise about
+ownership: the **envelope codec is peat-lite's own** (`protocol/document.rs:1-47`) — peat-lite
+defines, owns, and tests it (this is the
 "universal half" of ADR-059 Amendment 4). Only the **body** is a `peat_mesh::Document`'s fields,
 postcard-encoded (`document.rs:47`), opaque to peat-lite and interpreted by the publisher/consumer.
 That envelope is what lets a tiny sensor participate in the same document model as a server.
@@ -320,14 +339,14 @@ That envelope is what lets a tiny sensor participate in the same document model 
 # Part C — How the three connect
 
 > **The modularity model — the one thing to remember about these two crates.** `peat-lite` and
-> `peat-btle` are **standalone leaf crates**: the rest of PEAT depends on *them*, but they depend on
-> *nothing* in PEAT (beyond `peat-btle`'s one *optional* link to `peat-lite`). Dependencies flow
+> `peat-btle` are **standalone leaf crates**: the rest of Peat depends on *them*, but they depend on
+> *nothing* in Peat (beyond `peat-btle`'s one *optional* link to `peat-lite`). Dependencies flow
 > **down into** the edge crates, never out of them. This is deliberate. Keeping these as pure leaves
 > means they can be reused on their own — a `no_std` CRDT library, a cross-platform BLE-mesh
-> transport — by projects that do not want the whole PEAT stack; they can be versioned and published
+> transport — by projects that do not want the whole Peat stack; they can be versioned and published
 > independently; and they can compile for microcontrollers and mobile targets the heavier core
 > cannot reach. It is also what keeps the dependency graph acyclic (Module 1, §1.6; ADR-059). Every
-> PEAT arrow into `peat-btle` / `peat-lite` is marked `optional = true`.
+> Peat arrow into `peat-btle` / `peat-lite` is marked `optional = true`.
 
 - **`peat-btle` → `peat-lite`:** optional, behind the **`peat-lite-frame`** feature
   (`peat-btle/Cargo.toml:47,174`). It lets BLE carry the universal `Document` envelope
@@ -376,11 +395,13 @@ into the wider mesh. This is **use case 5** from the curriculum's use-case set, 
    and observers fire. **[Shipped]**
 3. **Bridge → mesh (QUIC/Iroh).** Negentropy set reconciliation + Automerge sync carry the document
    upstream over QUIC (Module 3). **[Shipped]**
-4. **OTA back down.** Firmware updates push to the sensors via the peat-lite OTA path
-   (`lite_ota.rs`, ADR-047): stop-and-wait, SHA-256 integrity, optional Ed25519 signing.
-   **[Shipped]**
+4. **OTA back down.** Firmware updates push to the sensors via the peat-lite OTA path (ADR-047):
+   protocol/offer types in `peat-lite/src/protocol/ota.rs`, the firmware applier in
+   `peat-lite/firmware/src/ota.rs:8-10` — stop-and-wait (one chunk, ACK before next), streaming
+   SHA-256 verified before commit, optional Ed25519 signature verification. (There is no
+   `lite_ota.rs`.) **[Shipped]**
 5. **A long-range variant of leg 1 (LoRa)** would let the sensor field span 7–87 km at 1.5–9.1 kB/s
-   — but those are **external LoRa hardware specs, not PEAT measurements**, and `peat-lora` is
+   — but those are **external LoRa hardware specs, not Peat measurements**, and `peat-lora` is
    **[Proposed]** only (ADR-052, which also still references ChaCha20-Poly1305 — a FIPS conflict to
    resolve before any implementation). There is no LoRa crate, module, or Cargo entry; the
    `TransportType::LoRa` enum variant resolves to "no transport registered."

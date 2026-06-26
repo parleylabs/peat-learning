@@ -1,6 +1,8 @@
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
+
 # Module 1 — Architecture Overview
 
-**Goal:** understand the shape of PEAT before touching any code — the layering, the six
+**Goal:** understand the shape of Peat before touching any code — the layering, the eight
 repositories, and (most importantly) how they depend on one another.
 
 > **How to read the status labels.** Throughout this curriculum every capability carries one
@@ -12,7 +14,7 @@ repositories, and (most importantly) how they depend on one another.
 
 ---
 
-## 1.1 The problem PEAT solves
+## 1.1 The problem Peat solves
 
 Tactical and edge environments are *heterogeneous*. A dismounted operator carries a phone
 running a CoT consumer (a Cursor-on-Target client). Sensors run on ESP32-class microcontrollers
@@ -21,7 +23,7 @@ computers. These systems speak different protocols, use different radios, and of
 each other directly. The network is frequently **degraded, disrupted, intermittent, or limited
 (DDIL)** — there may be no Wi-Fi, no cell, no satellite.
 
-PEAT gives all of them a common coordination layer. Four properties are worth pinning down
+Peat gives all of them a common coordination layer. Four properties are worth pinning down
 precisely, because each carries a different maturity:
 
 - **Any device can join** — servers, phones, ESP32 sensors, single-board computers, AI
@@ -44,14 +46,14 @@ precisely, because each carries a different maturity:
   validation is **In-flight** (epics #724–#727). Treat "1,000+ node" as a simulation ceiling,
   not a measured field result.
 
-One framing to carry forward: PEAT is built for **autonomy under human authority**. Nodes
+One framing to carry forward: Peat is built for **autonomy under human authority**. Nodes
 coordinate and act on their own when cut off, but anything that issues a command or tasks a
 platform sits behind an authority model (covered in Modules 2 and 2b). Keep that distinction in
 mind whenever you see "tasking" later in the track.
 
 ## 1.2 The three phases (the runtime mental model)
 
-Almost everything PEAT does happens in three phases, and the code is organized around them —
+Almost everything Peat does happens in three phases, and the code is organized around them —
 you will find a `Discovery` (Phase 1), `Cell` (Phase 2), and `Hierarchy` (Phase 3) module
 in `peat-protocol`. **(Shipped.)**
 
@@ -85,7 +87,9 @@ and it comes with a caveat.
 >   (`peat-mesh/src/beacon/types.rs:56-67`; `peat-protocol/src/security/authorization.rs:331-343`).
 > - `peat-btle` still uses the **fully legacy** `Platform/Squad/Platoon/Company`
 >   (`peat-btle/src/lib.rs:495-525`).
-> - `peat-schema`'s `.proto` files still ship `SquadSummary`, `squad_id`, etc.
+> - `peat-schema`'s `.proto` files have been renamed off the legacy military terms: they now ship
+>   `CellSummary`/`CohortSummary`/`FederationSummary`/`CoalitionSummary` — no `SquadSummary` or
+>   `squad_id` (`peat/peat-schema/proto/hierarchy.proto:24,71,72,122,172`).
 >
 > So if you `grep HierarchyLevel`, you will find **`Node`** as the leaf in the core crates — not
 > `Platform`. ADR-068 separately proposes settling the base-unit name on `Node` (#968/#970).
@@ -94,7 +98,7 @@ and it comes with a caveat.
 
 ## 1.3 The architecture, through two lenses
 
-There is **no single official "layer count"** for PEAT. The repo documents the architecture two
+There is **no single official "layer count"** for Peat. The repo documents the architecture two
 complementary ways. Recognizing that these are two *lenses* on one system — not a contradiction —
 saves a lot of early confusion.
 
@@ -120,11 +124,11 @@ crate owns what**, bottom-up. **(Shipped — this matches the member-crate roles
 ```
 
 > **Diagram legend.** Each box is a layer; the crate(s) named inside it own that layer.
-> Lower layers are foundational (the Schema layer has no PEAT dependencies); higher layers build
+> Lower layers are foundational (the Schema layer has no Peat dependencies); higher layers build
 > on lower ones. This is a *packaging* view — it does **not** show which crate compiles against
 > which (for that, see the literal dependency graph in §1.5).
 
-- **Schema** (`peat-schema`) — the wire format (Protobuf). No PEAT dependencies; the foundation.
+- **Schema** (`peat-schema`) — the wire format (Protobuf). No Peat dependencies; the foundation.
 - **Protocol** (`peat-protocol`) — the SDK core you program against (CRDT sync, auth, cells,
   hierarchy, QoS).
 - **Transport** — `peat-mesh` (P2P QUIC/Iroh), `peat-transport` (HTTP/REST + TAK/CoT TCP),
@@ -198,16 +202,19 @@ flowchart LR
 > `peat-protocol` pulls in `peat-mesh`. The diagrams show responsibilities; §1.5 is the literal
 > truth of what compiles against what.
 
-> **Name trivia worth knowing.** The developer guide expands the name as *"Peat (Hierarchical
-> Intelligence for Versatile Entities)"* (DEVELOPER_GUIDE.md:46) — which spells **HIVE**, the
-> project's former name. You will see "HIVE" throughout the history: ADR-049 is "HIVE mesh
-> extraction"; peat-lite's ADR-001 is "hive-lite-primitives." PEAT is the rename; HIVE is the
-> legacy term for the same project.
+> **Name trivia worth knowing.** Peat is a name, not an acronym — don't read the letters as
+> initials. The project's *former* name was **HIVE**, a backronym for "Hierarchical Intelligence
+> for Versatile Entities" (DEVELOPER_GUIDE.md:46). That legacy name is still all over the history:
+> ADR-049 is "HIVE mesh extraction"; peat-lite's ADR-001 is "hive-lite-primitives." Peat is the
+> current name for the same project.
 
-## 1.4 The six repositories (what is in this folder)
+## 1.4 The eight repositories (what is in this folder)
 
-The system spans **six repositories**, not five — `peat-node` is a real, separately developed
-sidecar in addition to the five library/control-plane repos. **(All Shipped.)**
+The system spans **eight repositories**. The six core library/control-plane repos below are joined
+by two client/bridge repos brought under tracking in 2026-06: `peat-flutter` (the Flutter/Dart
+client binding over `peat-ffi`) and `peat-sapient` (the SAPIENT sensor-standard bridge, a
+first-class accepted integration under ADR-070). **(All Shipped; ADR-070 SAPIENT bridge is
+Accepted.)**
 
 | Repo / dir | One-liner | Language | Key crate(s) |
 |------------|-----------|----------|--------------|
@@ -217,6 +224,8 @@ sidecar in addition to the five library/control-plane repos. **(All Shipped.)**
 | `peat-lite/` | `no_std` CRDT primitives + wire protocol for ~256 KB microcontrollers | Rust (`no_std`) | `peat-lite` |
 | `peat-gateway/` | Enterprise **control plane**: multi-tenant enrollment, CDC, identity federation — **not a mesh node and not in the data path** | Rust + SvelteKit | `peat-gateway` |
 | `peat-node/` | Deployable **node sidecar**: embeds peat-mesh + peat-protocol and exposes them over a single gRPC / Connect / gRPC-Web port (Iroh QUIC only — no BLE) | Rust | `peat-node` |
+| `peat-flutter/` | Flutter/Dart **client binding** over `peat-ffi` (hand-maintained UniFFI bindings) | Dart + Rust | `peat-flutter` (binds `peat-ffi`) |
+| `peat-sapient/` | **SAPIENT sensor-standard bridge** into Peat via `peat-schema` (ADR-070, Accepted) | Rust | `peat-sapient` |
 
 A framing that matters for a skeptical reader: **`peat-gateway` is a control plane, not a node.**
 It implements zero mesh transports, does not sync CRDTs, and does not sit in the peer-to-peer
@@ -238,7 +247,8 @@ Inside `peat/` the most important sub-crates are:
   an iOS demo, an M5Stack/ESP32 demo, etc.
 - **`peat/spec/`** — an IETF-style protocol draft (`draft-peat-protocol-00.md`) and `.proto`
   specs.
-- **`peat/docs/adr/`** — **75 Architecture Decision Records** (counted: `ls peat/docs/adr/*.md`).
+- **`peat/docs/adr/`** — **78 Architecture Decision Records** (counted: `ls peat/docs/adr/*.md` =
+  78; 74 numbered ADRs + 4 reference docs).
   These are gold for understanding *why*. Note that many are still in `Proposed` status — triage
   epic #695 tracks "triage 22 Proposed ADRs before public release," so an ADR existing does not
   mean the decision shipped.
@@ -267,7 +277,7 @@ verified against the manifests.)**
                     │        peat-mesh +       └──▶ peat-lite ◀─┘ │
                     ▼        peat-schema           (no_std MCU)   │
               peat-schema ◀──────────────────────────────────────┘
-              (Protobuf, foundation — no PEAT deps)
+              (Protobuf, foundation — no Peat deps)
 ```
 
 > **Diagram legend.** Boxes are crates. A solid arrow is a required dependency; the
@@ -287,7 +297,7 @@ Concretely, verified from the manifests:
 - `peat-mesh` → `peat-lite` *(optional, `lite-bridge`)*, `peat-btle` *(optional, `bluetooth`)*.
 - `peat-btle` → `peat-lite` *(optional, `peat-lite-frame` feature)*; it does **not** depend on
   `peat-mesh`.
-- `peat-lite` → *(nothing PEAT)* — `no_std`, standalone, only `heapless`.
+- `peat-lite` → *(nothing Peat)* — `no_std`, standalone, only `heapless`.
 - `peat-gateway` → `peat-mesh` (an exact `=`-pin, with features `automerge-backend` + `broker`).
   The pin was frozen at `=0.9.0-rc.1` for months but a Dependabot bump (peat-gateway#144) moved it
   to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (rc.43) by only ~3 RCs (Module 5 §5.6).
@@ -346,15 +356,15 @@ tracked by peat#828.)
 This is the single most important architectural property to internalize, and it is easy to miss.
 **(Shipped — verified from the manifests.)**
 
-> **`peat-lite` and `peat-btle` are standalone leaf crates. The rest of PEAT depends on *them*;
-> they depend on *nothing* in PEAT.** Dependencies flow *down into* the edge crates, never *out
+> **`peat-lite` and `peat-btle` are standalone leaf crates. The rest of Peat depends on *them*;
+> they depend on *nothing* in Peat.** Dependencies flow *down into* the edge crates, never *out
 > of* them.
 
 Concretely, from the manifests:
 
-- **`peat-lite` is a pure leaf** — it has **no PEAT dependencies at all** (its only runtime
+- **`peat-lite` is a pure leaf** — it has **no Peat dependencies at all** (its only runtime
   dependency is `heapless`). It is a self-contained `no_std` CRDT library.
-- **`peat-btle` is almost a leaf** — its only PEAT dependency is an **optional** `peat-lite`
+- **`peat-btle` is almost a leaf** — its only Peat dependency is an **optional** `peat-lite`
   (the `peat-lite-frame` feature). It does **not** depend on `peat-mesh`, `peat-protocol`, or
   `peat-schema`.
 - **The "core" reaches outward to consume them, optionally:** `peat-mesh` pulls in `peat-btle`
@@ -368,17 +378,17 @@ Concretely, from the manifests:
                    peat-btle      ← standalone BLE transport; only optional dep is peat-lite
                         │  (optional)
                         ▼
-                   peat-lite      ← pure leaf: zero PEAT deps, no_std, reusable anywhere
+                   peat-lite      ← pure leaf: zero Peat deps, no_std, reusable anywhere
 ```
 
 > **Diagram legend.** Top to bottom is the dependency direction: the core stack at the top
 > optionally depends *down* on the edge crates; the edge crates depend on nothing above them.
-> Every PEAT arrow into `peat-btle` or `peat-lite` is `optional = true`.
+> Every Peat arrow into `peat-btle` or `peat-lite` is `optional = true`.
 
 **Why this modularity matters:**
 
 1. **Independent reuse.** Carrying no upward dependencies, `peat-lite` and `peat-btle` can be
-   adopted *on their own* by projects that do not want the whole PEAT stack — someone who needs
+   adopted *on their own* by projects that do not want the whole Peat stack — someone who needs
    only a tiny `no_std` CRDT library, or only a cross-platform BLE-mesh transport. The value of
    each edge crate is not locked behind adopting `peat-protocol`.
 2. **Independent versioning and publishing.** Each is its own crate, released on its own cadence
@@ -394,7 +404,7 @@ Concretely, from the manifests:
    the structural rule that prevents that class of problem.
 
 The mental model is **"core depends on edge, edge depends on nothing"** — a stable-dependencies,
-leaf-reusability design. When you read `Cargo.toml`s, notice that every PEAT arrow into
+leaf-reusability design. When you read `Cargo.toml`s, notice that every Peat arrow into
 `peat-btle` or `peat-lite` is marked `optional = true`. That keyword is the modularity model in
 one word.
 
@@ -412,7 +422,7 @@ one word.
    spot the inverted arrow yourself.
 3. Run `grep -rn "pub use peat_mesh" peat/peat-protocol/src/lib.rs` — that single line is the
    whole "facade" idea.
-4. Run `ls peat/docs/adr/*.md | wc -l` to see the ADR count for yourself (75 at the audited
+4. Run `ls peat/docs/adr/*.md | wc -l` to see the ADR count for yourself (78 at the audited
    HEAD), then skim the file names. You do not need to read them yet; notice how many decisions
    are recorded, and that many are still `Proposed`.
 
@@ -424,7 +434,7 @@ one word.
   consensus-based or deterministic?
 - Which single crate does an application developer add to `Cargo.toml`, and what does it
   re-export?
-- Which crate is the foundation with no PEAT dependencies?
+- Which crate is the foundation with no Peat dependencies?
 - Why does the dependency graph contradict the old architecture diagram?
 - Which two crates are standalone *leaves*, and which direction do dependencies flow relative to
   them? Give two reasons that modularity matters.

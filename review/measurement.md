@@ -1,12 +1,12 @@
 # Measuring the curriculum's impact
 
-This note records **how we measure whether the PEAT learning curriculum is actually helping**, what
+This note records **how we measure whether the Peat learning curriculum is actually helping**, what
 we collect, and the privacy posture. It exists so the team — and any future refresh run — knows the
 instrumentation is deliberate, not accidental, and knows where to look for the signal.
 
 ## Why we measure
 
-The curriculum's whole purpose is to get new engineers productive on PEAT faster and more accurately.
+The curriculum's whole purpose is to get new engineers productive on Peat faster and more accurately.
 We can't tell whether it's working from the inside. So the three reader-facing pages carry lightweight
 instrumentation whose only job is to answer two questions: **which material gets read**, and **whether
 readers found it helpful or wrong**. That tells us where to spend the next refresh — a module nobody

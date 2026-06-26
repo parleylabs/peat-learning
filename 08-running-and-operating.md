@@ -1,6 +1,8 @@
-# Module 8 — Running, Deploying & Operating PEAT
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
 
-**Goal:** get hands-on. Build and run a real mesh, then learn how PEAT is configured, deployed,
+# Module 8 — Running, Deploying & Operating Peat
+
+**Goal:** get hands-on. Build and run a real mesh, then learn how Peat is configured, deployed,
 secured, monitored, and troubleshot. Primary sources: the repo's
 [`QUICKSTART.md`](../peat/docs/guides/QUICKSTART.md) and
 [`OPERATOR_GUIDE.md`](../peat/docs/guides/operator/OPERATOR_GUIDE.md), cross-checked against the
@@ -23,7 +25,7 @@ The quickstart uses one small, readable example crate — `examples/quickstart` 
 binary `peat-quickstart` (`peat/examples/quickstart/Cargo.toml`, a member of the `peat` workspace).
 It deliberately ships with **no formation key and no enrollment**: just the core property
 (multi-transport eventual consistency) made visible. There is also **no MLS group-key agreement —
-but that is not a feature the demo merely turns off. MLS is not implemented anywhere in PEAT yet**
+but that is not a feature the demo merely turns off. MLS is not implemented anywhere in Peat yet**
 ([Proposed], ADR-044; see Module 9). The demo is honest precisely because it shows you only what
 exists.
 
@@ -101,7 +103,7 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 - **Stale processes on the Pis** — peers launched over SSH with `nohup … &` survive your
   disconnect, and a local `pkill` will not reach them. As a field tip, pre-flight with
   `ssh pi-a 'pgrep -af peat-quickstart || echo CLEAN'` before relaunching, or a leftover process
-  holds the port and the new one never syncs. *(This is generic Unix behavior, not a documented PEAT
+  holds the port and the new one never syncs. *(This is generic Unix behavior, not a documented Peat
   failure mode.)*
 
 ---
@@ -161,6 +163,14 @@ If you run `peat-node` (the sidecar most deployments use), a handful of operabil
 
 And the changes from the `v0.4.4 → v0.4.7` line that still apply:
 
+- **Remote Agent Watcher (off by default).** Set `PEAT_NODE_AGENT_ADDR` (e.g.
+  `http://localhost:8080`) and the node polls a co-located UDS Remote Agent over Connect RPC,
+  syncing its state into the CRDT mesh for cross-cluster visibility; mTLS to the agent is configured
+  with `PEAT_NODE_AGENT_TLS_{CERT,KEY,CA}` and the cadence with `PEAT_NODE_AGENT_POLL_INTERVAL`
+  (default 10 s). With `PEAT_NODE_AGENT_ADDR` unset the watcher never starts
+  (`peat-node/src/watcher.rs`; `src/main.rs:127-145,584-599`). Note the `8080` here is the *agent's*
+  address that peat-node dials out to, not a port peat-node itself binds — peat-node serves a single
+  endpoint on `PEAT_NODE_LISTEN` (default `tcp://0.0.0.0:50051`, `src/main.rs:38`).
 - **Attachment auto-sync via an outbox watcher (off by default).** Set
   `PEAT_NODE_ATTACHMENT_OUTBOX_WATCH` and the node polls each configured `--attachment-root`; a file
   that is *stable* across a poll and not yet sent is auto-distributed by synthesising the same
@@ -190,7 +200,7 @@ And the changes from the `v0.4.4 → v0.4.7` line that still apply:
 > `PEAT_BROKER_PORT` pair from §8.2. Read this section as the documented operator workflow, then map
 > it to whichever binary you run.
 
-PEAT (in the operator guide) is configured by **environment variables** or a **`peat.toml`** file.
+Peat (in the operator guide) is configured by **environment variables** or a **`peat.toml`** file.
 The must-set trio:
 
 ```bash
@@ -227,7 +237,8 @@ non-mDNS environments, a `peers.toml` lists `[[peers]]` blocks with `id` / `addr
 - **Containers** — a multi-stage `Dockerfile` (rust builder → debian-slim runtime); a
   `docker-compose` with a seed + N nodes on one bridge network.
 - **Kubernetes** — a `StatefulSet` (stable pod identities) with `PEAT_DISCOVERY_MODE=static` pointed
-  at the headless-service DNS (`peat-node-0.peat:4040`), a `volumeClaimTemplate` for state, and a
+  at the headless-service DNS (a `peat-node` StatefulSet serves its single endpoint on
+  `PEAT_NODE_LISTEN`, default `:50051`, e.g. `peat-node-0.peat:50051`), a `volumeClaimTemplate` for state, and a
   headless `Service`. peat-mesh also supports native Kubernetes **`EndpointSlice` discovery**
   (feature `kubernetes`) — **[Shipped]**, used because multicast mDNS is unavailable inside most
   clusters (Module 3).
@@ -261,7 +272,7 @@ most clusters.*
 | 8080 | TCP | HTTP API |
 | 5353 | UDP | mDNS (multicast) — note mDNS is UDP, matching the `_peat._udp.local` service type |
 
-Open these in `iptables` / `firewalld`. PEAT uses **Iroh for NAT traversal** with optional STUN/relay
+Open these in `iptables` / `firewalld`. Peat uses **Iroh for NAT traversal** with optional STUN/relay
 configuration — but read this carefully for the defense-prime case: **the n0 hosted relay is OFF by
 default** (`relay-n0-hosted` feature off; the endpoint is built with no n0 DNS/pkarr), which is the
 correct posture for air-gapped and tactical builds. A runtime toggle to re-enable it was added in
@@ -312,7 +323,7 @@ no split-brain stall, and two independently-elected leaders converge determinist
   (`peat-protocol/src/network/formation_handshake.rs`).
 - **PKI** **[Documented — guide config, not verified in code]** — the operator guide shows optional
   X.509 device certs (`[security.pki]` with `ca_cert` / `node_cert` / `node_key`,
-  `verify_peer = true`, `OPERATOR_GUIDE.md:722`). This is operator-guide configuration; PEAT's
+  `verify_peer = true`, `OPERATOR_GUIDE.md:722`). This is operator-guide configuration; Peat's
   *implemented* identity is Ed25519 + a derived DeviceId plus the formation HMAC (Module 2), and the
   control-plane gateway issues mesh membership certificates (Module 5) — not the `[security.pki]`
   X.509 device-cert flow shown here. Treat `[security.pki]` as documented config until you confirm it
@@ -331,22 +342,23 @@ no split-brain stall, and two independently-elected leaders converge determinist
   - **Approved algorithm ≠ validated module.** AES-256-GCM and ECDH-P256 are FIPS-approved
     *algorithms*, but they run in pure-Rust RustCrypto crates that are **not CMVP-validated
     cryptographic modules**. For a real FIPS 140-3 boundary the path is the gateway's KMS / Vault HSM
-    backends (Module 5); migrating peat-btle's local crypto to `aws-lc-rs` is **[In-flight]**
-    (peat-btle#75). Residual `ring` symbols also remain transitively linked and are tracked for
-    removal under #923.
+    backends (Module 5). The peat-btle local crypto is itself already FIPS-clean — it uses the
+    RustCrypto `aes-gcm` / `p256` crates (FIPS-approved algorithms, **[Shipped]** as of commit
+    c8b013e), so it does *not* depend on `aws-lc-rs` and there is no in-flight migration there.
+    Residual `ring` symbols still remain transitively linked and are tracked for removal under #923.
   - **P-384 is not in code.** Only ECDH **P-256** is implemented; any "P-256/P-384" claim is
     aspirational. And note **ADR-060 (the FIPS-posture ADR) is formally [Proposed]** even though its
     §5 algorithm choices are already implemented — the code is ahead of the ADR's status.
 - **Best practices the guide stresses** — always use formation keys in production, enable TLS for the
   HTTP API, rotate credentials (and rotate the formation key on member departure), use PKI in secure
-  environments, keep audit logs, and segment PEAT traffic. These are operational recommendations, not
+  environments, keep audit logs, and segment Peat traffic. These are operational recommendations, not
   code-enforced behavior.
 
 ---
 
 ## 8.6 Monitoring & observability **[Documented — `peat-sim` surface]**
 
-PEAT (operator guide) exposes an **HTTP API** and **Prometheus metrics**:
+Peat (operator guide) exposes an **HTTP API** and **Prometheus metrics**:
 
 | Endpoint | Purpose |
 |----------|---------|
@@ -372,7 +384,7 @@ stale beacon views, not a stalled ballot.
 
 ## 8.7 CoT / TAK integration (operator view) **[Shipped subsystem; config values guide-documented]**
 
-PEAT bridges to a CoT consumer via Cursor-on-Target translation. The bridge code is **[Shipped]** —
+Peat bridges to a CoT consumer via Cursor-on-Target translation. The bridge code is **[Shipped]** —
 the TAK/CoT TCP path lives in `peat-transport/src/tak/` and the CoT encoding in
 `peat-protocol/src/cot/` (ADR-020/028/029, Modules 2 §2.8 and 5). The operator guide documents the
 configuration: a `[cot]` block (`bind_port` 8087, tcp/udp/multicast), configurable capability→CoT
@@ -398,9 +410,14 @@ them against the `cot` module if a deployment depends on an exact value.
   reconciled by **negentropy set reconciliation** over QUIC (Module 3). Disaster recovery = redeploy
   with the same config + formation key. One caveat: **tombstone retention** (default 168 h / 7-day,
   300 s GC interval on peat-node) governs what survives a long offline window — after an outage
-  longer than the retention horizon, GC'd deletions will not re-propagate. Per-collection
-  deletion-policy enforcement and the related tombstone-GC knobs are **[In-flight]** (peat-node#136;
-  sync-reliability bugs #850/#829/#873). *(This is the GC work the curriculum elsewhere mis-cited as
+  longer than the retention horizon, GC'd deletions will not re-propagate. Tombstone GC is
+  **[Shipped]** in peat-node (peat-node#136 closed): a background sweep tunable via
+  `PEAT_NODE_TOMBSTONE_TTL_HOURS` (default 168 h), `PEAT_NODE_GC_INTERVAL_SECS` (default 300 s), and
+  `PEAT_NODE_GC_BATCH_SIZE` (default 1000) — `peat-node/src/main.rs:109-122`, wired through
+  `node.rs`. Distinct from that, **per-collection deletion policy** is also **[Shipped]** as an RPC
+  surface (ADR-016): `SetCollectionConfig` / `GetCollectionConfig` / `ListCollectionConfigs` persist
+  a `DeletionPolicy` and per-collection TTLs (`peat-node/proto/sidecar.proto:129-145`,
+  `src/service.rs`, peat-node#55). *(This is the GC work the curriculum elsewhere mis-cited as
   "#857" — #857 is actually ADR-046 Phase-4 selectors.)*
 - **Troubleshooting greatest hits** (from both guides):
   - *0 peers / `[peers=0]`* → wrong node id or address, UDP blocked by firewall, or mDNS blocked on

@@ -1,12 +1,14 @@
-# PEAT Learning
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
 
-Onboarding curriculum for new teams adopting the **PEAT** mesh protocol, plus the
+# Peat Learning
+
+Onboarding curriculum for new teams adopting the **Peat** mesh protocol, plus the
 machinery that keeps it honest against the code.
 
 ## What's here
 
 - **`index.html`** — single-page learning hub and site landing page (mirrors the numbered modules).
-- **`peat-constrained-networking.html`** — advanced "Off the Grid" track (running PEAT where QUIC can't).
+- **`peat-constrained-networking.html`** — advanced "Off the Grid" track (running Peat where QUIC can't).
 - **`00`–`09` markdown modules** — the ordered curriculum (start at `00-START-HERE.md`).
 - **`PROMPT-peat-training-doc-improvement.md`** — the full, code-anchored adversarial review prompt.
 - **`PROMPT-peat-curriculum-refresh.md`** — the cheap, git-delta-driven incremental refresh prompt (scheduled).
@@ -18,7 +20,7 @@ machinery that keeps it honest against the code.
 The curriculum is kept in sync with the code by a scheduled review, not by hand:
 
 1. A weekly cloud routine clones this repo into a directory named **`learning/`** alongside fresh clones
-   of the six PEAT code repos as siblings:
+   of the six Peat code repos as siblings:
    ```
    <workspace>/
      learning/        ← this repo
@@ -35,12 +37,12 @@ Local runs (with the gbrain MCP available) additionally refresh the `peat-curren
 
 ## Source of truth
 
-The PEAT **code** is always authoritative. Every claim in the curriculum is labeled
+The Peat **code** is always authoritative. Every claim in the curriculum is labeled
 **shipped / in-flight / proposed / speculative**, and quantitative figures are cited or flagged.
 See `review/ground-truth.md` for the audited current-state model and `review/CHANGELOG-review.md`
 for the history of corrections.
 
-## House rules (inherited from the PEAT repos)
+## House rules (inherited from the Peat repos)
 
 - FIPS-approved cryptographic primitives only.
 - No vendor/consumer names in generic protocol prose ("consumer", "CoT consumer" — protocol names like CoT are fine).

@@ -1,7 +1,9 @@
-# Module 1·5 — The Big Idea: Why PEAT Exists
+<img src="assets/peat-wordmark.png" alt="Peat" width="200">
 
-**Goal:** understand the *argument* for PEAT before the architecture. This module distills the
-[PEAT whitepaper](../peat/docs/whitepaper/) (`peat/docs/whitepaper/`, chapters 01–09) — the "why"
+# Module 1·5 — The Big Idea: Why Peat Exists
+
+**Goal:** understand the *argument* for Peat before the architecture. This module distills the
+[Peat whitepaper](../peat/docs/whitepaper/) (`peat/docs/whitepaper/`, chapters 01–09) — the "why"
 that everything else serves. Read it right after Start Here and before the architecture overview.
 
 > **What this module is, and what it is not.** This page is a faithful summary of a *positioning and
@@ -22,7 +24,7 @@ that everything else serves. Read it right after Start Here and before the archi
 | **Lab** | A number from a single-machine simulation or a small test rig, not a field deployment. |
 
 > **Read order note.** This is numbered "1·5" because it sits between Start Here (Module 0) and the
-> Architecture Overview (Module 1). If you only read one page to understand *what problem PEAT
+> Architecture Overview (Module 1). If you only read one page to understand *what problem Peat
 > solves*, read this one. Each idea below ends with a pointer to where it's implemented — or to the
 > open issue that tracks the gap.
 
@@ -35,9 +37,9 @@ vehicles, industrial IoT, robot swarms, emergency response — consistently *pla
 nodes*. Demos with 10–15 work; operational deployments above ~20 get partitioned into independent
 zones with no cross-zone coordination.
 
-Read this as the paper's rhetorical premise, not a measured PEAT result. The whitepaper asserts it
+Read this as the paper's rhetorical premise, not a measured Peat result. The whitepaper asserts it
 verbatim (`peat/docs/whitepaper/01-executive-summary.md`, `02-scaling-crisis.md`) but cites no
-external study, and PEAT's own largest *code-side* test rig is a 7-node failover lab
+external study, and Peat's own largest *code-side* test rig is a 7-node failover lab
 (`peat-mesh` CHANGELOG rc.37). It is a useful frame for the rest of the argument; treat the "20" as
 illustrative.
 
@@ -54,7 +56,7 @@ square of the node count.
 | 1,000 | 1,000,000 | physically impossible |
 
 **[Analytical]** These are illustrative upper bounds — `n(n-1)` ordered pairs ≈ n² — matching the
-whitepaper's framing (`02-scaling-crisis.md:44`), not traffic measured on a PEAT deployment.
+whitepaper's framing (`02-scaling-crisis.md:44`), not traffic measured on a Peat deployment.
 
 The paper's blunt conclusion **[Thesis]**: better algorithms optimize *within* the constraint, they
 do not escape it; more bandwidth shifts the wall without removing it. Compression shrinks message
@@ -82,7 +84,7 @@ delegation, or emergent capability composition as a protocol-level primitive.
 ```
 Application: domain logic
 ─────────────────────────────────────────────
-??? COORDINATION: hierarchical orchestration ???   ← the missing layer the whitepaper says PEAT fills
+??? COORDINATION: hierarchical orchestration ???   ← the missing layer the whitepaper says Peat fills
 ─────────────────────────────────────────────
 Messaging: MQTT, DDS, gRPC, ROS2
 Device control: Modbus, CAN, proprietary APIs
@@ -97,10 +99,10 @@ The paper's framing **[Thesis]**: the hole is not in the standards we have — i
 not exist as an open standard. In its absence, proprietary fleet/coordination platforms fill it,
 creating lock-in and an O(N²) sprawl of one-off integration adapters across N incompatible approaches.
 
-> **Where this lands in the code.** PEAT positions *as* that coordination layer — `peat-protocol`
+> **Where this lands in the code.** Peat positions *as* that coordination layer — `peat-protocol`
 > (Module 2). The CoT/TAK bridge (Module 5's `peat-transport`, `src/tak/`, ADRs 020/028/029) is
-> **Shipped**, and it shows PEAT *bridging* existing standards rather than replacing them: a CoT
-> consumer keeps speaking Cursor-on-Target while PEAT carries the coordination underneath.
+> **Shipped**, and it shows Peat *bridging* existing standards rather than replacing them: a CoT
+> consumer keeps speaking Cursor-on-Target while Peat carries the coordination underneath.
 
 ## 3. The hierarchy insight — the reframe
 
@@ -142,7 +144,7 @@ graph TB
 
 *Same five-to-seven nodes, far fewer links once they organize into tiers. The shape is the
 argument; the exact link counts are **[Analytical]**, not benchmarked (see the caution below). The
-routing rule that **enforces** the tiered shape is **Shipped** (`hierarchy/router.rs:19-20,90-91,140`).*
+routing rule that **enforces** the tiered shape is **Shipped** (`peat-mesh/src/routing/router.rs:246,362-433,487-533`).*
 
 **[Analytical]** This complexity comparison is structurally sound and is the design rationale for the
 whole system, but it is a formula, not a benchmark — `peat`'s ground-truth model is explicit that
@@ -170,13 +172,13 @@ This is the model to memorize, and it maps directly onto shipped routing code (M
    gets exactly the granularity it needs.
 2. **Downward — dissemination.** Intent is translated into action at each level. *"Maintain
    surveillance of region X"* → team taskings → node directives. **Higher levels say *what*; lower
-   levels decide *how*.** This is PEAT's framing of *autonomy under human authority*: a parent sets
+   levels decide *how*.** This is Peat's framing of *autonomy under human authority*: a parent sets
    intent and constraints; the child chooses the method within them.
 3. **Lateral — coordination.** Peers sync within a level (boundary handoffs, deconfliction) without
    involving the hierarchy.
 
 The routing rule that *enforces* this is **Shipped**: cell leaders route upward, and non-leaders
-cannot route cross-cell or reach the zone (`peat-mesh hierarchy/router.rs:19-20,90-91,140`). So the
+cannot route cross-cell or reach the zone (`peat-mesh/src/routing/router.rs:246,362-433,487-533`). So the
 up/down/lateral model is not just a diagram — the same-cell-or-leader-mediated constraint is checked
 in code.
 
@@ -199,7 +201,7 @@ flowchart TB
 *The model to memorize. UP summarizes, DOWN translates intent into action (higher levels say **what**,
 lower levels decide **how** — autonomy under human authority), LATERAL is peer sync within a tier. All
 **Shipped**, and the routing rule that enforces it (cell leaders route upward; non-leaders cannot
-route cross-cell) is real code (`hierarchy/router.rs:19-20,90-91,140`).*
+route cross-cell) is real code (`peat-mesh/src/routing/router.rs:246,362-433,487-533`).*
 
 > **Where this lands in the code.** Module 2 §2.4 (hierarchy / aggregation / routing) and Module 6
 > Trace C (up / down / lateral). The §2.4 routing-validity snippet is the place to confirm the
@@ -239,7 +241,7 @@ intent until a code path and test confirm it.
 
 ## 5. Human-machine authority — *autonomy under human authority*
 
-PEAT's framing keeps humans in the loop by placing them **within** the hierarchy at the appropriate
+Peat's framing keeps humans in the loop by placing them **within** the hierarchy at the appropriate
 level — not above it, not beside it. Three ideas:
 
 - **Configurable authority boundaries.** Each level defines what executes autonomously versus what
@@ -266,13 +268,13 @@ conflating them is a common mistake:
 | Axis | What it is | Values (as shipped) | Where |
 |---|---|---|---|
 | **RBAC `Role`** | Access control | `Leader, Member, Observer, Commander, Admin` (5) | `peat-protocol/src/security/authorization.rs:50-64` |
-| **`CellRole`** | Capability role within a cell | `Leader, Sensor, Compute, Relay, Strike, Follower` (6) | `peat-protocol/src/models/role.rs:14-28` |
+| **`CellRole`** | Capability role within a cell | `Leader, Sensor, Compute, Relay, Strike, Support, Follower` (7) | `peat-protocol/src/models/role.rs:14-29` |
 | **`AuthorityLevel`** | Human-machine teaming ladder | `UNSPECIFIED, OBSERVER, ADVISOR, SUPERVISOR, COMMANDER` (5) | `peat-schema/proto/node.proto:61-67` |
 
 Two cautions the audit surfaced: the peat README's Layer-3 text wrongly lists the RBAC roles as
 "Observer, Member, Operator, Leader, Supervisor" — `Operator` and `Supervisor` are **not** in the
-enum (a known doc bug, fast-win fix). And `CellRole` has **no `Support` variant** despite earlier
-curriculum copy inventing one.
+enum (a known doc bug, fast-win fix). And `CellRole` does include a `Support` variant — earlier
+curriculum copy that denied one was wrong (it is the sixth of the seven, `role.rs:14-29`).
 
 The whitepaper's six-level authority model is a *fourth* vocabulary — and it is whitepaper-only, not
 in code:
@@ -303,8 +305,10 @@ to find `Root` or `Cluster` as code identifiers.
 >    shipped `HierarchyLevel` enums in `peat-mesh` (`src/beacon/types.rs:56-67`) and `peat-protocol`
 >    (`src/security/authorization.rs:331-343`) name the leaf **`Node`, not `Platform`**, with the
 >    upper four tiers already on `Cell / Cohort / Federation / Coalition`. Meanwhile `peat-btle`
->    still uses fully legacy `Platform / Squad / Platoon / Company` (`src/lib.rs:495-525`), and
->    `peat-schema`'s proto still ships `SquadSummary` / `squad_id`.
+>    still uses fully legacy `Platform / Squad / Platoon / Company` (`src/lib.rs:495-525`), while
+>    `peat-schema`'s proto has already been renamed to `CellSummary / CohortSummary /
+>    FederationSummary / CoalitionSummary` with no `SquadSummary` / `squad_id` left
+>    (`peat-schema/proto/hierarchy.proto:24,71,72,122,172`).
 >
 > Epics **#904** (workspace-wide military→abstract rename), **#968** (converge the base unit on
 > `Node`, ADR-068), and **#970** (ADR-068 follow-ups) track this churn. Net for a new reader: if you
@@ -329,7 +333,7 @@ not the exception, so a consensus system would stall constantly.
 | Consensus (Paxos / Raft / 2PC) | blocks until quorum | always-connected only |
 | CRDTs | proceeds locally, merges later | partition-tolerant |
 
-PEAT assumes partitions: nodes operate autonomously while disconnected and merge deterministically on
+Peat assumes partitions: nodes operate autonomously while disconnected and merge deterministically on
 reconnect. This is **Shipped and it is the most defensible part of the system**. The mechanism:
 **Automerge** documents (a single CRDT family — RGA lists, observed-remove maps) synced over Iroh
 QUIC, reconciled by **negentropy** set reconciliation (`peat-mesh/src/storage/negentropy_sync.rs`,
@@ -350,12 +354,12 @@ not assume a single global formula.)
 
 > **Where this lands in the code.** `sync` (Module 2 §2.5) and `peat-mesh` storage / negentropy
 > (Module 3 §3.4). Negentropy claims O(log n) reconciliation rounds — an algorithmic property of the
-> scheme (arxiv 2012.00472), **not** a PEAT benchmark.
+> scheme (arxiv 2012.00472), **not** a Peat benchmark.
 
 ## 7. The numbers — validation & claims, with sources
 
 These figures get quoted, so it is worth knowing exactly where each one comes from. The honest
-summary: PEAT's strongest results are real but *laboratory* results, and the headline percentages are
+summary: Peat's strongest results are real but *laboratory* results, and the headline percentages are
 roundings of softer measured numbers.
 
 - **Bandwidth reduction.** The exec summary says ~95–99% (`01-executive-summary.md`); the §4.2
@@ -383,16 +387,16 @@ roundings of softer measured numbers.
 > change: the **shipped** crypto uses FIPS-*approved* algorithms — AES-256-GCM, ECDH P-256, Ed25519,
 > HKDF-SHA-256, HMAC-SHA-256, SHA-256 (the code migrated off ChaCha20/X25519 in peat-mesh rc.12). The
 > nuance an auditor will press on: those run in pure-Rust crates that are **not yet CMVP-validated
-> modules**, so "FIPS-approved algorithms" is accurate but "FIPS 140-3 validated" is not — the
-> validated-module path is the KMS/Vault HSM backends, and `peat-btle#75` (migrate to `aws-lc-rs`) is
-> open. Older READMEs and some ADRs still advertise ChaCha20; that is stale documentation, queued for
-> amendment, not shipped behavior. (Full detail in Module 9.)
+> modules**, so "FIPS-approved algorithms" is accurate but "FIPS 140-3 validated" is not — closing
+> that last gap means routing key operations through a CMVP-validated module, which is what the
+> KMS/Vault HSM backends on the gateway provide. Older READMEs and some ADRs still advertise ChaCha20;
+> that is stale documentation, queued for amendment, not shipped behavior. (Full detail in Module 9.)
 
 ## 8. The open-architecture imperative — the TCP/IP lesson
 
 The whitepaper's closing argument **[Thesis]**: infrastructure wins by enabling, not capturing.
 TCP/IP became universal because it was nobody's proprietary advantage — open protocols create
-ecosystems, proprietary ones create dependencies. PEAT positions as coordination *substrate*, not
+ecosystems, proprietary ones create dependencies. Peat positions as coordination *substrate*, not
 product:
 
 - **Apache 2.0** (permissive, with patent grant) — no per-unit licensing, deploy at any scale.
@@ -418,7 +422,7 @@ is on, and every proprietary adoption raises switching costs. The paper's line: 
 useful frame; the LOC/latency estimates that sometimes accompany them are author estimates, not
 measured, so they are omitted here.
 
-- **Shallow:** protocol adapters/bridges; PEAT coordinates the outputs of existing systems. Lowest
+- **Shallow:** protocol adapters/bridges; Peat coordinates the outputs of existing systems. Lowest
   risk.
 - **Medium:** existing platforms advertise capabilities and participate natively; gradual migration.
 - **Deep:** native integration via `peat-ffi` (the UniFFI/JNI binding, **Shipped**; rc.27 added a
@@ -443,7 +447,7 @@ measured, so they are omitted here.
 | Whitepaper idea | Status | Where it lives in the code modules |
 |-----------------|--------|-------------------------------------|
 | O(n²) → O(n log n), hierarchy | Shipped (scale = Lab) | Module 2 §2.4 (hierarchy), Module 3 (routing/aggregation) |
-| Three information flows | Shipped | Module 6 Trace C; routing rule `hierarchy/router.rs` |
+| Three information flows | Shipped | Module 6 Trace C; routing rule `peat-mesh/src/routing/router.rs` |
 | Capability composition / emergence | In-flight (WIP) | Module 2 §2.3 (composition engine) |
 | Human-machine authority | Shipped (formation gate); model In-flight (#941) | Module 2 §2.7 (security), §2.4 (command) |
 | "Trust as data" replicated authority | Proposed / design intent (#941) | Module 2 §2.7 |
@@ -474,7 +478,7 @@ measured, so they are omitted here.
 - Name the three information flows and which direction each carries. Which one is *autonomy under
   human authority*?
 - Explain why consensus protocols are a poor fit for DIL/DDIL networks, and name the two shipped
-  mechanisms PEAT uses instead (Automerge + negentropy).
+  mechanisms Peat uses instead (Automerge + negentropy).
 - Of "trust as data," capability auto-reallocation, the `command_log` CRDT, and the ADR-066
   hierarchy vocabulary — which are Shipped, and which are not yet?
 
