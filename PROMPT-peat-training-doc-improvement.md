@@ -319,6 +319,36 @@ claim; the `run_log` entry records how many diagrams were verified.
      correct via update/config, not deletion. (See memory: keep-peat-docs-in-gbrain-default.)
    - Link the new/updated pages to the existing ones with `[[wikilinks]]`.
 
+## 9b · Phase 7b — Self-improvement retrospective (the second loop)
+
+The full sweep is where the *process* improves, not just the curriculum. Before declaring done, run a
+retrospective and **propose (do not silently apply)** amendments to this prompt, the incremental prompt,
+and the gates. This is a **human-gated ratchet**: it may only *tighten* a check, always with evidence,
+and a human approves the merge — never loosen or remove a gate autonomously.
+
+1. **Gather the miss signal** since `self_improvement.last_retrospective` (or `last_full_run`): the
+   `run_log` `meta` scorecards; every **"verified-then-wrong"** miss (a claim a recent prior run marked
+   verified that you corrected this sweep — the strongest signal); the closed/open `curriculum-feedback`
+   issues (`gh issue list … --label curriculum-feedback`); and the `quality_trend` (are
+   `unverifiable_count` / `open_feedback_issues` falling?).
+2. **Classify each miss** and ask the operative question: *"what single check, in which gate, would have
+   caught this automatically?"* — the question that produced §1c. Fold recurring misses into one
+   proposed check each.
+3. **Write proposals; do not self-edit the methodology.** Append to `REVIEW-STATE.json`
+   `self_improvement.proposed_amendments`: `{ when, observed_miss, evidence (path:line / issue / run),
+   proposed_check, target ("§1c" | "incremental gate" | "CLAUDE.md" | "routing table"),
+   status: "proposed" }`, and summarize them in the PR body for human approval. **Low-risk mechanical
+   amendments may be applied in the same PR** (a new repo added to the routing table; a corrected
+   count); **methodology changes — new or strengthened gates — are proposed only** and wait for a human
+   to merge.
+4. **Record the trend.** Append a `quality_trend` snapshot and set
+   `self_improvement.last_retrospective` to the run date. If a trend line is going the wrong way
+   (unverifiable claims rising, feedback piling up), **say so explicitly in the PR** — that is the loop
+   telling you it is not learning.
+
+The goal: each monthly sweep leaves the next month's runs measurably sharper than this month's, and the
+evidence for "sharper" lives in the trend, not in a feeling.
+
 ## 10 · Deliverables
 
 1. **Ground-Truth Appendix** (cited model + the commit/branch audited per repo).
@@ -333,6 +363,9 @@ claim; the `run_log` entry records how many diagrams were verified.
    remain **unverifiable** (so a human can chase them).
 9. **Diagram registry** (`review/diagrams.md`): every diagram with id, file, concept, the
    `path:line`/ADR it derives from, and the commit it was last verified against.
+10. **Self-improvement proposals** (§9b): the `self_improvement.proposed_amendments` written this
+    sweep (miss → evidence → proposed check → target), surfaced in the PR for human approval, plus the
+    updated `quality_trend`.
 
 ## 11 · Definition of done
 

@@ -539,5 +539,51 @@
       }
     ],
     "ledgers_note": "The dated audit-trail docs — review/ledger/*, review/claim-ledger.md, review/assumptions.md, review/gaps-contributions.md, review/CHANGELOG-review.md, review/diagrams.md — are point-in-time adversarial records. A few of their findings are now SUPERSEDED by this verification block (e.g. 'CellRole has no Support', 'sidecar.proto 28/27', 'peat-btle#75 aws-lc-rs'). They are intentionally LEFT as history (not rewritten); verification_2026-06-26 + the canonical ground-truth are authoritative."
-  }
+  },
+  "self_improvement": {
+    "mechanism": "The loop self-CORRECTS curriculum drift every run (single-loop). To also self-IMPROVE (double-loop): the WEEKLY run consumes the reader-feedback signal (open curriculum-feedback GitHub issues), triages each against code, and records a run_log.meta scorecard + a quality_trend snapshot; the MONTHLY full sweep runs a retrospective (PROMPT-peat-training-doc-improvement.md §9b) that turns misses into PROPOSED prompt/gate amendments for HUMAN APPROVAL — a human-gated ratchet: tighten-only, evidence-required, never loosen a gate autonomously. Checks live in §1c (full) + gates 6-7 / Phase 0 step 2b / Phase 5 meta (incremental).",
+    "last_retrospective": "2026-06-26",
+    "proposed_amendments": [
+      {
+        "when": "2026-06-26",
+        "observed_miss": "'Code is truth' was read as git-HEAD; missed that the crates.io-published peat-btle 0.4.0 still ships ChaCha20/X25519 though source migrated (commit c8b013e)",
+        "evidence": "peat-flutter/rust/Cargo.lock:3542-3575 vs peat-btle/Cargo.toml:106,116",
+        "proposed_check": "Published-artifact != source: check consumer lockfiles + checksums; flag unpublished migrations; Shipped label states source-vs-published",
+        "target": "§1c + incremental gate 6 + CLAUDE.md",
+        "status": "applied (human-approved this session)"
+      },
+      {
+        "when": "2026-06-26",
+        "observed_miss": "Phantom peat-btle#75/aws-lc-rs propagated for weeks; 'only ADR-041 Accepted' and 'ADR count 75' carried forward unchecked",
+        "evidence": "grep peat-btle for #75 = 0 hits; 11 ADRs Accepted; ls docs/adr/*.md = 78",
+        "proposed_check": "Verify every repo#NNN in-repo; re-derive ADR status/counts each sweep; never carry forward an unconfirmed ref/count",
+        "target": "§1c + incremental gate 6 + CLAUDE.md",
+        "status": "applied"
+      },
+      {
+        "when": "2026-06-26",
+        "observed_miss": "Recurring facts (CellRole, SquadSummary, RPC count, router path) fixed in one file but missed in the hub mirror + 4-11 other spots",
+        "evidence": "convergence found 27 residual occurrences after the first fix pass",
+        "proposed_check": "Fact-wide occurrence sweep: grep ALL artifacts for every occurrence, fix/flag each",
+        "target": "§1c + incremental gate 7",
+        "status": "applied"
+      },
+      {
+        "when": "2026-06-26",
+        "observed_miss": "The process never improved itself; today's prompt hardening was a manual, human-directed double-loop pass with no standing mechanism",
+        "evidence": "this session",
+        "proposed_check": "Standing self-improvement loop: weekly feedback-triage + run_log.meta scorecard + quality_trend; monthly §9b retrospective emitting human-gated proposed_amendments",
+        "target": "§9b + incremental Phase 0/Phase 5",
+        "status": "applied"
+      }
+    ]
+  },
+  "quality_trend": [
+    {
+      "when": "2026-06-26",
+      "unverifiable_count": 8,
+      "open_feedback_issues": 0,
+      "note": "baseline after the code-verification pass converged; curriculum-feedback label live but no reader issues yet. Both metrics should trend DOWN."
+    }
+  ]
 }

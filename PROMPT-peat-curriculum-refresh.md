@@ -75,7 +75,13 @@ commit and open the PR (§7).
    and `git -C <repo> diff --name-only <audited>..origin/HEAD`. **Do not pull/modify the tree**
    unless your run mode is the local in-place mode (then a fast-forward of the working copy is
    allowed; never force).
-3. **If no repo moved** → write a "no drift" entry to the run log in `REVIEW-STATE.json`
+2b. **Pull the reader-feedback signal** (the self-improvement input): run
+   `gh issue list -R parleylabs/peat-learning --label curriculum-feedback --state open` and skim the
+   last few `run_log` `meta` scorecards. **Open feedback issues are WORK even on a zero-code-drift
+   week** — a quiet code week is not a quiet feedback week. For each open issue: re-verify the reader's
+   point against code, then either fix the doc (cite `path:line`) and close the issue with the fix, or
+   close it with a code-cited rationale if the doc is already right. Never silently ignore one.
+3. **If no repo moved AND no open feedback issues** → write a "no drift" entry to the run log in `REVIEW-STATE.json`
    (timestamp from `args.now`, see §6), touch nothing else, and exit. This is the common case
    and should cost almost nothing.
 4. **Full-sweep check**: if `args.full` is set, or `last_full_run` is older than the
@@ -183,9 +189,16 @@ new commits and any status changes. Skip this phase in cloud/CI mode (no local g
 Update `learning/REVIEW-STATE.json`:
 - `audited_commits[repo].head` → the new HEADs for changed repos.
 - append to a `run_log` array: `{ when: args.now, mode, repos_changed, docs_touched,
-  claims_changed, diagrams_touched, notes }`. (Timestamps come from `args.now` — the scheduler
+  claims_changed, diagrams_touched, notes, meta }`. (Timestamps come from `args.now` — the scheduler
   passes the date; do not invent one.) Any diagram fact that couldn't be confirmed against code
   goes into `unverifiable_claims`, exactly like an unverifiable prose claim.
+- **`meta` is the self-improvement scorecard** (the input the monthly retrospective learns from):
+  `{ drift_found, claims_resolved (prior unverifiable_claims confirmed/closed this run),
+  claims_demoted (new unverifiable_claims added), feedback_addressed (curriculum-feedback issues
+  fixed/closed), misses_found (claims a recent prior run had marked verified that turned out wrong) }`.
+- append a `quality_trend` snapshot: `{ when: args.now, unverifiable_count, open_feedback_issues }`.
+  Over time both should trend **down**; if they climb, note it for the monthly retrospective (§9b of
+  the full prompt) — that is the loop signalling it is not actually learning.
 - if a full sweep ran, set `last_full_run = args.now`.
 
 Append (do not overwrite) a dated delta section to `learning/review/CHANGELOG-review.md`
