@@ -12,6 +12,16 @@ into the affected set, **re-derive** it (don't just preserve its legend), keep i
 colors** (shipped/in-flight/proposed/speculative) correct, verify hub-SVG ↔ module-ASCII
 agreement for the same concept, then advance its **Last verified** entry.
 
+**Visual-standard compliance (added 2026-06-26, see `DESIGN-SYSTEM.md`).** Each diagram also carries a
+compliance state: **Format** (inline-SVG / mermaid-source / ASCII) and **Compliant?** (meets the visual
+standard: ≤12 nodes or hybrid, legend, dark figure-plate, zoom/pan on HTML, no CDN). ASCII diagrams are
+**migration targets**. The visual gate enforces the standard on every NEW/CHANGED diagram; the **monthly
+full-sweep upgrade pass migrates a bounded batch** (~3–5) of the lowest-compliance diagrams and advances
+their flag here — so the backlog converges over months, never in one big-bang. Light mode uses the
+**dark figure-plate** (decision A): diagrams sit on a fixed dark surface in both themes, so existing
+inline-SVG colors stay valid with zero rework. New rows should note Format + Compliant?; legacy rows are
+backfilled as the upgrade pass reaches them.
+
 **Conventions.** Markdown structural/flow diagrams use ```mermaid (diffable, GitHub-rendered);
 plain-fence ASCII art is for tiny inline sketches only. HTML diagrams are hand-authored inline
 SVG and must stay self-contained (no external renderer/CDN). The same concept may appear twice

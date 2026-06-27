@@ -298,11 +298,19 @@ each diagram (markdown M-###, hub H-###, constrained C-###):
 5. **Triage the backlog.** Re-check the "Proposed diagrams (backlog)" table: author any now-unblocked
    high-value entries, drop ones a new diagram already covers, and re-flag build-here-safe vs
    needs-code. Add a registry row for any diagram authored.
+6. **Visual-standard upgrade pass (bounded, per `DESIGN-SYSTEM.md`).** Migrate a SMALL batch (~3–5 per
+   sweep, never the whole corpus) of the lowest-compliance reader visuals toward the standard: ASCII →
+   inline SVG / mermaid, dense prose or tables → the card / data-table pattern, add the **dark
+   figure-plate + light-mode + zoom/pan** to HTML diagrams, fix any overflow / missing legend / emoji
+   status. Choose the batch from the registry's compliance flags and from open `curriculum-feedback`
+   issues about confusing visuals. Record each migrated item's new compliance in `review/diagrams.md`.
+   The backlog converges over several months — do not big-bang it.
 
 **Outputs:** every registry row advanced (or flagged); new/changed diagrams reflected in both the
 module and any hub twin; any diagram fact that couldn't be traced to code appended to the run's
 **unverifiable** list (`REVIEW-STATE.json` `unverifiable_claims`) exactly like an unverifiable prose
-claim; the `run_log` entry records how many diagrams were verified.
+claim; the `run_log` entry records how many diagrams were verified **and how many visuals were upgraded
+to the `DESIGN-SYSTEM.md` standard this sweep**, with the registry's visual-compliance flags advanced.
 
 ## 9 · Phase 7 — Validate the design note & update gbrain
 
