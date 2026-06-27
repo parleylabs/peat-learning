@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peat Learning · Visual Standard (adapted)</title>
+<style>
+  :root{
+    --bg:#0e1116; --surface:#161b22; --surface2:#1c232c; --border:#2a323c;
+    --text:#e6edf3; --dim:#9aa7b4;
+    --green:#1cb57d; --orange:#e84700;
+    --ship:#3fb950; --flight:#d29922; --prop:#58a6ff; --spec:#a371f7; --red:#f85149;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    --radius:12px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f8fa; --surface:#ffffff; --surface2:#f0f3f7; --border:#d8dee4;
+           --text:#1b2027; --dim:#5b6675; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+       line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:48px 24px 80px}
+  h1,h2,h3{font-weight:800;line-height:1.15;letter-spacing:-.02em;margin:0}
+  h1{font-size:clamp(28px,5vw,44px)}
+  h2{font-size:clamp(20px,3.2vw,28px);margin:52px 0 8px;padding-top:18px;border-top:1px solid var(--border)}
+  h3{font-size:16px;margin:0 0 6px}
+  p{margin:10px 0;color:var(--text)}
+  .dim{color:var(--dim)}
+  code{font-family:var(--mono);font-size:.88em;background:var(--surface2);
+       padding:2px 6px;border-radius:5px;border:1px solid var(--border)}
+  a{color:var(--green)}
+  .lede{font-size:18px;color:var(--dim);max-width:70ch;margin-top:14px}
+  .brandbar{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+  .brandbar .dot{width:12px;height:12px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px color-mix(in srgb,var(--green) 22%,transparent)}
+  .brandbar .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+
+  /* cards */
+  .grid{display:grid;gap:16px;margin:18px 0}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+        padding:18px 20px;min-width:0;overflow-wrap:break-word}
+  .card.hero{background:linear-gradient(160deg,color-mix(in srgb,var(--green) 12%,var(--surface)),var(--surface))}
+  .card.accent{border-left:3px solid var(--orange)}
+  .card h3 .tag{font-family:var(--mono);font-size:11px;color:var(--dim)}
+
+  /* status badges — our canonical palette */
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
+         padding:3px 10px;border-radius:20px;border:1px solid;white-space:nowrap}
+  .badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+  .b-ship{color:var(--ship);border-color:color-mix(in srgb,var(--ship) 45%,transparent);background:color-mix(in srgb,var(--ship) 14%,transparent)}
+  .b-flight{color:var(--flight);border-color:color-mix(in srgb,var(--flight) 45%,transparent);background:color-mix(in srgb,var(--flight) 14%,transparent)}
+  .b-prop{color:var(--prop);border-color:color-mix(in srgb,var(--prop) 45%,transparent);background:color-mix(in srgb,var(--prop) 14%,transparent)}
+  .b-spec{color:var(--spec);border-color:color-mix(in srgb,var(--spec) 45%,transparent);background:color-mix(in srgb,var(--spec) 14%,transparent)}
+
+  /* data table pattern */
+  .tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);margin:18px 0}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:560px}
+  thead th{position:sticky;top:0;background:var(--surface2);text-align:left;
+           font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);
+           padding:11px 14px;border-bottom:1px solid var(--border)}
+  td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover td{background:color-mix(in srgb,var(--green) 5%,transparent)}
+  .verb{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.05em;padding:2px 8px;border-radius:5px}
+  .v-keep{color:var(--ship);background:color-mix(in srgb,var(--ship) 14%,transparent)}
+  .v-adapt{color:var(--flight);background:color-mix(in srgb,var(--flight) 14%,transparent)}
+  .v-drop{color:var(--red);background:color-mix(in srgb,var(--red) 14%,transparent)}
+
+  /* KPI */
+  .kpi{text-align:left}
+  .kpi .n{font-family:var(--mono);font-size:30px;font-weight:800;color:var(--text);line-height:1}
+  .kpi .lab{font-size:12.5px;color:var(--dim);margin-top:6px}
+  .trend{font-size:12px;font-weight:700;color:var(--ship)}
+
+  /* diagram shell */
+  .diagram{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:18px 0}
+  .diagram svg{display:block;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--dim);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  .callout{background:color-mix(in srgb,var(--orange) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--orange) 35%,transparent);
+           border-left:3px solid var(--orange);border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;margin:18px 0}
+  ul.tight{margin:8px 0;padding-left:20px} ul.tight li{margin:5px 0}
+  .foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--border);font-size:13px;color:var(--dim);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+
+  .reveal{opacity:0;transform:translateY(10px)}
+  @media (prefers-reduced-motion: no-preference){
+    .reveal{animation:fu .6s ease forwards}
+    .reveal:nth-child(2){animation-delay:.05s}.reveal:nth-child(3){animation-delay:.1s}
+    @keyframes fu{to{opacity:1;transform:none}}
+  }
+  @media (prefers-reduced-motion: reduce){.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandbar"><span class="dot"></span><span class="kicker">Parley Labs · Peat Learning · adapted visual standard</span></div>
+  <h1>Adopt the design system, <span style="color:var(--green)">not the CDN</span>.</h1>
+  <p class="lede">The Visual Explainer skill is a strong quality bar. We take its components, tables, accessibility, and
+  "no generic aesthetic" discipline — and bind it to our two hard constraints: <b>everything stays self-contained &amp;
+  air-gap-safe</b>, and <b>everything wears the Parley Labs brand</b>. No runtime Mermaid/Chart.js; pre-render to inline SVG.</p>
+
+  <div class="callout reveal">
+    <h3>⚑ The one rule that overrides the skill</h3>
+    <p style="margin-bottom:0">The skill loads Mermaid &amp; Chart.js from a CDN at runtime. Our pages must render <b>offline</b> — the
+    <i>Off the Grid</i> track is about denied networks, and these pages may be opened air-gapped. So: <b>diagrams are authored as
+    <code>```mermaid</code> in the markdown (GitHub renders them) and pre-rendered to <b>inline SVG</b> for the HTML; all CSS/JS is inline;
+    the only external call remains the cookieless GoatCounter beacon.</b> A CDN <code>&lt;script src&gt;</code> is a gate failure.</p>
+  </div>
+
+  <h2>What we already have vs. what this adds</h2>
+  <p class="dim">We're not starting over — roughly 70% of this is already shipped in the curriculum. The skill mostly formalizes and levels it up.</p>
+  <div class="grid g2">
+    <div class="card"><h3>Already in place ✓</h3>
+      <p class="dim" style="margin:0">Self-contained pages · Parley Labs palette + Montserrat/Roboto · the Shipped/In-flight/Proposed/Speculative
+      status palette · inline-SVG diagrams with legends · the diagram registry (code-derived, re-verified each sweep) · the analytics/feedback carve-out.</p></div>
+    <div class="card accent"><h3>What the skill adds</h3>
+      <p class="dim" style="margin:0">A formal component library (cards, KPI, data-table) · accessibility (semantic HTML, ARIA, <code>prefers-reduced-motion</code>) ·
+      <b>light-mode</b> (we're dark-only today) · diagram zoom/pan/expand (inline JS) · a written quality checklist the gates can enforce.</p></div>
+  </div>
+
+  <h2>Adopt · Adapt · Drop</h2>
+  <div class="tablewrap reveal">
+    <table>
+      <thead><tr><th>From the skill</th><th>Decision</th><th>In our system</th></tr></thead>
+      <tbody>
+        <tr><td>CSS custom-property theming, <code>.card</code> system, overflow protection</td><td><span class="verb v-keep">ADOPT</span></td><td>Use as-is; map onto our existing tokens.</td></tr>
+        <tr><td>Data-table pattern (sticky headers, responsive, constrained cols)</td><td><span class="verb v-keep">ADOPT</span></td><td>Our modules are table-heavy (shipped-vs-proposed, ADR status) — direct win.</td></tr>
+        <tr><td>Accessibility: semantic HTML, ARIA, reduced-motion</td><td><span class="verb v-keep">ADOPT</span></td><td>Strengthens every page; currently inconsistent.</td></tr>
+        <tr><td>Diagram zoom / pan / expand controls</td><td><span class="verb v-keep">ADOPT</span></td><td>Inline JS only — no CDN; great for dense SVGs.</td></tr>
+        <tr><td>Palette + typography (Instrument Serif / JetBrains / generic)</td><td><span class="verb v-adapt">ADAPT</span></td><td>Keep <b>PL green/orange/charcoal</b> + status palette + Montserrat/Roboto (self-hosted woff2, no font CDN).</td></tr>
+        <tr><td>Mermaid.js for flows</td><td><span class="verb v-adapt">ADAPT</span></td><td>Author as <code>```mermaid</code> in markdown; <b>pre-render to inline SVG</b> for HTML.</td></tr>
+        <tr><td>Chart.js dashboards</td><td><span class="verb v-adapt">ADAPT</span></td><td>Pre-rendered inline SVG / CSS bars (e.g. the <code>quality_trend</code>); no runtime lib.</td></tr>
+        <tr><td>light + dark via <code>prefers-color-scheme</code></td><td><span class="verb v-adapt">ADAPT</span></td><td>Add light-mode tokens (net-new — pages are dark-only today).</td></tr>
+        <tr><td>CDN script tags (Mermaid / Chart.js / fonts)</td><td><span class="verb v-drop">DROP</span></td><td>Hard violation of self-contained / air-gap. Pre-render instead.</td></tr>
+        <tr><td>Slide-deck mode</td><td><span class="verb v-drop">DROP*</span></td><td>Keep as an optional on-request "presentation export," not part of the standard track.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>The components, in our brand</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Status badges <span class="tag">canonical palette</span></h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+        <span class="badge b-ship">Shipped</span><span class="badge b-flight">In-flight</span>
+        <span class="badge b-prop">Proposed</span><span class="badge b-spec">Speculative</span>
+      </div>
+      <p class="dim" style="font-size:13px;margin-bottom:0">Dots, not emoji — the same four states already used across the modules and diagrams.</p>
+    </div>
+    <div class="grid g3" style="margin:0">
+      <div class="card kpi"><div class="n">8</div><div class="lab">unverifiable claims <span class="trend">▼ baseline</span></div></div>
+      <div class="card kpi"><div class="n">0</div><div class="lab">open feedback issues <span class="trend">▼</span></div></div>
+      <div class="card kpi"><div class="n">8</div><div class="lab">repos tracked &amp; verified</div></div>
+    </div>
+  </div>
+
+  <div class="diagram reveal">
+    <svg viewBox="0 0 720 132" role="img" aria-label="Pre-rendered inline SVG flow: standard feeds the gate every refresh, the monthly sweep upgrades visuals, the retrospective proposes tightenings.">
+      <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/></marker></defs>
+      <g font-family="SF Mono,monospace" font-size="12" text-anchor="middle">
+        <rect x="14" y="46" width="150" height="44" rx="8" fill="#1cb57d22" stroke="#1cb57d"/>
+        <text x="89" y="64" fill="#e6edf3">DESIGN-SYSTEM</text><text x="89" y="79" fill="#9aa7b4">the written rule</text>
+        <rect x="208" y="46" width="150" height="44" rx="8" fill="#3fb95022" stroke="#3fb950"/>
+        <text x="283" y="64" fill="#e6edf3">Visual gate</text><text x="283" y="79" fill="#9aa7b4">every refresh</text>
+        <rect x="402" y="46" width="150" height="44" rx="8" fill="#d2992222" stroke="#d29922"/>
+        <text x="477" y="64" fill="#e6edf3">Monthly sweep</text><text x="477" y="79" fill="#9aa7b4">upgrade pass</text>
+        <rect x="566" y="46" width="142" height="44" rx="8" fill="#58a6ff22" stroke="#58a6ff"/>
+        <text x="637" y="64" fill="#e6edf3">Retrospective</text><text x="637" y="79" fill="#9aa7b4">proposes ▲</text>
+        <line x1="166" y1="68" x2="204" y2="68" stroke="#9aa7b4" marker-end="url(#ar)"/>
+        <line x1="360" y1="68" x2="398" y2="68" stroke="#9aa7b4" marker-end="url(#ar)"/>
+        <line x1="554" y1="68" x2="562" y2="68" stroke="#9aa7b4" marker-end="url(#ar)"/>
+        <path d="M637,44 C637,18 89,18 89,42" fill="none" stroke="#58a6ff" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+        <text x="363" y="14" fill="#58a6ff">human-approved amendment tightens the rule</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i style="background:#1cb57d"></i>the rule</span>
+      <span><i style="background:#3fb950"></i>enforced every week</span>
+      <span><i style="background:#d29922"></i>migrated monthly</span>
+      <span><i style="background:#58a6ff"></i>improved via the ratchet</span>
+    </div>
+  </div>
+
+  <h2>How it becomes a weekly / monthly rule</h2>
+  <div class="grid g2">
+    <div class="card"><h3>1 · One written standard</h3><p class="dim" style="margin:0">Commit <code>learning/DESIGN-SYSTEM.md</code> (this page, distilled) as the canonical spec, referenced from <code>CLAUDE.md</code>.</p></div>
+    <div class="card"><h3>2 · A visual gate, every refresh</h3><p class="dim" style="margin:0">Extend the diagram gate into a visual &amp; design gate: self-contained (no CDN), semantic, reduced-motion, status palette, table discipline, no overflow, legend on every diagram, hierarchy-first.</p></div>
+    <div class="card"><h3>3 · A monthly upgrade pass</h3><p class="dim" style="margin:0">The full sweep migrates a <b>bounded</b> batch of weak visuals (ASCII → SVG, dense prose → cards/tables) toward the standard — incremental, never big-bang.</p></div>
+    <div class="card"><h3>4 · Improves via the ratchet</h3><p class="dim" style="margin:0"><code>curriculum-feedback</code> on confusing visuals + the §9b retrospective file <code>prompt-amendment</code> issues — the standard tightens with your approval.</p></div>
+  </div>
+
+  <div class="foot"><span>Self-contained · no CDN · Parley Labs brand · works air-gapped</span><span>Peat Learning · visual standard</span></div>
+</div>
+</body>
+</html>

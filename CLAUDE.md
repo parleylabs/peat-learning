@@ -113,6 +113,13 @@ These come from the Peat repos and the review prompts. Violating them is the mai
   `peat-constrained-networking.html`, and `changelog.html`; in `changelog.html` also prepend one
   `<tr>` immediately after `<!-- CHANGELOG-ROWS-START -->`. Never invent a date — use the date the
   scheduler passes.
+- **Visual standard (`DESIGN-SYSTEM.md`).** All reader pages follow the adapted Visual Explainer standard
+  in `learning/DESIGN-SYSTEM.md` (live reference: `DESIGN-SYSTEM.html`): the component system (cards,
+  status badges, the data-table pattern for any 4+-row / 3+-column table), accessibility (semantic HTML,
+  `prefers-reduced-motion`, no emoji for status), and **light + dark** via `prefers-color-scheme`. It is
+  bounded by the two rules above — **self-contained** (no CDN/runtime/external font; pre-render Mermaid to
+  inline SVG) and the **Parley Labs brand + status palette**. A *visual & design gate* enforces it on
+  every refresh; the monthly sweep migrates legacy visuals incrementally (never big-bang).
 
 ## Diagrams
 
@@ -122,9 +129,13 @@ ports). That drift is invisible to a prose diff because the facts live inside SV
 and ASCII box-art, so diagrams get the same discipline as text.
 
 - **Formats.** Markdown structural/flow diagrams use ```mermaid (diffable, GitHub-rendered);
-  plain-fence ASCII art is for tiny inline sketches only. HTML diagrams are hand-authored
+  plain-fence ASCII art is for tiny inline sketches only **and is a migration target** (prefer a
+  mermaid twin so both copies are real, diffable diagrams). HTML diagrams are hand-authored
   inline SVG and must stay **self-contained** — no mermaid.js, CDN, or runtime fetch. To use a
-  mermaid source in the HTML, pre-render it to static SVG and inline the result.
+  mermaid source in the HTML, pre-render it to static SVG and inline the result. **Authoring hygiene**
+  (mermaid source): `flowchart TD` for 5+ nodes / branching (`LR` only for 3–4-node linear flows);
+  **max ~10–12 nodes** — beyond that split into a hybrid (mermaid overview + a CSS card grid); `<br/>`
+  for multi-line labels (never `\n`); quote labels; alphanumeric IDs.
 - **Re-derive, don't just preserve.** When the code a diagram depicts changes, regenerate the
   diagram's facts — updating the surrounding prose while leaving the old SVG/ASCII is the
   common silent bug. Diagram nodes carry the **shipped/in-flight/proposed/speculative** status
@@ -132,6 +143,10 @@ and ASCII box-art, so diagrams get the same discipline as text.
 - **One status palette across all pages:** Shipped = green, In-flight = amber, Proposed = blue,
   Speculative = purple (exact hex in `review/diagrams.md`). Error/rejected states use a separate
   red and are not a status. Keep `index.html` and `peat-constrained-networking.html` in sync.
+- **Light mode = dark figure-plate (decision A).** Diagrams always sit on a fixed **dark surface card**
+  in both light and dark page modes, so existing inline-SVG colors stay valid with **zero rework**. Full
+  theme-adaptive SVGs are optional/opt-in per registry row, never required. HTML diagrams get inline
+  **zoom / pan / reset / expand** controls (inline JS only — no CDN). Full rules: `DESIGN-SYSTEM.md` §4.
 - **Watch the dual-copy hazard.** The same concept is sometimes drawn twice — as hub SVG and
   as module ASCII (e.g. the layer model, the dependency graph). Those twins must agree.
 - **The registry is the source of record.** `review/diagrams.md` lists every diagram with its

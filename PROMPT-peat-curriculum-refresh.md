@@ -46,10 +46,14 @@ This work is about understanding complex systems code, so quality beats cost.
    no vendor/consumer names in generic prose; "autonomy under human authority" preserved.
 3. **Cohesion & flow gate.** The curriculum still reads as one coherent track: learning order
    intact, hub ↔ module mirroring consistent, prose human (no AI cadence), terminology uniform.
-4. **Diagram gate.** Every affected diagram re-derived (not just preserved), status palette correct
-   (Shipped green · In-flight amber · Proposed blue · Speculative purple), hub-SVG ↔ module-ASCII
-   twins agree, SVG well-formed and self-contained (no CDN/script/fetch), legend present, and the
-   `review/diagrams.md` row advanced.
+4. **Visual & design gate (per `DESIGN-SYSTEM.md`).** Every affected diagram re-derived (not just
+   preserved), status palette correct (Shipped green · In-flight amber · Proposed blue · Speculative
+   purple), hub-SVG ↔ module-mermaid twins agree, SVG well-formed and self-contained (no
+   CDN/script/fetch; Mermaid pre-rendered to inline SVG), **≤12 nodes or hybrid**, legend present,
+   **dark figure-plate + zoom/pan** on HTML diagrams, and the `review/diagrams.md` row advanced. Any
+   NEW or CHANGED page also meets the standard: data-table pattern for 4+-row / 3+-column tables (no
+   horizontal overflow), semantic HTML, `prefers-reduced-motion`, light + dark, no emoji status, Parley
+   Labs brand + status palette. Checklist: `DESIGN-SYSTEM.md` §6.
 5. **Regression / blast-radius gate.** No edit silently broke another section (the §4b checks).
 6. **Published-artifact & reference gate.** For a consumed crate pinned by a *published* version, the
    shipped truth is the release, not git HEAD — check a consumer lockfile (package + checksum + deps)
