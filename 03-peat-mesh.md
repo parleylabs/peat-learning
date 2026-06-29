@@ -5,7 +5,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@71fc3d5` (`0.9.0-rc.43`).
+`peat-mesh@c863d16` (`0.9.0-rc.43`).
 
 > **How to read the labels.** Every capability below carries one of four tags so you always know
 > what is real:
@@ -145,6 +145,18 @@ flowchart LR
 The formation gate is an HMAC-SHA-256 challenge-response over ALPN `peat/formation-auth/1`: the
 pre-shared formation key is proven without ever crossing the wire (constant-time compare). The
 handshake itself lives in `peat-protocol`; Module 2b covers it in detail.
+
+> **Android mDNS interop (c863d16, peat-mesh#266) [Shipped].** On Android, iroh's own
+> `MdnsAddressLookup` browse never fires, so a peer could advertise but never *discover*. The
+> transport now owns a long-lived **peat-controlled `_peat._udp` browse that mirrors the
+> advertiser** (`from_formation_with_discovery_at_addr`, `network/iroh_transport.rs`): it
+> advertises a *concrete* address plus a `formation_id` TXT record for parity with node
+> advertisements, browses the same service, and self-filters its own advertisement out of the
+> event stream. Peers still reconstruct each other's `EndpointId` from `(formation_secret,
+> node_id)` via `derive_iroh_node_secret` — `HKDF-SHA-256(salt=None, ikm=formation_secret,
+> info="iroh:"+node_id)`, the same FIPS-approved derivation `peat-node` uses (ADR-049) — so the
+> formation key still gates who is admitted. No new transport or wire format: this is a discovery
+> path that makes LAN peering work on Android without any n0 phone-home.
 
 ---
 

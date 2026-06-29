@@ -227,7 +227,7 @@ one fails. The requirement persists; the implementation adapts.
 **Status — In-flight / partly shipped.** A `composition` engine is part of `peat-protocol`'s public
 API (`peat-protocol/src/lib.rs`), so the building block exists. But the ground-truth audit finds **no
 code or test evidence that the automatic reallocate-on-failure loop is implemented end to end**, and
-`peat-protocol` is at `0.9.0-rc.27` (work in progress). Treat composition as present-but-WIP: the
+`peat-protocol` is at `0.9.0-rc.28` (work in progress). Treat composition as present-but-WIP: the
 capability vocabulary is real; the self-healing "requirement outlives the node" behavior is design
 intent until a code path and test confirm it.
 
@@ -426,7 +426,9 @@ measured, so they are omitted here.
   risk.
 - **Medium:** existing platforms advertise capabilities and participate natively; gradual migration.
 - **Deep:** native integration via `peat-ffi` (the UniFFI/JNI binding, **Shipped**; rc.27 added a
-  non-blocking `connect_peer_nowait` so a UI thread doesn't freeze for the full dial, peat#995) for
+  non-blocking `connect_peer_nowait` so a UI thread doesn't freeze for the full dial, peat#995, and
+  rc.28 added a resilience layer for mobile clients — a persistent peer roster, a per-peer reconnect
+  supervisor with exponential backoff, and origin-tagged change events, peat#1000; see Module 6) for
   app embedding, or `peat-lite` for constrained embedded nodes. One clarification so you scope this
   correctly: **`peat-lite` is the embedded *building block* — a codec plus a small set of bounded
   CRDTs (`LwwRegister`, `GCounter`) — not a turnkey coordination stack.** It has no transport and no

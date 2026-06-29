@@ -6,7 +6,7 @@
 server. But an organization that fields meshes still has to onboard teams, plug into its own identity
 system, manage cryptographic material, and feed mesh events into its analytics and audit pipelines.
 That work happens in the gateway. Repo path: [`peat-gateway/`](../peat-gateway/) (crate `0.1.0`,
-audited at HEAD `bece4d6`).
+audited at HEAD `4d82282`).
 
 > **Mental model — the gateway watches and manages; it does not relay.** CRDT sync, blob transfer,
 > and peer-to-peer routing all live in `peat-mesh` and never pass through the gateway. The gateway is
@@ -324,6 +324,14 @@ other words, tracking the mesh is real integration
 work, exactly as the old "frozen" framing warned; it just happens to be getting done now. Still read
 "shipped" for this crate as "shipped against an exact-pinned mesh," and budget integration time when
 the next mesh surface change lands.
+
+The only thing that moved the gateway this cycle (`bece4d6 → 4d82282`) was a **security dependency
+bump**: `async-nats` `0.38 → 0.49` to clear the `rustls-webpki` CVEs in the transitive TLS stack
+(peat-gateway#151, `Cargo.toml:57,96`). The `peat-mesh` pin is untouched at `=0.9.0-rc.40`, and the
+CDC sink set (NATS JetStream + Webhook shipped; Kafka still a `// TODO` stub) is unchanged. Worth
+noting because the NATS control-plane ingress is still the weakest surface here — AuthZ is a
+permissive stub and broker ACLs/auth/TLS are absent (the §5.5 In-flight gaps) — so the bump hardens
+the library, not the missing ingress controls.
 
 ---
 

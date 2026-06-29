@@ -38,7 +38,7 @@ the TAK/CoT bridge in `peat-transport`** (`docs/c2-collaboration.md:78` models i
 
 ## Relationship to other Peat repos
 Depends on **`peat-schema` only**, pinned **`0.9.0-rc.24`** (`Cargo.toml:38`) behind the `peat`
-feature — **trails the umbrella (`rc.27`) by 3 rc's**. **No dep on peat-mesh / peat-btle / peat-lite /
+feature — **trails the umbrella (`rc.28`) by 4 rc's**. **No dep on peat-mesh / peat-btle / peat-lite /
 peat-gateway / peat-node / peat-transport.** A pure schema-level translator; mesh propagation is left
 to a consuming Peat node. SAPIENT data lands in **peat-schema docs**: detections→`track::v1::Track`,
 registration→`capability::v1::CapabilityAdvertisement`, status→`node::v1::NodeState`,
@@ -68,7 +68,7 @@ by the surrounding environment** — the crate ships no transport encryption.
 ## README-vs-code drift
 `src/transform/mod.rs:3-5` stale "All modules are stubs until Phase 3" (all are implemented); README
 quick-start uses `state.health_status` but the field is `health` (`status.rs:78`) — would not compile;
-peat-schema pin trails the umbrella by 3 rc's. `docs/c2-collaboration.md` is accurate/current.
+peat-schema pin trails the umbrella by 4 rc's. `docs/c2-collaboration.md` is accurate/current.
 
 ## Curriculum mapping
 **Section / case-study in `07-repo-links-and-gaps`**, paired with peat-transport's TAK/CoT bridge as

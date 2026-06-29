@@ -123,6 +123,19 @@ offline-first guarantee. One honest caveat on the embedded leg: **BLE-path recon
 pending CRDT state is In-flight** (peat-btle #73), so a node that was offline on the BLE leg for a
 long window may not re-deliver everything it queued. The QUIC/peat-node path is the robust one.
 
+**At the mobile-client edge (peat-ffi `0.2.9`, peat#1000) [Shipped].** Two pieces make a phone a
+better citizen of this flow when links flap. First, change notifications are **origin-tagged**: the
+UniFFI `DocumentChange` now carries an `origin: ChangeOrigin` field — `Local` (the app's own
+publish) or `Remote { peer_id }` (a sync from a peer) — so a consumer can refresh its UI on remote
+deltas without echoing its own writes. Second, a **per-peer reconnect supervisor** re-dials known
+peers from a persistent roster (`roster.json`, plain non-secret reachability hints — no FIPS
+concern) with an `Idle → Connecting → Connected → Backoff` state machine, exponential backoff
+(2 s base, 5 min cap) plus deterministic per-peer jitter, and at most 8 concurrent dials. Its
+connected set is the **union across transports**, so a peer already reachable over BLE is not
+also dialed over iroh/relay. `wake_reconnect` clears backoffs on a foreground/network-up event;
+`reconnect_known_peers` honours them. This is dial resilience at the binding layer — it does not
+change the wire protocol or the negentropy reconciliation above.
+
 **Identity does not travel intact across the bridge.** Trace A reads as one continuous climb, but
 the identity attached to the report is *re-derived* at step 2, because the stack uses four different
 identity schemes. peat-lite's `NodeId` is a bare 32-bit integer (`peat-lite/src/node_id.rs:9-34`,

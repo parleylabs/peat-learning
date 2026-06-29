@@ -1,7 +1,7 @@
 {
   "review": "Peat learning-curriculum hardening to enterprise-onboarding grade",
   "prompt": "learning/PROMPT-peat-training-doc-improvement.md",
-  "date": "2026-06-26",
+  "date": "2026-06-29",
   "last_full_run": "2026-06-18",
   "status": "complete",
   "phases_completed": [
@@ -60,16 +60,16 @@
   },
   "audited_commits": {
     "peat": {
-      "head": "8a94796",
-      "subject": "chore(release): workspace 0.9.0-rc.27 + peat-ffi AAR 0.1.3 (#999)",
-      "version": "workspace 0.9.0-rc.27; peat-ffi 0.2.8 (Maven AAR 0.1.3); peat-mesh floor >=0.9.0-rc.43",
-      "origin_status": "advanced 68e9c3c->8a94796 this run (4 commits: ADR-072 synced-folder lifecycle #996 [Proposed], ADR-059 data-as-a-capability #997 [Proposed, NUMBER COLLISION with existing 059-cross-transport-document-bridging.md], peat-ffi relay-n0-hosted passthrough + connect_peer_nowait #995, rc.27 bump #999). No peat-protocol/peat-mesh/peat-schema src change this delta."
+      "head": "871776d",
+      "subject": "chore(release): workspace 0.9.0-rc.28 + peat-ffi AAR 0.1.4 (#1000) (#1003)",
+      "version": "workspace 0.9.0-rc.28; peat-ffi 0.2.9 (Maven AAR 0.1.4); peat-schema =0.9.0-rc.28; peat-mesh floor >=0.9.0-rc.43",
+      "origin_status": "advanced 8a94796->871776d this run (2 commits: peat-ffi reconnect-supervisor + peer-roster + relay-passthrough + origin-tagged change events #1000 [Shipped, additive FFI], rc.28 release bump #1003). peat-ffi 0.2.8->0.2.9; Maven AAR 0.1.3->0.1.4. NO peat-protocol/peat-mesh/peat-schema SRC change this delta (peat-schema pin bumped in lockstep only). FIPS posture unchanged (roster is plain JSON; no crypto added)."
     },
     "peat-mesh": {
-      "head": "71fc3d5",
-      "subject": "chore: bump to 0.9.0-rc.43",
-      "version": "0.9.0-rc.43 (README stale: advertises 0.3.2/0.1.0)",
-      "origin_status": "advanced 00ab0c9->71fc3d5 this run (4 commits: register inbound peers #261, provider gossip #262, relocate distribution impl peat#992, rc.43 bump)"
+      "head": "c863d16",
+      "subject": "Merge pull request #266 from defenseunicorns/fix/android-mdns-discovery",
+      "version": "0.9.0-rc.43 (no version bump this delta; README stale: advertises 0.3.2/0.1.0)",
+      "origin_status": "advanced 71fc3d5->c863d16 this run (3 commits, peat-mesh#266 fix/android-mdns-discovery): formation-identity iroh-key constructor + _peat._udp advertise, peat-controlled _peat._udp browse mirroring the advertiser (Android interop where iroh's MdnsAddressLookup browse never fires), + a peat_mdns_browse integration test. Touches src/network/iroh_transport.rs (+293) + tests/peat_mdns_browse.rs (+151). NO version bump, NO crypto change (derive_iroh_node_secret is HKDF-SHA-256, FIPS-approved, ADR-049), NO wire-format/strategy change."
     },
     "peat-btle": {
       "head": "3d70f48",
@@ -84,10 +84,10 @@
       "origin_status": "even with origin"
     },
     "peat-gateway": {
-      "head": "bece4d6",
-      "subject": "chore(deps): bump redb, reqwest, tower-http, peat-mesh (#144)",
-      "version": "0.1.0; pins peat-mesh =0.9.0-rc.40 (was rc.1; Dependabot #144 bumped it ~3 RCs behind rc.43). Pin no longer 'intentionally frozen ~40 RCs stale' — kept current via Dependabot; bump adapted CDC watcher to ChangeEvent origin field + redb 2->4.",
-      "origin_status": "advanced 8d16824->bece4d6 this run (4 commits, all deps bumps: peat-mesh rc.1->rc.40 + redb/reqwest/tower-http/rdkafka/ui/actions #135/#137/#140/#144). CDC sink set unchanged (src/cdc/engine.rs + sink modules + CdcSinkType in src/tenant/models.rs untouched)."
+      "head": "4d82282",
+      "subject": "fix(deps): bump async-nats 0.38 → 0.49 to resolve rustls-webpki CVEs (#151)",
+      "version": "0.1.0; pins peat-mesh =0.9.0-rc.40 (UNCHANGED this delta; ~3 RCs behind rc.43, kept current via Dependabot). async-nats 0.38->0.49 (rustls-webpki CVE fix #151).",
+      "origin_status": "advanced bece4d6->4d82282 this run (1 commit, peat-gateway#151): async-nats 0.38->0.49 to clear rustls-webpki CVEs in the transitive TLS stack. Cargo.toml (4 lines) + Cargo.lock only; NO src/ change. peat-mesh pin untouched (=0.9.0-rc.40). CDC sink set (NATS/Webhook shipped, Kafka stub) unchanged; NATS ingress gaps (#99/#97/#124/#125) unchanged. M-027/H-010 facts hold."
     },
     "peat-node": {
       "head": "9fcdabd",
@@ -96,15 +96,15 @@
       "origin_status": "advanced bbe3b68->9fcdabd this run (v0.4.8: inbox mirrors sender outbox layout w/ path re-sanitisation #173, post-write blob_size validation, startup version banner, --print-config/PEAT_NODE_PRINT_CONFIG). proto/sidecar.proto unchanged — RPC count still 27."
     },
     "peat-flutter": {
-      "head": "369f05d",
-      "subject": "feat: reconnect-supervisor bindings + facade (putRaw, peerTransportStates, origin decode, enableN0Relay fix) (#13)",
-      "version": "0.0.1 (pre-1.0); native peat-flutter-ffi 0.1.0; binds peat-ffi =0.2.9 from crates.io via UniFFI 0.28",
-      "origin_status": "FIRST TRACKED 2026-06-25 (initial read-only audit). Flutter/Dart binding layer wrapping peat-ffi; hand-maintained UniFFI bindings (contract v30). Transitively bundles peat-btle 0.4.0 + peat-mesh. FIPS FLAG: bundled libpeat_ffi pulls chacha20poly1305 + x25519-dalek at the BLE layer (rust/Cargo.lock, via peat-btle 0.4.0) — VERIFY against peat-btle source. Ground truth: review/ground-truth/peat-flutter.md."
+      "head": "4a6554f",
+      "subject": "feat: reconnect-supervisor bindings + relay URL fix (#17)",
+      "version": "0.0.1 (pre-1.0, unchanged); native peat-flutter-ffi 0.1.0; binds peat-ffi =0.2.9 from crates.io via UniFFI 0.28",
+      "origin_status": "advanced 369f05d->4a6554f this run (1 commit, peat-flutter#17): reconnect-supervisor Dart facade (reconnectKnownPeers/wakeReconnect/onPeerObserved) over the peat-ffi 0.2.9 surface + endpointAddr relay-URL fix (returns iroh relay https:// URL or '—'). Touches lib/src/peat_node.dart (+8) + rust/Cargo.lock (transitive minors only). FIPS FLAG UNCHANGED: Cargo.lock still pins peat-btle 0.4.0 (bundling chacha20poly1305 0.10.1 + x25519-dalek 2.0.1) — the C1 published-vs-source non-FIPS split persists (source FIPS-clean, published 0.4.0 not re-published). peat-ffi 0.2.9, peat-mesh rc.43 lines unchanged. Ground truth: review/ground-truth/peat-flutter.md."
     },
     "peat-sapient": {
       "head": "8ec24d4",
       "subject": "fix(detection): handle deprecated SAPIENT v7 feet coordinate systems; clarify MGRS status (#27)",
-      "version": "0.1.0; SAPIENT BSI Flex 335 v2.0 (proto pinned to dstl 244a741); depends peat-schema =0.9.0-rc.24 (trails umbrella rc.27 by 3)",
+      "version": "0.1.0; SAPIENT BSI Flex 335 v2.0 (proto pinned to dstl 244a741); depends peat-schema =0.9.0-rc.24 (trails umbrella rc.28 by 4)",
       "origin_status": "FIRST TRACKED 2026-06-25 (initial read-only audit). Rust lib bridging the SAPIENT sensor protocol into Peat via peat-schema (the sensor-standard analog of peat-transport's TAK/CoT bridge). Depends on peat-schema ONLY. Crypto FLAG: plain TCP, NO TLS — ships no transport security. Ground truth: review/ground-truth/peat-sapient.md."
     }
   },
@@ -113,7 +113,7 @@
     "Curriculum integration of the two new repos: write Module '04c client bindings' (peat-flutter) and a Module 7 SAPIENT-bridge case study (peat-sapient) — note ADR-070 (SAPIENT Protocol Bridge) is ACCEPTED, so peat-sapient is a first-class accepted integration, not speculative.",
     "peat-node QUICKSTART.md (root = node/container) + crates/peat-cli/QUICKSTART.md (CLI) — route into Module 8 + a getting-started callout in Module 0/0b (Kit, 2026-06-24).",
     "Leader-election score-over-message convergence (peat-protocol/src/cell/leader_election.rs ~340-345): code carries a 'follows higher node id' tiebreak + 'future work' comment; NO tracking issue located — file one upstream or log as a known design gap.",
-    "peat-sapient peat-schema pin (=0.9.0-rc.24) trails the umbrella (rc.27) by 3 rc's; re-check each sync (a bump may rename transform fields, e.g. NodeState.health).",
+    "peat-sapient peat-schema pin (=0.9.0-rc.24) trails the umbrella (rc.28) by 4 rc's; re-check each sync (a bump may rename transform fields, e.g. NodeState.health).",
     "ADR-044 MLS key-exchange: X25519 still flagged for FIPS review (amendment 2026-05-18 prefers ECDH-P256/P384 'where the design has a choice'; tracked as MLS-integration follow-up) — watch for resolution."
   ],
   "unverifiable_claims": [
@@ -124,9 +124,51 @@
     "NEEDS_RUNTIME: '<5s P1 latency' (README:232) and the bandwidth-reduction % figures are targets/benchmarks — require a live build/benchmark, not a code read. QoS BandwidthAllocation shares ARE in code (peat-mesh/src/qos/bandwidth.rs:250-300) but enforcement/latency is not.",
     "NEEDS_RUNTIME: provider-gossip multi-hop reach under partition (peat/blob-announce/1, DEFAULT_ANNOUNCE_TTL=3) — code paths CONFIRMED (blob_announce.rs, BlobPeerIndex, iroh_blob_store.rs:1544-1663) but actual multi-hop delivery under partition is not benchmarked.",
     "NEEDS_RUNTIME: peat-node attachment outbox watcher + inbox layout-mirror + post-write blob_size validation + path re-sanitisation — code paths CONFIRMED (src/attachments/*); runtime behavior not exercised live.",
-    "DECLARED-CONSTANT (not measured): peat-btle BLE rate/range (~100-400 m, 125 kbps-2 Mbps) are capability constants in code, not measured field results."
+    "DECLARED-CONSTANT (not measured): peat-btle BLE rate/range (~100-400 m, 125 kbps-2 Mbps) are capability constants in code, not measured field results.",
+    "NEEDS_RUNTIME (2026-06-29): the peat-ffi 0.2.9 per-peer reconnect supervisor (backoff timing 2s->5min, deterministic jitter, <=8 concurrent dials, cross-transport dedup), the persistent peer roster, the origin-tagged DocumentChange routing, and the peat-mesh#266 Android _peat._udp peat-controlled browse are all CONFIRMED from source (peat-ffi/src/{supervisor,roster,lib}.rs; peat-mesh/src/network/iroh_transport.rs + tests/peat_mdns_browse.rs) but NOT exercised live here — actual backoff/dedup behaviour and Android browse delivery are not benchmarked."
   ],
   "run_log": [
+    {
+      "when": "2026-06-29",
+      "mode": "ci",
+      "repos_changed": {
+        "peat": "8a94796 -> 871776d (workspace rc.27 -> rc.28; peat-ffi 0.2.8 -> 0.2.9, Maven AAR 0.1.3 -> 0.1.4)",
+        "peat-mesh": "71fc3d5 -> c863d16 (no version change; rc.43; Android mDNS interop #266)",
+        "peat-gateway": "bece4d6 -> 4d82282 (0.1.0; async-nats 0.38 -> 0.49 CVE fix #151)",
+        "peat-flutter": "369f05d -> 4a6554f (0.0.1; reconnect-supervisor facade + relay-URL fix #17)",
+        "peat-btle": "no drift (3d70f48)",
+        "peat-lite": "no drift (7a8a8fb)",
+        "peat-node": "no drift (9fcdabd)",
+        "peat-sapient": "no drift (8ec24d4)"
+      },
+      "docs_touched": [
+        "00b-the-big-idea.md (rc.28; peat-ffi deep-integration note += rc.28 roster/reconnect-supervisor/origin-tagged change events)",
+        "01-architecture-overview.md (audited HEAD rc.27 -> rc.28 in the version-pinning-dance note)",
+        "02-peat-protocol.md (header: peat 871776d/rc.28, peat-mesh c863d16)",
+        "03-peat-mesh.md (header c863d16; §3.3 NEW Android mDNS interop note — peat-controlled _peat._udp browse + formation-identity HKDF-SHA-256 iroh-key derivation, ADR-049)",
+        "04-peat-btle-and-lite.md (audited-against header: peat-mesh 71fc3d5 -> c863d16)",
+        "05-peat-gateway.md (header bece4d6 -> 4d82282; §5.6 NEW async-nats 0.38->0.49 rustls-webpki CVE note #151, mesh pin + sink set unchanged)",
+        "06-data-flows.md (NEW mobile-edge note: origin-tagged DocumentChange + per-peer reconnect supervisor, peat-ffi 0.2.9)",
+        "07-repo-links-and-gaps.md (audited HEADs: peat 871776d/rc.28, peat-mesh c863d16, peat-gateway 4d82282)",
+        "index.html (Audited-against warn box + gateway card async-nats note + SYNC stamp)",
+        "peat-constrained-networking.html (SYNC stamp only — mDNS shipped-discovery facts unchanged)",
+        "changelog.html (Current-sync card + tags + SYNC block + prepended incremental row)",
+        "review/ground-truth/{peat,peat-mesh,peat-gateway,peat-flutter}.md (dated 2026-06-29 deltas; peat.md §0 table cells rc.28/0.2.9)",
+        "review/diagrams.md (M-006/H-003, M-017/M-018/H-006, M-027/H-010 spot-checked + advanced to 2026-06-29; dated maintenance note)",
+        "review/CHANGELOG-review.md (2026-06-29 delta section)",
+        "REVIEW-STATE.json (audited_commits for 4 repos; this run_log entry + meta; quality_trend; 1 new unverifiable_claim)"
+      ],
+      "claims_changed": "version/commit stamps across 7 modules + 3 HTML + ground-truth; new Shipped peat-ffi mobile-resilience surface (persistent peer roster [plain JSON, no FIPS concern], per-peer reconnect supervisor [Idle->Connecting->Connected->Backoff, 2s base / 5min cap, <=8 concurrent dials, cross-transport dedup], origin-tagged DocumentChange [ChangeOrigin Local/Remote], peat#1000); new Shipped peat-mesh Android mDNS interop (peat-controlled _peat._udp advertise+browse, formation-identity iroh-key derivation via HKDF-SHA-256/ADR-049, peat-mesh#266); peat-gateway async-nats 0.38->0.49 rustls-webpki CVE bump (#151, mesh pin + CDC sink set unchanged); peat-flutter reconnect-supervisor facade + relay-URL fix (#17). FIPS posture UNCHANGED; peat-btle published-vs-source non-FIPS split (C1) re-confirmed unchanged.",
+      "diagrams_touched": "M-006/H-003 (Cargo dep graph — version-independent, spot-checked), M-017/M-018/H-006 (discovery — Android browse is a new path, not a new strategy; strategies + formation-auth gate unchanged), M-027/H-010 (gateway CDC sinks — async-nats bump only, sink set unchanged) advanced to 2026-06-29. No diagram facts changed. The peat-ffi reconnect/roster/origin surface has no diagram.",
+      "notes": "Incremental CI refresh on the latest model, multi-agent (orchestrator + read-only gate sub-agents: independent fact-check, house-rules, cohesion, diagram, blast-radius, published-artifact/reference, fact-wide-occurrence). No full sweep due (last_full_run 2026-06-18, < 30d). NO open curriculum-feedback issues. NO peat-protocol/peat-schema/peat-mesh-protocol SRC change in the peat delta (additive FFI only; peat-schema pin bumped in lockstep). All four code repos cloned via GIT_CONFIG_GLOBAL=/dev/null to bypass the session git-proxy's parleylabs-only scope (defenseunicorns public repos reachable through the egress HTTPS proxy; the git-credential proxy 403'd them).",
+      "meta": {
+        "drift_found": 4,
+        "claims_resolved": 0,
+        "claims_demoted": 1,
+        "feedback_addressed": 0,
+        "misses_found": 0
+      }
+    },
     {
       "when": "2026-06-26",
       "mode": "fix-application (2 workflows + manual convergence)",
@@ -584,6 +626,12 @@
       "unverifiable_count": 8,
       "open_feedback_issues": 0,
       "note": "baseline after the code-verification pass converged; curriculum-feedback label live but no reader issues yet. Both metrics should trend DOWN."
+    },
+    {
+      "when": "2026-06-29",
+      "unverifiable_count": 9,
+      "open_feedback_issues": 0,
+      "note": "+1 unverifiable: the new peat-ffi reconnect/roster/origin surface + peat-mesh Android browse are code-confirmed but runtime-unverified (NEEDS_RUNTIME). The uptick is new-capability runtime claims, not unresolved drift — no prior verified claim regressed (misses_found=0). Still zero open feedback issues."
     }
   ]
 }

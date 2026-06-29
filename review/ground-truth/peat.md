@@ -18,11 +18,11 @@ Labels: **Shipped** (in code/tested) · **In-flight** (open issue/epic) · **Pro
 
 | Member crate | Role | Status |
 |---|---|---|
-| `peat-protocol` | Core: cell formation, hierarchy, QoS, security re-exports, CoT, discovery, distribution | Shipped (WIP, `0.9.0-rc.27`) |
+| `peat-protocol` | Core: cell formation, hierarchy, QoS, security re-exports, CoT, discovery, distribution | Shipped (WIP, `0.9.0-rc.28`) |
 | `peat-schema` | Protobuf wire definitions (`prost`) | Shipped |
 | `peat-transport` | HTTP/REST (Axum) + TAK/CoT TCP bridge | Shipped |
 | `peat-persistence` | Storage abstraction over peat-mesh | Shipped |
-| `peat-ffi` | UniFFI + JNI Kotlin/Swift bindings | Shipped (`0.2.8`) |
+| `peat-ffi` | UniFFI + JNI Kotlin/Swift bindings | Shipped (`0.2.9`) |
 | `peat` | Reserved facade | Placeholder, no deps |
 
 **Retired:** `peat-discovery` removed under peat#919 (members comment in `peat/Cargo.toml`). Discovery now lives in `peat_mesh::discovery`.
@@ -255,3 +255,36 @@ retained. **Proposed**; only the Phase-1 subscription seam exists in code, and i
   Proposed — no code.**
 - No `peat-protocol/src`, `peat-mesh`, or `peat-schema` source change this delta — protocol/mesh
   diagrams' facts unaffected.
+
+---
+
+### 2026-06-29 delta — `8a94796 → 871776d` (workspace 0.9.0-rc.27 → rc.28)
+
+All change is in `peat-ffi` (crate `0.2.8 → 0.2.9`; Maven AAR `0.1.3 → 0.1.4`; peat#1000). `peat-schema`
+pin bumped in lockstep (`=0.9.0-rc.28`, `peat-protocol/Cargo.toml`). **No `peat-protocol/src`,
+`peat-schema`, or `peat-mesh` source change** in this repo this delta — the new surface is additive on
+the FFI binding only.
+
+- **Persistent peer roster (peat#1000) [Shipped].** New `RosterStore` (JSON on disk, `peat-ffi/src/roster.rs:35,57`)
+  tracks known group members across restarts. Six new UniFFI exports — `roster_remember`, `roster_upsert`,
+  `roster_remove`, `roster_get`, `roster_list`, `roster_list_by_group` (`peat-ffi/src/lib.rs:2533-2569`) —
+  plus a new `RosterEntry` UniFFI Record. Stored as **plain JSON, non-secret reachability hints only — no
+  FIPS concern** (explicit in CHANGELOG).
+- **Per-peer reconnect supervisor (peat#1000) [Shipped].** Dial state machine `Idle → Connecting →
+  Connected → Backoff` with exponential backoff (`BACKOFF_BASE_MS=2_000`, `BACKOFF_MAX_MS=300_000` i.e.
+  5 min, `peat-ffi/src/supervisor.rs:23,25`) plus deterministic per-peer jitter; concurrent in-flight
+  dials bounded at `MAX_CONCURRENT_RECONNECT_DIALS = 8` via `tokio::sync::Semaphore`. Three new UniFFI
+  exports — `reconnect_known_peers` (honours backoff), `wake_reconnect` (clears backoffs; call on
+  foreground/network-up), `on_peer_observed` (`peat-ffi/src/lib.rs:2477,2490,2511`). **Cross-transport
+  dedup:** the connected set is the union of iroh peers and any roster member with a live link on any
+  transport (BLE, etc.), so a peer reachable over BLE is not re-dialed over iroh/relay.
+- **Origin-tagged `DocumentChange` (peat#1000) [Shipped].** New required field `origin: ChangeOrigin` on
+  the UniFFI `DocumentChange` Record; `ChangeOrigin` is a new UniFFI enum — `Local` / `Remote { peer_id }`
+  (`peat-ffi/src/lib.rs:608`), converted from `peat_mesh::ChangeOrigin` at the FFI boundary
+  (`lib.rs:618-622`). Lets consumers notify only on remote changes. **Coordinated binding regen** — paired
+  with peat-flutter#13 (already in the audited peat-flutter HEAD).
+- **Four Dart C-ABI shims (peat#1000) [Shipped].** Hand-rolled `#[no_mangle] extern "C"` reformatting flat
+  `FFIBuffer` arrays for `roster_remember`, `reconnect_known_peers`, `wake_reconnect`, `on_peer_observed`
+  (`peat-ffi/src/dart_ffi.rs`), alongside the existing shims.
+- **FIPS posture unchanged.** The new code adds no crypto; roster persistence is plain JSON. No
+  ChaCha20/X25519 reintroduced anywhere in source.
