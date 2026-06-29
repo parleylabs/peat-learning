@@ -534,3 +534,47 @@ untouched; no vendor names; autonomy framing untouched.
   conflating the two. Watch for the source repo to renumber one of them.
 - **Unverifiable (read-only audit):** ADR-072 / ADR-059 are Proposed with no code; `connect_peer_nowait`
   and the v0.4.8 inbox layout / size check were read from source + CHANGELOG, not exercised live.
+
+## 2026-06-29 — incremental refresh (CI mode)
+
+**Repos moved:** `peat` `8a94796 → 871776d` (workspace `0.9.0-rc.27 → rc.28`; `peat-ffi` `0.2.8 → 0.2.9`,
+Maven AAR `0.1.3 → 0.1.4`), `peat-mesh` `71fc3d5 → c863d16` (no version change; still `rc.43`),
+`peat-gateway` `bece4d6 → 4d82282` (still `0.1.0`), `peat-flutter` `369f05d → 4a6554f` (still `0.0.1`).
+`peat-btle`, `peat-lite`, `peat-node`, `peat-sapient` did not move. No open `curriculum-feedback` issues.
+No full sweep due (`last_full_run` 2026-06-18, < 30 days).
+
+**`peat-ffi` mobile-resilience surface (peat#1000) — Shipped.** All change in this peat delta is additive
+on the FFI binding; **no `peat-protocol`/`peat-schema`/`peat-mesh` source change** in the umbrella repo.
+- Persistent **peer roster** (`RosterStore`, plain JSON, non-secret reachability hints — **no FIPS
+  concern**): six new UniFFI exports (`roster_remember/upsert/remove/get/list/list_by_group`) + a
+  `RosterEntry` Record (`peat-ffi/src/roster.rs:35,57`; `lib.rs:2533-2569`).
+- Per-peer **reconnect supervisor**: `Idle → Connecting → Connected → Backoff` with exponential backoff
+  (`BACKOFF_BASE_MS=2_000`, `BACKOFF_MAX_MS=300_000`, `supervisor.rs:23,25`), per-peer jitter, ≤8 concurrent
+  dials, cross-transport dedup (union of iroh + BLE-reachable peers). Three exports
+  (`reconnect_known_peers/wake_reconnect/on_peer_observed`, `lib.rs:2477,2490,2511`).
+- **Origin-tagged `DocumentChange`**: new `origin: ChangeOrigin` (`Local`/`Remote { peer_id }`, `lib.rs:608`),
+  so consumers can notify only on remote deltas. → Module 00b (deep-integration note), Module 6 (data-flow note).
+
+**`peat-mesh` Android mDNS interop (peat-mesh#266) — Shipped.** Peat-controlled `_peat._udp` advertise +
+browse mirroring the advertiser (`from_formation_with_discovery_at_addr`, `src/network/iroh_transport.rs`)
+for Android, where iroh's own `MdnsAddressLookup` browse never fires; formation-identity iroh-key derivation
+via `derive_iroh_node_secret` = `HKDF-SHA-256(salt=None, ikm=formation_secret, info="iroh:"+node_id)` (ADR-049,
+FIPS-approved). No new transport/wire/strategy. → Module 3 §3.3. Discovery diagrams (M-017/M-018/H-006)
+spot-checked — strategies unchanged, rows advanced.
+
+**`peat-gateway` security dep bump (peat-gateway#151) — Shipped.** `async-nats` `0.38 → 0.49` to clear
+`rustls-webpki` CVEs; **mesh pin (`=0.9.0-rc.40`) and CDC sink set unchanged**; NATS ingress gaps (#99/#97/
+#124/#125) unchanged. → Module 5 §5.6 + hub gateway card. M-027/H-010 spot-checked, unchanged.
+
+**`peat-flutter` (peat-flutter#17) — Shipped.** Reconnect-supervisor facade (`reconnectKnownPeers`/
+`wakeReconnect`/`onPeerObserved`) + relay-URL fix on `endpointAddr` (`lib/src/peat_node.dart`). **BLE
+non-FIPS published-vs-source split (C1) UNCHANGED** — `rust/Cargo.lock` still pins `peat-btle 0.4.0`
+(bundling `chacha20poly1305`/`x25519-dalek`); only unrelated transitive minors moved. → ground-truth/peat-flutter.md.
+
+**Gates:** all §0b gates run (fact-check, house-rules, cohesion, diagram, blast-radius, published-artifact/
+reference, fact-wide-occurrence). FIPS posture unchanged across the run; no ChaCha20/X25519 reintroduced into
+prose; the published-vs-source split re-confirmed for peat-btle 0.4.0.
+
+**New unverifiable claims:** the `peat-ffi` reconnect supervisor + roster + origin-tagging and the peat-mesh
+`_peat._udp` Android browse are **read from source, not exercised live** (NEEDS_RUNTIME) — backoff timing,
+cross-transport dedup behaviour, and Android browse delivery are not benchmarked here.

@@ -79,3 +79,24 @@ walkthrough candidate. **Note: `peat-swift` exists too** — a sibling client-bi
 - The single test covers only JSON codecs; cross-peer sync untested in-repo.
 - BLE non-FIPS flag is **confirmed** from `Cargo.lock`; the QUIC-path FIPS runtime config is
   **unverifiable from this repo** (needs peat-mesh/peat-ffi source).
+
+---
+
+### 2026-06-29 delta — `369f05d → 4a6554f` (still `0.0.1`)
+
+Single commit, peat-flutter#17 ("reconnect-supervisor bindings + relay URL fix"). Touches
+`lib/src/peat_node.dart` (+8) and `rust/Cargo.lock` (transitive minor bumps only). **No pubspec version
+change.**
+
+- **Reconnect-supervisor facade [Shipped].** The Dart facade now exposes `reconnectKnownPeers()`,
+  `wakeReconnect()`, `onPeerObserved(nodeId)` (`lib/src/peat_node.dart:228,234` + generated
+  `lib/src/generated/peat_ffi.dart:9392,9400,9408`), thin wrappers over the peat-ffi `0.2.9` reconnect
+  surface (peat#1000). The generated bindings were regenerated against the new UniFFI contract.
+- **Relay URL fix [Shipped].** `endpointAddr` getter now returns the iroh relay `https://` URL (or `'—'`
+  when not yet established) instead of the old endpoint-address form, with an `isEmpty` guard
+  (`lib/src/peat_node.dart:89-98`).
+- **FIPS flag UNCHANGED.** `rust/Cargo.lock` still pins **`peat-btle 0.4.0`** (the crates.io artifact
+  bundling **`chacha20poly1305 0.10.1` + `x25519-dalek 2.0.1`**), `peat-ffi 0.2.9`, `peat-mesh
+  0.9.0-rc.43` — none of these lines moved in `369f05d..4a6554f`. The published-vs-source non-FIPS split
+  (C1) **persists**: peat-btle *source* is FIPS-clean, the *published* 0.4.0 that peat-flutter builds is
+  not. The only lockfile churn was unrelated transitive minors (libc, etc.).

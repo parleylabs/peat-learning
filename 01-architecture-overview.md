@@ -340,7 +340,7 @@ this project, and spotting it is part of the job.
 Because `peat-mesh` and `peat-btle` are separate published crates, the `peat` workspace pins
 their versions carefully. Open `peat/Cargo.toml` and you will find a long, heavily commented
 floor-version history (a succession of release-candidate floors; the floor now sits at
-`peat-mesh >=0.9.0-rc.43` and the audited HEAD is the workspace bump to `0.9.0-rc.27`) explaining a
+`peat-mesh >=0.9.0-rc.43` and the audited HEAD is the workspace bump to `0.9.0-rc.28`) explaining a
 cargo **cycle-detection** problem that arose when `peat-btle` and `peat-mesh` each optionally
 depended on the other.
 

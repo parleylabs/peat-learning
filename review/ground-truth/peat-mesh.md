@@ -317,3 +317,27 @@ Four commits. New ground truth, all read against `71fc3d5`:
 - **Sync fix #261:** inbound-accepted peers are now registered into the blob store's `known_peers`
   (`sync/automerge_backend.rs`, `with_inbound_peer_registry`), so a node you only accepted a dial from
   becomes targetable for distribution — not just one you dialed. **Shipped.**
+
+---
+
+### 2026-06-29 delta — `71fc3d5 → c863d16` (no version change; still `0.9.0-rc.43`)
+
+Range = peat-mesh#266 (`fix/android-mdns-discovery`). Touches `src/network/iroh_transport.rs` (+293)
+and a new test `tests/peat_mdns_browse.rs` (+151). **No version bump, no crypto change, no wire-format
+change.**
+
+- **Android mDNS interop — peat-controlled `_peat._udp` browse [Shipped].** On Android, iroh's own
+  `MdnsAddressLookup` browse never fires, so the transport now owns a long-lived **peat-controlled
+  `_peat._udp` advertise + browse** that mirrors the advertiser
+  (`from_formation_with_discovery_at_addr`, `src/network/iroh_transport.rs`): it advertises a *concrete*
+  address plus a `formation_id` TXT record for parity with node advertisements, browses the same service,
+  and self-filters its own advertisement out of the event stream (`peat_mdns` / `peat_mdns_events`
+  fields). Mirrors the advertiser so discovery works where iroh's browse is silent.
+- **Formation-identity iroh key derivation [Shipped, FIPS-clean].** New `derive_iroh_node_secret(formation_secret,
+  node_id)` = `HKDF-SHA-256(salt=None, ikm=formation_secret, info="iroh:"+node_id)` (ADR-049) — the same
+  derivation `peat-node`'s `crypto::derive_iroh_node_key` uses, so every formation member can reconstruct
+  a peer's `EndpointId` from `(formation_secret, node_id)` and dial by `node_id` alone. FIPS-approved
+  primitive; no ChaCha20/X25519.
+- **Diagram impact:** the §3.3 discovery diagrams (M-017/M-018, twin H-006) still hold — the three
+  strategies (mDNS / Kubernetes / static) and the formation-auth gate are unchanged; this adds an
+  Android-interop browse path, not a new strategy. Spot-checked; rows advanced to 2026-06-29.

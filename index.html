@@ -200,9 +200,9 @@
       or a whitepaper concept that exists in no repo. Do not assume it ships.</p>
     </div>
     <div class="warn"><b>Audited against (the source of truth for every badge below).</b> peat
-    <code>8a94796</code> (workspace 0.9.0-rc.27) · peat-mesh <code>71fc3d5</code> (rc.43) · peat-btle
+    <code>871776d</code> (workspace 0.9.0-rc.28) · peat-mesh <code>c863d16</code> (rc.43) · peat-btle
     <code>3d70f48</code> (0.4.0) · peat-lite <code>7a8a8fb</code> (0.2.5) · peat-gateway
-    <code>bece4d6</code> (0.1.0) · peat-node <code>9fcdabd</code> (0.4.8). The single recurring pattern:
+    <code>4d82282</code> (0.1.0) · peat-node <code>9fcdabd</code> (0.4.8). The single recurring pattern:
     <b>code &gt; current ADRs &gt; specs/guide/README</b>. READMEs and the developer guide are months
     older than the code and are wrong in several places this track flags.</div>
 
@@ -1175,7 +1175,9 @@ ties → lexicographic node id</code></pre>
     at <code>rc.1</code>, then Dependabot-bumped (peat-gateway#144) to <code>rc.40</code>, so it now lags the mesh
     ecosystem (rc.43) by only ~3 RCs. The bump also adapted the CDC watcher to the new <code>ChangeEvent</code>
     surface (an <code>origin</code> field) and a <code>redb</code> 2→4 major — tracking the mesh is real integration
-    work, not a one-line bump.</p>
+    work, not a one-line bump. The only change this cycle (<code>bece4d6→4d82282</code>) was a security
+    dependency bump — <code>async-nats</code> <code>0.38→0.49</code> to clear <code>rustls-webpki</code> CVEs
+    (peat-gateway#151); the mesh pin and the CDC sink set are unchanged.</p>
 
     <div class="chk"><b>Checkpoint.</b> Why is the gateway never in the data path, and what is the "gateway"
     in a DDIL story instead? · which two CDC sinks actually deliver, and what is the status of Kafka and
@@ -1616,7 +1618,7 @@ cargo build -p peat-quickstart --release   <span class="cm"># binary/crate name 
       <span class="fw">PARLEY<b>LABS</b></span> &nbsp; <span class="beep">beep · boop · beep</span>
       <svg class="squig" width="54" height="9" viewBox="0 0 54 9" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5 q4.5 -4 9 0 t9 0 t9 0 t9 0 t9 0 t9 0"/></svg>
       <br><span class="ft">Peat onboarding curriculum · styled per the Parley Labs Brand Guide · © Parley Labs</span>
-      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-06-26</b> · code-verified + Peat rebrand · peat <code>8a94796</code> (rc.27) · mesh <code>rc.43</code> · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>bece4d6</code> · node <code>0.4.8</code> · flutter <code>0.0.1</code> · sapient <code>0.1.0</code><!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
+      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-06-29</b> · incremental refresh · peat <code>871776d</code> (rc.28) · mesh <code>c863d16</code> (rc.43) · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>4d82282</code> · node <code>0.4.8</code> · flutter <code>4a6554f</code> (0.0.1) · sapient <code>0.1.0</code><!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
     </span>
       <div class="fb" id="fb">
         <b>Was this helpful?</b>

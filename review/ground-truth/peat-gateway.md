@@ -229,3 +229,18 @@ These are **self-reported single-run debug-build microbenchmarks**, environment-
   `8d16824..bece4d6` — so M-027/H-010 facts hold.
 - Other commits in range are pure dependency bumps (reqwest 0.12→0.13, tower-http 0.5→0.6,
   rdkafka 0.37→0.39, the UI/actions groups).
+
+---
+
+### 2026-06-29 delta — `bece4d6 → 4d82282` (still `0.1.0`)
+
+Single commit (peat-gateway#151). A **security dependency bump only**: `async-nats` `0.38 → 0.49`
+(`Cargo.toml:57` main dep + `:96` dev-dep) to resolve `rustls-webpki` CVEs in the transitive TLS stack.
+The diff is `Cargo.toml` (4 lines) + `Cargo.lock` (lockfile churn) — **no `src/` change**.
+
+- The **`peat-mesh` pin is untouched** at `=0.9.0-rc.40` (still ~3 RCs behind ecosystem rc.43).
+- The **CDC sink set is unchanged**: NATS JetStream + Webhook shipped, Kafka still a `// TODO` stub
+  (`src/cdc/engine.rs`, the sink modules, and `CdcSinkType` all untouched) — so M-027/H-010 facts hold.
+- The NATS control-plane **ingress gaps are unchanged** — AuthZ permissive stub (#99), no broker
+  ACLs (#97), no NATS auth/TLS (#124/#125), all still In-flight. This bump hardens the library's TLS
+  deps, not the missing ingress controls.
