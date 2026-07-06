@@ -5,7 +5,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@c863d16` (`0.9.0-rc.43`).
+`peat-mesh@b410d7c` (`0.9.0-rc.45`).
 
 > **How to read the labels.** Every capability below carries one of four tags so you always know
 > what is real:
@@ -157,6 +157,23 @@ handshake itself lives in `peat-protocol`; Module 2b covers it in detail.
 > info="iroh:"+node_id)`, the same FIPS-approved derivation `peat-node` uses (ADR-049) — so the
 > formation key still gates who is admitted. No new transport or wire format: this is a discovery
 > path that makes LAN peering work on Android without any n0 phone-home.
+>
+> **Discovered peers are now dialed, sanitised, and durable (b410d7c, rc.44–rc.45) [Shipped].**
+> peat-mesh#266 made browse *fire*; the rc.44–rc.45 follow-ups (peat-mesh#268) make its output
+> actually usable. The advertiser now publishes the **dialable hex `EndpointId`** rather than the
+> formation `node_id` (`network/iroh_transport.rs:836`) so a browsing peer can dial back — the
+> case that matters when the local node is behind NAT and can only be peer-initiated. Discovered
+> `PeerInfo` is bridged into a **dialable** `PeerInfo` (`network/peer_info.rs:108`) and connected via
+> `connect_peer`; loopback and link-local addresses (IPv4, and IPv6 `fe80::/10`) are dropped from the
+> dialable set (`is_routable_addr`, `network/peer_info.rs:73`); and the browse daemon now runs under a
+> **supervised, self-respawning `tokio::spawn` loop** with capped backoff (500 ms → 10 s,
+> `discovery/mdns.rs`) instead of dying permanently on an mdns-sd encoder panic — the bug that used
+> to freeze the Android peer count at 0. On the client side, `peat-ffi` threads a nullable
+> `bindAddress` through the `createNodeJni` / `createNodeWithConfigJni` JNI entry points and derives
+> the iroh identity from the formation key when present (peat#1006, `peat-ffi/src/lib.rs:9061`,
+> `:1859` — **breaking JNI arity**: Android callers must add `bindAddress: String?`), and the
+> peat-controlled `_peat._udp` browse consumer that dials discovered peers (with a 10 s
+> reconnect-watchdog re-dial) lives in `peat-protocol/src/sync/automerge.rs:2682` (peat#1007).
 
 ---
 
@@ -338,6 +355,22 @@ sequenceDiagram
     H-->>N: blob bytes
     Note over N: acquiring X re-announces "I hold X" → next-hop convergence
 ```
+
+**Direct pull-only fetch — `fetch_blob_from_peer` [Shipped].** New at rc.45 (peat-mesh#274,
+consumed by peat#1017): a second, gossip-independent way to get a blob. Where `fetch_blob` walks the
+automatic candidate list (`known_peers ∪ BlobPeerIndex`, health-filtered) and can fall back across
+holders, `fetch_blob_from_peer(&token, peer_id_hex, progress)`
+([`storage/iroh_blob_store.rs:1497`](../peat-mesh/src/storage/iroh_blob_store.rs)) fetches from
+**exactly one caller-chosen peer**, bypasses the candidate list and the `PeerHealthIndex`
+readiness/cooldown filter, and does **not** fall back on failure — every error carries the literal
+`"direct fetch"` so a caller (e.g. the mobile FFI) can branch on it. The peer must be pre-registered;
+the companion `add_peer_from_hex_id(endpoint_id_hex)` (peat-mesh#270,
+[`storage/iroh_blob_store.rs:1347`](../peat-mesh/src/storage/iroh_blob_store.rs)) registers a peer
+**by id only, with no static address**, so relay/DNS discovery resolves reachability at dial time.
+This is a *targeted* pull that lives alongside provider gossip, not a replacement — a successful
+direct fetch still records the holding and re-announces it, so the two paths reinforce the same
+`BlobPeerIndex`. (The e2e proof `tests/blob_direct_peer_fetch_e2e.rs` fetches over real QUIC with no
+document/sync engine attached — code-confirmed, runtime unbenchmarked here.)
 
 **Interest-driven convergence — the ADR-071 seam [Proposed; seam Shipped-but-inert].** rc.43 also
 lands the additive Phase-1 seam for **ADR-071 (Proposed): subscription-based convergence**. The

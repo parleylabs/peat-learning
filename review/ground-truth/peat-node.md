@@ -180,3 +180,18 @@ read from source, not run live.
 - **`--print-config` / `PEAT_NODE_PRINT_CONFIG`.** Opt-in resolved-config dump at startup, secrets
   redacted (`src/main.rs:29-30,445-451`). **Shipped.**
 - **Confirmed unchanged:** `proto/sidecar.proto` not touched — still 27 `rpc`s (27 defined / 27 implemented, full parity).
+
+### 2026-07-06 delta — `9fcdabd → 5df3130` (v0.4.8 → **v0.4.9**)
+
+Range = 8 commits, all test/docs/CI. **No new runtime surface; `proto/sidecar.proto` untouched — RPC count
+still 27/27.**
+
+- **v0.4.9 (2026-07-02): `grpc_test` port-collision fix.** `boot_server` now binds `127.0.0.1:0` and reads
+  the OS-assigned port via `BoundServer::local_addr()` instead of hardcoded 50081–50087, removing the
+  `AddrInUse` flake (`CHANGELOG.md` [0.4.9]; `tests/grpc_test.rs`). Test-only.
+- **Zero-friction two-node attachment quick-start (#176).** New `examples/compose/attachments/`
+  (`docker-compose.two-node.yml`, `node-a`/`node-b`) exercising attachment send/receive over a shared
+  external network with **no `peer.sh`/`send.sh`** — docs/examples only.
+- **Note:** the commit subject "bump to 0.4.2 — peat-mesh rc.41" (#178) is a mislabel; `Cargo.toml`
+  version is **0.4.9**. peat-node's embedded peat-mesh pin (rc.41) is not surfaced in the curriculum
+  (the reader-facing mesh ecosystem version is peat-mesh's own rc.45).

@@ -341,3 +341,41 @@ change.**
 - **Diagram impact:** the §3.3 discovery diagrams (M-017/M-018, twin H-006) still hold — the three
   strategies (mDNS / Kubernetes / static) and the formation-auth gate are unchanged; this adds an
   Android-interop browse path, not a new strategy. Spot-checked; rows advanced to 2026-06-29.
+
+### 2026-07-06 delta — `c863d16 → b410d7c` (rc.43 → **rc.45**; #273 rc.44, #275 rc.45)
+
+Range = 14 commits. Substantive: peat-mesh#274 (`fetch_blob_from_peer`), #270 (`add_peer_from_hex_id`),
+#268 + follow-ups (Android mDNS discovered-peer dial). Rest is CI/release. **No crypto change** (grep of
+changed files: no `chacha20`/`x25519` reintroduced — only historical comments in `Cargo.toml:45,50-51`;
+`derive_iroh_node_secret` still `HKDF-SHA-256`, `src/network/iroh_transport.rs:128`, untouched).
+
+- **`fetch_blob_from_peer` — direct, pull-only, single-peer fetch [Shipped].**
+  `pub async fn fetch_blob_from_peer<F>(&self, token, peer_id_hex, progress)`
+  (`src/storage/iroh_blob_store.rs:1497`). Fetches from **exactly one caller-chosen peer**, bypassing the
+  automatic candidate list (`known_peers ∪ blob_peer_index`) and the `PeerHealthIndex` readiness/cooldown
+  filter, with **no fallback** on failure (errors carry the literal `"direct fetch"` for caller branching).
+  Peer must be pre-registered or it errors (`:1521-1530`). Local-first short-circuit like `fetch_blob`
+  (`:1506-1517`). Uses shared `attempt_download_from_peer` (`:1360`) → `downloader.download(hash, Some(peer_id))`
+  (targeted pull, `:1382`); on success still records `peer_health`/`blob_peer_index` + re-announces
+  (`:1444-1455`). **Lives alongside provider gossip, not a replacement** — `announce_local_holding` still
+  sends `ttl: DEFAULT_ANNOUNCE_TTL` and `DEFAULT_ANNOUNCE_TTL` is still `3` (`src/storage/blob_announce.rs:58`).
+  E2e proof `tests/blob_direct_peer_fetch_e2e.rs:19` (real QUIC, no document/sync engine) — feature-gated
+  `automerge-backend`, self-hosted-runner-only; **NEEDS_RUNTIME** (path confirmed, transfer not benchmarked here).
+- **`add_peer_from_hex_id` — register a blob peer by id only [Shipped].**
+  `pub async fn add_peer_from_hex_id(&self, endpoint_id_hex)` (`src/storage/iroh_blob_store.rs:1347`):
+  parses hex → `EndpointId`, then `add_peer(peer_id)` with **no static address** so relay/DNS resolves
+  reachability at connect time. Contrast sibling `add_peer_from_hex` (`:1322`) which also pins a
+  `TransportAddr::Ip`.
+- **Android mDNS: discovered peers are now dialable, sanitised, durable [Shipped].** Four distinct changes
+  under peat-mesh#268: (a) `impl From<discovery::PeerInfo> for PeerInfo` (`src/network/peer_info.rs:108`)
+  bridges discovered→dialable, filtering addresses through `is_routable_addr`; (b) advertiser now publishes
+  the **dialable hex `EndpointId`** (`hex::encode(endpoint.id().as_bytes())`, `src/network/iroh_transport.rs:836`)
+  instead of the formation `node_id`, so a browsing peer can dial back (matters behind NAT); formation
+  matching still uses the `formation_id` TXT (`:839`); (c) `is_routable_addr` (`src/network/peer_info.rs:73`)
+  drops IPv4 loopback/link-local/unspecified/broadcast + IPv6 loopback/unspecified/`fe80::/10`; (d) the browse
+  daemon now runs on its own `ServiceDaemon` inside a **supervised self-respawning `tokio::spawn` loop**
+  (capped backoff 500 ms→10 s, `src/discovery/mdns.rs`) instead of dying permanently on an mdns-sd encoder
+  panic — the bug that froze the Android peer count at 0. **NEEDS_RUNTIME** for on-device browse recovery.
+- **Diagram impact:** M-017/M-018 + H-006 still hold (dialable/sanitised/durable is a property of the same
+  browse path, not a new strategy or wire tag); M-038 provider-gossip sequence still holds (`fetch_blob_from_peer`
+  is a parallel direct path, re-announces on success). Rows advanced to 2026-07-06.

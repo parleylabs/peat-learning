@@ -16,8 +16,8 @@ download list; the capability map is what tells you whether the system does what
 - **Speculative** — design discussed for teaching, not even an ADR-complete proposal anywhere.
 
 Everything below was checked against the audited HEADs in
-[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `871776d` (rc.28), `peat-mesh`
-rc.43 (`c863d16`), `peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` `4d82282` (0.1.0), `peat-node` 0.4.8. The operating
+[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `2778bd9` (rc.29), `peat-mesh`
+rc.45 (`b410d7c`), `peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` `1da5002` (0.1.0), `peat-node` 0.4.9. The operating
 principle is **code over everything**: where a README, a spec, or a months-old guide disagrees with
 the source on the audited HEAD, the source wins.
 
@@ -37,12 +37,12 @@ each one's role in a sentence so you know why you'd open it.
 | `peat-gateway/` | https://github.com/defenseunicorns/peat-gateway | The enterprise **control plane** — binary, library, web UI, and Helm/Zarf/UDS packaging. It is **not a mesh node and not in the data path**; it observes and manages. Server-side, not an SDK crate. |
 | `peat-node/` | https://github.com/defenseunicorns/peat-node | The deployable **production node**: a gRPC / Connect / gRPC-Web sidecar that embeds `peat-mesh` + `peat-protocol` and exposes them on one port. Iroh QUIC only — no BLE path. (See §7.2 for how it differs from the in-`peat-mesh` demo binary.) |
 | `peat-flutter/` | https://github.com/defenseunicorns/peat-flutter | The **Flutter/Dart client binding** over `peat-ffi` (hand-maintained UniFFI bindings). Wraps the native crate for mobile consumers; transitively bundles peat-btle + peat-mesh. |
-| `peat-sapient/` | https://github.com/defenseunicorns/peat-sapient | The **SAPIENT sensor-standard bridge** — a Rust lib bridging the SAPIENT sensor protocol into Peat via `peat-schema` (ADR-070, Accepted). The sensor-standard analog of peat-transport's TAK/CoT bridge. |
+| `peat-sapient/` | https://github.com/defenseunicorns/peat-sapient | The **SAPIENT sensor-standard bridge** (ADR-070, Accepted) — the sensor-standard analog of peat-transport's TAK/CoT bridge. As of 2026-07 it is a **three-crate workspace**: `peat-sapient` (core BSI Flex 335 v2.0 codec + transforms + C2, `peat-schema` optional), `peat-mesh-sapient` (a one-way `Translator`/`Transport` adapter onto `peat-mesh`, ADR-059 Amendment 4), and `peat-sapient-bridge` (a deployable bidirectional SAPIENT↔mesh↔TAK bridge binary that also consumes `peat-tak`). It now ships **opt-in TLS** (see §7.8). |
 
 > **Note on registries.** Whether `peat-protocol`, `peat-schema`, `peat-btle`, and `peat-lite` are
 > *published* to crates.io, and `peat-ffi` to Maven Central, is **not verified in this audit**. The
 > crates exist and carry versions, but the peat-mesh README advertises stale versions (0.3.2 against
-> a shipped rc.43), so registry-version trust is shaky. Check the actual registry before relying on a
+> a shipped rc.45), so registry-version trust is shaky. Check the actual registry before relying on a
 > published version; do not assume the README is current.
 
 ---
@@ -69,7 +69,7 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 >
 > - **`peat-mesh-node`** (inside peat-mesh) is a small demo / reference binary for bringing up a mesh
 >   by hand.
-> - **`peat-node`** (its own repo, audited at v0.4.8) is the **production sidecar**: it embeds
+> - **`peat-node`** (its own repo, audited at v0.4.9) is the **production sidecar**: it embeds
 >   peat-mesh + peat-protocol and exposes them as a gRPC / Connect / gRPC-Web API on a single port. It
 >   is the Kubernetes sidecar pattern's node, it ships a Helm chart plus Zarf and UDS bundles, and it
 >   is the UDS Remote Agent integration target. The proto defines **27 RPCs** and `service.rs`
@@ -140,7 +140,7 @@ open.
 - **[`peat/docs/guides/developer/DEVELOPER_GUIDE.md`](../peat/docs/guides/developer/DEVELOPER_GUIDE.md)**
   — the onboarding guide: environment setup, runtime architecture, core concepts, crate reference,
   testing, mobile, edge AI, and "Extending Peat." This learning track is a guided path through it.
-  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.43, the
+  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.45, the
   rc.12 FIPS crypto swap dated 2026-05-18, the ADR-066 hierarchy rename still in flight). Where the
   guide and the code differ, **the code wins** — quoting the guide without checking the source is how
   the known stale-doc errors (wrong RBAC role names, ChaCha20 crypto, legacy hierarchy terms) get
@@ -173,7 +173,7 @@ open.
 
 ## 7.6 The ADR archive — your deepest primary source
 
-`peat/docs/adr/` holds **78 files (74 numbered ADRs + 4 reference docs), and growing** — confirmed by a file count,
+`peat/docs/adr/` holds **79 files (75 numbered ADRs + 4 reference docs), and growing** — confirmed by a file count,
 not the "~60" an earlier draft estimated; open issue #695 ("triage 22 Proposed ADRs before public
 release") shows the count trending up. `peat-mesh/docs/adr/` (14) and `peat-btle/docs/adr/` (6) hold
 more. When you want to know *why* something is the way it is, these beat any summary — including this
@@ -254,6 +254,20 @@ suggest, and it is exactly what a defense-prime security auditor will probe:
   never carry it forward into new material.**
 - **Also not in code:** P-384 (only P-256 ships), and the ARM-without-crypto-extensions performance
   envelope is unbenchmarked (peat-mesh #126).
+- **peat-sapient now has transport security — but read the fine print (new 2026-07, peat-sapient#39) [Shipped, opt-in].**
+  The prior audit flagged the SAPIENT bridge as *plain TCP, no TLS*. That is now **partly** fixed:
+  the `peat-sapient-bridge` binary ships **opt-in TLS** for both the SAPIENT sensor link (DLMM↔HLDMM)
+  and the TAK-server link (mTLS via `peat_tak::TakIdentity`), built on `tokio-rustls` with the
+  `aws-lc-rs` provider. Two honest caveats keep this from being a clean "FIPS-clean TLS" claim:
+  (1) **it defaults OFF** — `config.sapient.tls`/`config.tak.tls` are `unwrap_or(false)`, so plain TCP
+  is still the out-of-the-box transport (`peat-sapient-bridge/src/main.rs:132,164`); and (2) the
+  `fips_crypto_provider()` restricts *cipher suites* to AES-GCM but spreads
+  `aws_lc_rs::default_provider()`'s **key-exchange groups unchanged, so X25519 (non-FIPS) is still
+  offered** alongside P-256/P-384, and it is the standard provider, **not** the `aws-lc-rs` *fips*
+  module (`peat-sapient/src/connection.rs:337-348`). So: FIPS-approved AEAD suites, but a non-FIPS
+  key-agreement group is still on the table and the module is unvalidated. This is a **source-level**
+  posture note — all three crates are `0.1.0` and unpublished, so there is no shipped-artifact CVE,
+  and the mesh side (iroh QUIC) is a separate stack.
 
 ---
 

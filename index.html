@@ -200,9 +200,9 @@
       or a whitepaper concept that exists in no repo. Do not assume it ships.</p>
     </div>
     <div class="warn"><b>Audited against (the source of truth for every badge below).</b> peat
-    <code>871776d</code> (workspace 0.9.0-rc.28) · peat-mesh <code>c863d16</code> (rc.43) · peat-btle
-    <code>3d70f48</code> (0.4.0) · peat-lite <code>7a8a8fb</code> (0.2.5) · peat-gateway
-    <code>4d82282</code> (0.1.0) · peat-node <code>9fcdabd</code> (0.4.8). The single recurring pattern:
+    <code>2778bd9</code> (workspace 0.9.0-rc.29) · peat-mesh <code>b410d7c</code> (rc.45) · peat-btle
+    <code>bcfa954</code> (0.4.0) · peat-lite <code>7a8a8fb</code> (0.2.5) · peat-gateway
+    <code>1da5002</code> (0.1.0) · peat-node <code>5df3130</code> (0.4.9). The single recurring pattern:
     <b>code &gt; current ADRs &gt; specs/guide/README</b>. READMEs and the developer guide are months
     older than the code and are wrong in several places this track flags.</div>
 
@@ -470,12 +470,13 @@ NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
         enrollment, CDC, identity federation, envelope encryption. <b>Never in the data path.</b></div>
       <div class="card"><h4>peat-node/</h4><span class="muted">Deployable node.</span> A real, separate
         gRPC/Connect sidecar that embeds peat-mesh + peat-protocol. Iroh QUIC only (no BLE).
-        <span class="st ship">Shipped</span> at 0.4.8.</div>
+        <span class="st ship">Shipped</span> at 0.4.9.</div>
       <div class="card"><h4>peat-flutter/</h4><span class="muted">Client bindings.</span> Flutter/Dart
         client binding over <code>peat-ffi</code> (hand-maintained UniFFI). <span class="st ship">Shipped</span>
         at 0.0.1 (pre-1.0).</div>
-      <div class="card"><h4>peat-sapient/</h4><span class="muted">Sensor bridge.</span> Bridges the SAPIENT
-        sensor standard into Peat via <code>peat-schema</code> (ADR-070, Accepted).
+      <div class="card"><h4>peat-sapient/</h4><span class="muted">Sensor bridge.</span> SAPIENT (BSI Flex 335
+        v2.0) into Peat (ADR-070, Accepted). Now a 3-crate workspace (core codec · <code>peat-mesh</code>
+        adapter · deployable bridge binary) with <b>opt-in TLS</b> for the SAPIENT/TAK links.
         <span class="st ship">Shipped</span> at 0.1.0.</div>
     </div>
 
@@ -922,6 +923,13 @@ ties → lexicographic node id</code></pre>
     consults, TTL-bounded to 3 relay hops, re-announcing on acquire, with trust-classified announces to
     block provider poisoning. Riding its own ALPN (not a new sync message type) keeps it compat-safe in a
     mixed-version rollout.</div>
+    <div class="note"><b>Direct pull-only fetch is <span class="st ship">Shipped</span> (rc.45, peat-mesh#274).</b>
+    <code>fetch_blob_from_peer(token, peer_id_hex, …)</code> fetches from <b>one caller-chosen peer</b>,
+    bypassing the candidate list + health filter with <b>no fallback</b> — a targeted pull alongside
+    gossip, not a replacement (a success still re-announces the holding). Its companion
+    <code>add_peer_from_hex_id</code> registers a peer <b>by id only</b> (relay/DNS resolves the address at
+    dial time). rc.29's <code>peat-ffi</code> UniFFI-exports this as poll-based
+    <code>blob_fetch_start</code> → <code>BlobFetchHandle.status()</code> for mobile (peat#1017).</div>
     <div class="note"><b>Interest-driven convergence is <span class="st prop">Proposed</span> (ADR-071).</b>
     A receiver-evaluated <code>NeedEvaluator</code> + a <code>collection</code> field on the distribution
     doc let a node decide locally whether it needs data, instead of the sender enumerating recipients. The
@@ -1173,11 +1181,11 @@ ties → lexicographic node id</code></pre>
     <code>Strict</code> enrollment policy is unimplemented (always 403s). All <span class="st flight">In flight</span>.</div>
     <p class="muted">Depends on <code>peat-mesh = "=0.9.0-rc.40"</code> purely as a library — frozen for months
     at <code>rc.1</code>, then Dependabot-bumped (peat-gateway#144) to <code>rc.40</code>, so it now lags the mesh
-    ecosystem (rc.43) by only ~3 RCs. The bump also adapted the CDC watcher to the new <code>ChangeEvent</code>
+    ecosystem (rc.45) by ~5 RCs. The bump also adapted the CDC watcher to the new <code>ChangeEvent</code>
     surface (an <code>origin</code> field) and a <code>redb</code> 2→4 major — tracking the mesh is real integration
-    work, not a one-line bump. The only change this cycle (<code>bece4d6→4d82282</code>) was a security
-    dependency bump — <code>async-nats</code> <code>0.38→0.49</code> to clear <code>rustls-webpki</code> CVEs
-    (peat-gateway#151); the mesh pin and the CDC sink set are unchanged.</p>
+    work, not a one-line bump. This cycle (<code>4d82282→1da5002</code>) was CI/toolchain-only — QA-review
+    workflow tweaks, a <code>rust-analyzer</code> toolchain component, and an ignore for the quick-xml
+    <code>RUSTSEC-2026-0194/0195</code> advisories; the mesh pin (still <code>rc.40</code>) and the CDC sink set are unchanged.</p>
 
     <div class="chk"><b>Checkpoint.</b> Why is the gateway never in the data path, and what is the "gateway"
     in a DDIL story instead? · which two CDC sinks actually deliver, and what is the status of Kafka and
@@ -1420,10 +1428,10 @@ DOWN  CommandCoordinator.issue_command() → CommandRouter resolves targets
       <tr><td>peat-gateway/</td><td>control plane</td><td>github.com/defenseunicorns/peat-gateway</td></tr>
       <tr><td><b>peat-node/</b></td><td><b>the deployable node</b> — a real, separate gRPC/Connect sidecar embedding peat-mesh + peat-protocol; Iroh QUIC only</td><td>github.com/defenseunicorns/peat-node</td></tr>
       <tr><td>peat-flutter/</td><td>Flutter/Dart client binding over peat-ffi (UniFFI)</td><td>github.com/defenseunicorns/peat-flutter</td></tr>
-      <tr><td>peat-sapient/</td><td>SAPIENT sensor-standard bridge via peat-schema (ADR-070, Accepted)</td><td>github.com/defenseunicorns/peat-sapient</td></tr>
+      <tr><td>peat-sapient/</td><td>SAPIENT (BSI Flex 335 v2.0) bridge (ADR-070, Accepted) — 3-crate workspace, opt-in TLS</td><td>github.com/defenseunicorns/peat-sapient</td></tr>
     </table></div>
     <div class="note"><b>peat-node, not "peat-mesh-node."</b> The deployable node is the standalone
-    <code>peat-node</code> repo (0.4.8), exposing a gRPC/Connect API (27 RPCs, all 27 implemented
+    <code>peat-node</code> repo (0.4.9), exposing a gRPC/Connect API (27 RPCs, all 27 implemented
     — the README's "25" is outdated). Whether a <code>peat-mesh-node</code> binary also exists is
     <span class="st spec">unverified</span> at the audited HEAD. v1 honesty caveats in peat-node: the gRPC
     surface is <b>unauthenticated</b> (#38, <span class="st flight">In flight</span>); attachment priority
@@ -1437,7 +1445,7 @@ DOWN  CommandCoordinator.issue_command() → CommandRouter resolves targets
     <h3>Where a new contributor gets the most leverage</h3>
     <div class="tbl-wrap"><table>
       <tr><th>Contribution</th><th>What &amp; why</th><th>Status / size</th></tr>
-      <tr><td><b>Doc-fixes</b></td><td>Make stale docs match shipped code: README RBAC names (drop Operator/Supervisor → Leader/Member/Observer/Commander/Admin); README crypto (ChaCha20/X25519 → AES-256-GCM/ECDH-P256); peat-mesh version (0.3.2 → rc.43); peat-node RPC count (25 → 27); GATT UUID (→ 0xA1B2); peat-lite README missing <code>Document</code> 0x07. Highest-ROI first PR.</td><td><span class="st flight">Doc-fix</span> · trivial–small</td></tr>
+      <tr><td><b>Doc-fixes</b></td><td>Make stale docs match shipped code: README RBAC names (drop Operator/Supervisor → Leader/Member/Observer/Commander/Admin); README crypto (ChaCha20/X25519 → AES-256-GCM/ECDH-P256); peat-mesh version (0.3.2 → rc.45); peat-node RPC count (25 → 27); GATT UUID (→ 0xA1B2); peat-lite README missing <code>Document</code> 0x07. Highest-ROI first PR.</td><td><span class="st flight">Doc-fix</span> · trivial–small</td></tr>
       <tr><td><b>FIPS module validation</b></td><td>Swap RustCrypto (<code>aes-gcm</code>/<code>p256</code>) for a CMVP-validated module behind the existing security trait. The single most important enterprise-readiness item.</td><td><span class="st flight">In flight</span> · medium</td></tr>
       <tr><td><b>QoS enforcement</b></td><td>Wire-level cross-class preemption so a Critical bundle can pause an in-flight Bulk transfer; make "&lt;5 s P1" real.</td><td><span class="st flight">In flight</span> · medium</td></tr>
       <tr><td><b>Control-plane auth</b></td><td>peat-node gRPC auth (#38); gateway ingress AuthZ (#99), NATS ACLs/auth/TLS (#97/#124/#125), enrollment proof-of-possession.</td><td><span class="st flight">In flight</span> · medium</td></tr>
@@ -1448,7 +1456,7 @@ DOWN  CommandCoordinator.issue_command() → CommandRouter resolves targets
     </table></div>
 
     <h3>The ADR archive — your best primary source</h3>
-    <p><span class="file">peat/docs/adr/</span> has <b>78</b> files (74 numbered ADRs + 4 reference docs; older docs say "~60"). <b>Eleven are
+    <p><span class="file">peat/docs/adr/</span> has <b>79</b> files (75 numbered ADRs + 4 reference docs; older docs say "~60"). <b>Eleven are
     Accepted</b>: 002, 009, 015, 016, 023, 024, 030, 041 (multi-transport embedded integration), 047,
     057, and 070 (SAPIENT Protocol Bridge — so <code>peat-sapient</code> is a first-class accepted
     integration). ADRs 011/032/035/039/060/063/066 are all <span class="st prop">Proposed</span> even
@@ -1618,7 +1626,7 @@ cargo build -p peat-quickstart --release   <span class="cm"># binary/crate name 
       <span class="fw">PARLEY<b>LABS</b></span> &nbsp; <span class="beep">beep · boop · beep</span>
       <svg class="squig" width="54" height="9" viewBox="0 0 54 9" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5 q4.5 -4 9 0 t9 0 t9 0 t9 0 t9 0 t9 0"/></svg>
       <br><span class="ft">Peat onboarding curriculum · styled per the Parley Labs Brand Guide · © Parley Labs</span>
-      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-06-29</b> · incremental refresh · peat <code>871776d</code> (rc.28) · mesh <code>c863d16</code> (rc.43) · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>4d82282</code> · node <code>0.4.8</code> · flutter <code>4a6554f</code> (0.0.1) · sapient <code>0.1.0</code><!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
+      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-07-06</b> · incremental refresh · peat <code>2778bd9</code> (rc.29) · mesh <code>b410d7c</code> (rc.45) · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>1da5002</code> · node <code>0.4.9</code> · flutter <code>291d7e4</code> (0.0.1) · sapient <code>5118afa</code> (0.1.0)<!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
     </span>
       <div class="fb" id="fb">
         <b>Was this helpful?</b>

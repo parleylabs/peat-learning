@@ -133,10 +133,14 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 > it takes `--bind` / `--name` CLI flags. When something does not pick up an env var, first confirm
 > which binary you are actually running.
 
-### What the production sidecar (`peat-node`) gained recently — v0.4.8 **[Shipped]**
+### What the production sidecar (`peat-node`) gained recently — through v0.4.9 **[Shipped]**
 
 If you run `peat-node` (the sidecar most deployments use), a handful of operability changes in the
-`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `9fcdabd`:
+`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `5df3130` (v0.4.9). The
+v0.4.9 release itself adds no new runtime surface — it eliminates a `grpc_test` port-collision flake
+(the test server now binds `127.0.0.1:0` and reads the OS-assigned port instead of a hardcoded one)
+and ships a zero-friction two-node attachment quick-start under `examples/compose/attachments/`
+(no `peer.sh`/`send.sh` needed). The capability facts below are unchanged from v0.4.8:
 
 - **Received files now keep their name and folder layout (v0.4.8, #173).** Earlier builds wrote each
   attachment to `inbox/<distribution_id>/<basename>` — the original filename buried under a UUID

@@ -105,7 +105,8 @@ sequenceDiagram
 6. `peat-transport/src/tak/` + `peat-protocol/src/cot/` — the aggregated picture is encoded as
    Cursor-on-Target XML (MIL-STD-2525 *type-code mapping*, not full symbology rendering, plus the
    `<_peat_>` extension from ADR-028) and pushed over the TAK/CoT TCP bridge (TLS) to a CoT consumer.
-   (Runnable: [`peat/examples/peat-tak-bridge/`](../peat/examples/peat-tak-bridge/).)
+   (Runnable example: the standalone [`peat-tak`](https://github.com/defenseunicorns/peat-tak) repo —
+   moved out of `peat/examples/` in peat#1020.)
 
 **QoS along the way (ordering Shipped, enforcement In-flight).** A contact report is classified P1
 Critical, so at every bandwidth-constrained hop (`peat-protocol/src/qos/`, `peat-mesh/src/qos/`) it
@@ -123,7 +124,7 @@ offline-first guarantee. One honest caveat on the embedded leg: **BLE-path recon
 pending CRDT state is In-flight** (peat-btle #73), so a node that was offline on the BLE leg for a
 long window may not re-deliver everything it queued. The QUIC/peat-node path is the robust one.
 
-**At the mobile-client edge (peat-ffi `0.2.9`, peat#1000) [Shipped].** Two pieces make a phone a
+**At the mobile-client edge (peat-ffi `0.2.10`, peat#1000) [Shipped].** Two pieces make a phone a
 better citizen of this flow when links flap. First, change notifications are **origin-tagged**: the
 UniFFI `DocumentChange` now carries an `origin: ChangeOrigin` field — `Local` (the app's own
 publish) or `Remote { peer_id }` (a sync from a peer) — so a consumer can refresh its UI on remote
@@ -135,6 +136,19 @@ connected set is the **union across transports**, so a peer already reachable ov
 also dialed over iroh/relay. `wake_reconnect` clears backoffs on a foreground/network-up event;
 `reconnect_known_peers` honours them. This is dial resilience at the binding layer — it does not
 change the wire protocol or the negentropy reconciliation above.
+
+**Blobs from the phone (peat-ffi `0.2.10`, peat#1017) [Shipped].** rc.29 also UniFFI-exports the blob
+surface so a mobile app can move large attachments directly, not only through document sync. The new
+methods (`peat-ffi/src/lib.rs:3358` onward, `#[cfg(feature = "sync")]`) are `enable_blob_transfer`,
+`blob_add_peer` / `blob_add_peer_id` (the latter wraps peat-mesh's `add_peer_from_hex_id`), `blob_put`,
+`blob_exists_locally`, `blob_endpoint_id`, `blob_bound_addr`, and — the interesting one —
+**`blob_fetch_start(hash_hex, size_bytes, peer_id_hex?)`**, which is *non-blocking*: it spawns a tokio
+task and immediately returns an `Arc<BlobFetchHandle>` you poll via `status() -> BlobFetchStatus`
+(`Pending → Started → Downloading → Completed | Failed`) and cancel via `dispose()`. When
+`peer_id_hex` is supplied it routes to peat-mesh's direct `fetch_blob_from_peer` (Module 3 §3.4b);
+when omitted it falls back to mesh-sync `fetch_blob`. This is a UniFFI-liftable, poll-based facade
+over the same mesh blob store — no new wire format. (Handle/poll semantics are code-confirmed; live
+transfer behaviour on a device is not benchmarked here.)
 
 **Identity does not travel intact across the bridge.** Trace A reads as one continuous climb, but
 the identity attached to the report is *re-derived* at step 2, because the stack uses four different

@@ -84,5 +84,55 @@ once `TaskAck→CommandAcknowledgment` lands and a Peat node ships it wired in).
 - `proto/VERSION` upstream hash `244a741…` — correspondence to "BSI Flex 335 v2.0" asserted, not
   verifiable offline.
 - ADR-070 / ADR-009 references point to the `peat` umbrella, not present here.
-- No wire-level transport security (flagged above).
+- No wire-level transport security (flagged above). **SUPERSEDED 2026-07-06 — see delta below: opt-in TLS now ships.**
 - Tests present and substantial but not run live in this read-only audit.
+
+---
+
+## 2026-07-06 delta — `8ec24d4 → 5118afa` (v0.1.0; major restructure)
+
+Range = 13 commits. This supersedes the "single lib, depends on peat-schema ONLY, plain TCP no TLS" facts above.
+
+**Now a 3-crate workspace** (root `Cargo.toml:3`, resolver 2):
+
+| Crate | Role | Depends on |
+|---|---|---|
+| `peat-sapient` | Core BSI Flex 335 v2.0 lib: proto codec, TCP/TLS connection mgmt, transforms, `SapientBridge` C2 (task/ack/watchdog), rate limiting | `peat-schema` **optional** behind `peat` feature (`Cargo.toml:20,44`); NOT peat-mesh. TLS deps optional. |
+| `peat-mesh-sapient` | One-way `impl Translator`/`Transport` for SAPIENT (ADR-059 Amend.4) + bridge→mesh subscriber glue | `peat-mesh =0.9.0-rc.41` (`:23`), `peat-sapient` (path), `peat-schema =0.9.0-rc.24` (`:25`) |
+| `peat-sapient-bridge` | Deployable **binary**: bidirectional SAPIENT↔mesh↔TAK bridge service | `peat-mesh =rc.41`, `peat-mesh-sapient`, `peat-sapient`, **`peat-tak =0.0.2`** (`:22`); dev-dep `peat-protocol =rc.28` |
+
+- **TLS is now Shipped, but OPTIONAL / default-off (peat-sapient#39).** `peat-sapient-bridge/Cargo.toml:15`
+  `default = ["tls"]` so the shipped binary is built with TLS, but at runtime
+  `config.sapient.tls`/`config.tak.tls` are `unwrap_or(false)` (`peat-sapient-bridge/src/main.rs:132,164`)
+  — **plain TCP is still fully supported** (`connection::connect`/`accept`; TLS variants
+  `connect_tls`/`accept_tls` are parallel, `src/connection.rs:270,312`). TLS covers (a) SAPIENT DLMM↔HLDMM
+  (mTLS both directions, `connection.rs:147,201`) and (b) TAK-server mTLS via `peat_tak::TakIdentity`
+  (`main.rs:165-197`). Mesh side is separate (iroh QUIC). Library = `tokio-rustls 0.26` + `rustls-pemfile 2.2`,
+  provider `aws_lc_rs`.
+- **FIPS posture — PARTIAL (source-level flag; all crates 0.1.0, unpublished).** `fips_crypto_provider()`
+  (`connection.rs:337-348`) restricts *cipher suites* to AES-GCM only (TLS1.3 AES-256/128-GCM; TLS1.2
+  ECDHE-{ECDSA,RSA}-AES-GCM) and thus excludes ChaCha20. **But** (1) it spreads
+  `aws_lc_rs::default_provider()`'s `kx_groups` unchanged, so **X25519 (non-FIPS) is still offered**
+  alongside P-256/P-384 — cipher-suite filtering does not constrain the ECDHE group; and (2) it uses the
+  standard `default_provider()`, **not** the `aws-lc-rs` *fips* module, so even the AES-GCM suites run
+  through the non-validated build. The `// FIPS-approved cipher suites only` comment overstates. **NEEDS_RUNTIME**
+  to prove X25519 is actually negotiated (it is offered by construction).
+- **SAPIENT → mesh → TAK/CoT via Translator (peat-sapient#28) [Shipped].** `impl Translator for SapientTranslator`
+  (`peat-mesh-sapient/src/translator.rs:91`): DetectionReport→`"tracks"`, Registration/StatusReport→`"platforms"`
+  (`transport.rs:246-250`). Subscriber glue `run_bridge_subscriber` (`subscriber.rs:41`) publishes
+  Registered/StatusUpdated→platforms, Detected→tracks (origin `"sapient"`). C2 (TaskAck/Alert/AlertAck) not
+  yet published (no v1 mesh doc). SAPIENT↔CoT is achieved at the mesh layer — the bridge binary registers
+  both `SapientTranslator` and `peat_tak::CotTranslator` on one `TransportManager` and fans out the shared
+  `tracks` collection (`main.rs:129,162,208-224`) — not a direct SAPIENT→CoT converter.
+- **New capabilities [Shipped]:** AlertAck/`AlertAckStatus` (`bridge.rs:60,292,591`), `command_id` correlation
+  in TaskAck (`bridge.rs:120-127,255-259,449-456`), watchdog (`watchdog.rs:20`, emits `NodeDisconnected` after
+  2× silence), per-node DetectionReport rate limit (`rate_limit.rs:15,56`), DLMM reconnect-after-HLDMM-drop
+  (`peat-mesh-sapient/src/transport.rs:459` `run_dlmm_connect_loop` + TLS variant, #40), criterion benchmarks.
+  **DLMM** = Detection-Level Multi-sensor Management Module (sensor/platform); **HLDMM** = High-Level Decision
+  Making Module (manager); Peat can act as either (default HLDMM, `main.rs:239`).
+- **peat-schema pin unchanged at `0.9.0-rc.24`** (`peat-sapient/Cargo.toml:44`, `peat-mesh-sapient/Cargo.toml:25`) —
+  **trails the umbrella (rc.29) by 5**. Pins are now internally inconsistent (peat-mesh rc.41, peat-protocol
+  dev-dep rc.28, peat-schema rc.24). Open todo to re-check on each sync (a bump may rename transform fields).
+- **Curriculum mapping this run:** Module 7 §7.1 (row rewritten to 3-crate workspace + opt-in TLS) and §7.8
+  (FIPS-posture note added — flips the prior "plain TCP, no TLS" flag with the precise caveats above). A full
+  Module 7 SAPIENT case-study section + a Module 9 BSI-Flex wire-format section remain open_todos for the full sweep.

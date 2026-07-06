@@ -18,7 +18,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `871776d` (workspace `0.9.0-rc.28`), `peat-mesh` rc.43 (`c863d16`).
+Audited at `peat` HEAD `2778bd9` (workspace `0.9.0-rc.29`), `peat-mesh` rc.45 (`b410d7c`).
 Citations below point at the working-tree source.
 
 ---
@@ -577,9 +577,11 @@ Peat bridges to existing tactical systems rather than replacing them. The `cot` 
 Peat domain messages (e.g. `TrackUpdate`, `CapabilityAdvertisement`) into **Cursor-on-Target** XML
 with MIL-STD-2525 military symbols, plus a custom `<_peat_>` detail extension. That XML is what any
 **CoT/TAK consumer** ingests. The HTTP/socket plumbing for an actual TAK Server bridge is in
-`peat-transport/src/tak/` (ADR-020/028/029) — see Module 5's neighbor, and the runnable
-[`peat/examples/peat-tak-bridge/`](../peat/examples/peat-tak-bridge/). The TAK/CoT TCP bridge is
-**Shipped** (TLS via `tokio-rustls`).
+`peat-transport/src/tak/` (ADR-020/028/029) — see Module 5's neighbor. The TAK/CoT TCP bridge is
+**Shipped** (TLS via `tokio-rustls`). The runnable end-to-end example that used to live at
+`peat/examples/peat-tak-bridge/` was **moved out to a standalone [`peat-tak`](https://github.com/defenseunicorns/peat-tak)
+repo** (peat#1020, workspace `Cargo.toml:17`); `peat-tak` is now a real published crate (`=0.0.2`),
+consumed by the SAPIENT bridge binary (Module 7).
 
 > CoT and TAK are protocol/ecosystem names and are fine to use. Per the curriculum's house rule,
 > generic protocol prose names the *consumer* ("a CoT/TAK consumer"), not specific client products.
