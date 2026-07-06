@@ -6,7 +6,7 @@
 server. But an organization that fields meshes still has to onboard teams, plug into its own identity
 system, manage cryptographic material, and feed mesh events into its analytics and audit pipelines.
 That work happens in the gateway. Repo path: [`peat-gateway/`](../peat-gateway/) (crate `0.1.0`,
-audited at HEAD `4d82282`).
+audited at HEAD `1da5002`).
 
 > **Mental model — the gateway watches and manages; it does not relay.** CRDT sync, blob transfer,
 > and peer-to-peer routing all live in `peat-mesh` and never pass through the gateway. The gateway is
@@ -315,7 +315,7 @@ for CDC watching. It never starts a mesh node and never routes mesh data.
 
 That `=` pin moved a long way this cycle. It sat on `=0.9.0-rc.1` for months — a deliberately frozen
 pin that lagged the live mesh by ~40 release candidates — but a Dependabot bump (peat-gateway#144)
-fast-forwarded it to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (`rc.43`) by only ~3 RCs.
+fast-forwarded it to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (`rc.45`) by ~5 RCs.
 That bump was **not** a one-line version change: the same PR adapted the CDC watcher to `peat-mesh`'s
 newer `ChangeEvent` surface — the `Updated`/`Removed`/`Initial` variants now carry an `origin` field
 (and `Initial` a `collection`), with a catch-all arm added (`src/cdc/watcher.rs:81,154,202`) — and rode
@@ -325,11 +325,13 @@ work, exactly as the old "frozen" framing warned; it just happens to be getting 
 "shipped" for this crate as "shipped against an exact-pinned mesh," and budget integration time when
 the next mesh surface change lands.
 
-The only thing that moved the gateway this cycle (`bece4d6 → 4d82282`) was a **security dependency
-bump**: `async-nats` `0.38 → 0.49` to clear the `rustls-webpki` CVEs in the transitive TLS stack
-(peat-gateway#151, `Cargo.toml:57,96`). The `peat-mesh` pin is untouched at `=0.9.0-rc.40`, and the
-CDC sink set (NATS JetStream + Webhook shipped; Kafka still a `// TODO` stub) is unchanged. Worth
-noting because the NATS control-plane ingress is still the weakest surface here — AuthZ is a
+The last substantive change to the gateway was a **security dependency bump** (`bece4d6 → 4d82282`):
+`async-nats` `0.38 → 0.49` to clear the `rustls-webpki` CVEs in the transitive TLS stack
+(peat-gateway#151, `Cargo.toml:57,96`). Since then (`4d82282 → 1da5002`) it has moved only on
+CI/toolchain — QA-review workflow tweaks, a `rust-analyzer` toolchain component, and an ignore for
+the quick-xml `RUSTSEC-2026-0194/0195` advisory — no source change. The `peat-mesh` pin is untouched
+at `=0.9.0-rc.40`, and the CDC sink set (NATS JetStream + Webhook shipped; Kafka still a `// TODO`
+stub) is unchanged. Worth noting because the NATS control-plane ingress is still the weakest surface here — AuthZ is a
 permissive stub and broker ACLs/auth/TLS are absent (the §5.5 In-flight gaps) — so the bump hardens
 the library, not the missing ingress controls.
 

@@ -578,3 +578,58 @@ prose; the published-vs-source split re-confirmed for peat-btle 0.4.0.
 **New unverifiable claims:** the `peat-ffi` reconnect supervisor + roster + origin-tagging and the peat-mesh
 `_peat._udp` Android browse are **read from source, not exercised live** (NEEDS_RUNTIME) — backoff timing,
 cross-transport dedup behaviour, and Android browse delivery are not benchmarked here.
+
+---
+
+## 2026-07-06 — incremental refresh (CI mode)
+
+**Repos moved:** `peat` `871776d → 2778bd9` (workspace `0.9.0-rc.28 → rc.29`; `peat-ffi` `0.2.9 → 0.2.10`),
+`peat-mesh` `c863d16 → b410d7c` (`rc.43 → rc.45`), `peat-node` `9fcdabd → 5df3130` (`v0.4.8 → v0.4.9`),
+`peat-sapient` `8ec24d4 → 5118afa` (still `0.1.0`; major restructure). `peat-btle` `3d70f48 → bcfa954`,
+`peat-gateway` `4d82282 → 1da5002`, `peat-flutter` `4a6554f → 291d7e4` all advanced **CI/toolchain-only** (no
+curriculum-affecting source change — heads advanced, no doc edit routed). `peat-lite` did not move. **No open
+`curriculum-feedback` issues.** No full sweep due (`last_full_run` 2026-06-18, < 30 days).
+
+**peat (rc.29) — Shipped, additive.** UniFFI blob surface with a **poll-based `blob_fetch_start`** returning an
+`Arc<BlobFetchHandle>` you poll via `status()` (`peat-ffi/src/lib.rs:3358` on; `Some(peer)` → direct
+`fetch_blob_from_peer`, `None` → mesh-sync `fetch_blob`; peat#1017) → Module 6. Android mDNS: nullable
+`bindAddress` + formation-identity through the `createNodeJni` JNI (**breaking JNI arity**, peat#1006) and a
+peat-controlled `_peat._udp` browse consumer that dials discovered peers (`sync/automerge.rs:2682`, peat#1007)
+→ Module 3 §3.3. Dropped the `[patch.crates-io]` git pin on peat-mesh and raised the floor to **rc.45**
+(peat#1016). `cot/event.rs` quick-xml 0.37→0.41 (RUSTSEC-2026-0194/0195) is behaviour-equivalent. **ADR count
+78→79** (ADR-073 peer-ejection Rayfish review, **Proposed, no code**, no change to ADR-056); **11 Accepted
+unchanged** (re-derived across both `**Status:**`/`**Status**:` formats). The `peat-tak-bridge` example
+**moved to a standalone `peat-tak` repo** (peat#1020) — dead curriculum links fixed in Modules 2 & 6.
+
+**peat-mesh (rc.45) — Shipped.** `fetch_blob_from_peer` — direct, pull-only, single-peer, **no-fallback**
+fetch that bypasses the candidate list + health filter (`storage/iroh_blob_store.rs:1497`, peat-mesh#274), and
+`add_peer_from_hex_id` (register a peer by id only, `:1347`, #270) → Module 3 §3.4b + hub + constrained track.
+The rc.44–rc.45 mDNS follow-ups (peat-mesh#268) make Android browse **dialable** (advertise hex EndpointId, dial
+discovered peers, drop loopback/link-local, self-respawning browse daemon) → Module 3 §3.3. Crypto posture
+unchanged (`derive_iroh_node_secret` still HKDF-SHA-256; no ChaCha20/X25519).
+
+**peat-sapient (major restructure) — Shipped.** Now a **3-crate workspace** (`peat-sapient` core codec +
+`peat-mesh-sapient` mesh adapter + `peat-sapient-bridge` deployable binary consuming `peat-tak`). Ships
+**opt-in TLS** (default-off; plain TCP still supported) for the SAPIENT DLMM↔HLDMM link and the TAK-server link
+(mTLS) — **flips the prior "plain TCP, no TLS" flag**. FIPS caveat kept precise: `fips_crypto_provider()`
+restricts cipher suites to AES-GCM but leaves `aws_lc_rs::default_provider()` kx_groups intact so **X25519 is
+still offered**, and it is the standard provider, **not** the aws-lc-rs *fips* module — a **source-level** note
+(all crates 0.1.0, unpublished). SAPIENT reaches TAK/CoT via the shared mesh `tracks` collection, not a direct
+converter. Rewrote Module 7 §7.1 (repo row) + §7.8 (FIPS note); ground-truth `peat-sapient.md` delta supersedes
+the old "peat-schema only / plain TCP" facts.
+
+**peat-node (v0.4.9) — no new runtime surface.** `grpc_test` port-collision fix (test-only) + a zero-friction
+two-node attachment quick-start (docs/examples). `proto/sidecar.proto` untouched — RPC count still 27/27.
+Module 8 heading advanced to v0.4.9 with a one-line note; capability facts unchanged.
+
+**Diagrams:** M-006/H-003 (dep graph — gateway edge label rc.40 `~3 → ~5` behind, node/edge set otherwise
+version-independent; SVG twin carries no rc label), M-017/M-018/H-006 (discovery — dialable/durable is a
+property of the same browse path, no new strategy), M-038 (`fetch_blob_from_peer` is a parallel direct path,
+gossip facts hold), M-027/H-010 (gateway CI-only) all re-derived and advanced to 2026-07-06. peat-sapient's
+3-crate/TLS restructure has no current diagram (prose only; logged as a backlog candidate).
+
+**New unverifiable claims (NEEDS_RUNTIME):** `blob_fetch_start`/`BlobFetchHandle` poll semantics + the
+`fetch_blob_from_peer` transfer (feature-gated e2e, not benchmarked here); the Android mDNS discovered-peer
+dial + self-respawning browse daemon recovery; and the peat-sapient TLS handshake's **actually-negotiated
+key-exchange group** (X25519 is offered by construction but selection needs a runtime capture). Maven AAR
+version for rc.29 could not be confirmed from the tree (no bump in range) — logged, not asserted.

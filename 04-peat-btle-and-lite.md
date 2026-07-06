@@ -20,8 +20,8 @@ crates: [`peat-btle/`](../peat-btle/) (Bluetooth LE mesh transport) and
 > **standalone leaf crates**: they depend on nothing else in Peat (beyond `peat-btle`'s one optional
 > link to `peat-lite`), and `peat-mesh` pulls them in only through opt-in Cargo features.
 
-**Audited against:** peat-btle `3d70f48` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `c863d16` /
-0.9.0-rc.43.
+**Audited against:** peat-btle `bcfa954` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `b410d7c` /
+0.9.0-rc.45.
 
 ---
 
@@ -173,7 +173,7 @@ peat-btle **README is stale** and still advertises ChaCha20/X25519 (`README.md:1
 Two honest caveats for a defense-prime auditor:
 
 - **Published-vs-source split — the shipped crate is not yet FIPS-clean.** The FIPS-clean code above
-  is the *source* at HEAD `3d70f48` (`Cargo.toml:106,116`; `src/security/mesh_key.rs:23-25`,
+  is the *source* at HEAD `bcfa954` (`Cargo.toml:106,116`; `src/security/mesh_key.rs:23-25`,
   `peer_key.rs:33,93`). The peat-btle 0.4.0 **published to crates.io** (checksum `a57dd351`) — the
   one a downstream consumer like peat-flutter actually builds — still depends on `chacha20poly1305`
   + `x25519-dalek` (`peat-flutter/rust/Cargo.lock:3542-3575,630-631,6451-52`). Same version string,

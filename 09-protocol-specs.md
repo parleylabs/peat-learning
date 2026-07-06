@@ -291,7 +291,7 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
   > but the `aes-gcm` / `p256` crates are pure-Rust RustCrypto implementations, **not CMVP-validated
   > cryptographic modules**. For a real FIPS 140 boundary the path is the KMS / Vault HSM backends in
   > peat-gateway; the local-key path uses non-validated software AES. **One published-vs-source split to
-  > flag:** peat-btle *source* (HEAD `3d70f48`) is already FIPS-clean — `aes-gcm` + `p256` (AES-256-GCM,
+  > flag:** peat-btle *source* (HEAD `bcfa954`) is already FIPS-clean — `aes-gcm` + `p256` (AES-256-GCM,
   > ECDH P-256), migrated in commit `c8b013e` (`peat-btle/Cargo.toml:106,116`). But the crates.io-published
   > peat-btle 0.4.0 (checksum `a57dd351`) that downstream binaries like peat-flutter build against still
   > depends on `chacha20poly1305` + `x25519-dalek` — same version string, the FIPS migration was never
@@ -339,7 +339,7 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
    largely **[In-flight]** (ADR-046 epic #853); it is not a shipped runtime mechanism yet.
 8. **Crypto uses FIPS-approved algorithms (AES-256-GCM / ECDH P-256 / Ed25519) under `aws-lc-rs`
    [Shipped]** — but the modules are not CMVP-validated, and only P-256 ships (not P-384). One
-   published-vs-source split: peat-btle *source* (`3d70f48`) is FIPS-clean (`aes-gcm` + `p256`, commit
+   published-vs-source split: peat-btle *source* (`bcfa954`) is FIPS-clean (`aes-gcm` + `p256`, commit
    `c8b013e`), but the crates.io-published peat-btle 0.4.0 still ships ChaCha20/X25519 — never re-published.
    The docs that *still* advertise ChaCha20-Poly1305 / X25519 are the **peat-mesh and peat-btle READMEs**
    and **pre-FIPS ADRs 048/049** (plus **ADR-052 for LoRa, which carries a live ChaCha20 FIPS conflict**)

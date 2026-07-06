@@ -533,6 +533,13 @@
   extends the same reach to opaque blob delivery. (Choosing recipients by durable <em>interest</em>
   rather than a relay's peer list — ADR-071 — is <span class="st st-prop">Proposed</span>: the seam is in
   code but inert.)</div>
+  <div class="note"><b>And the opposite lever: a deliberate, one-peer pull.</b> rc.45 adds
+  <code>fetch_blob_from_peer</code> (<span class="st st-ship">Shipped</span>, peat-mesh#274) — fetch a
+  blob from <b>exactly one caller-chosen peer</b>, skipping the automatic candidate list and health
+  filter, with <b>no fallback</b>. In a DDIL setting where you know which relay actually holds the
+  payload and want to spend link budget on that one path (not fan out across a flaky candidate set),
+  this is the surgical counterpart to gossip's spread-and-discover. The mobile binding exposes it as a
+  poll-based <code>blob_fetch_start</code> handle (peat-ffi rc.29, peat#1017).</div>
   <div class="crumbs"><button class="btn" data-go="cn6">← Back</button><button class="btn" data-go="cn8">Next: two graphs, one system →</button></div>
 </section>
 
@@ -817,7 +824,7 @@
       <span class="fw">PARLEY<b>LABS</b></span> &nbsp; <span class="beep">beep · boop · beep</span>
       <svg class="squig" width="54" height="9" viewBox="0 0 54 9" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5 q4.5 -4 9 0 t9 0 t9 0 t9 0 t9 0 t9 0"/></svg>
       <br><span class="ft">Peat onboarding curriculum · styled per the Parley Labs Brand Guide · © Parley Labs</span>
-      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-06-29</b> · incremental refresh · peat <code>871776d</code> (rc.28) · mesh <code>c863d16</code> (rc.43) · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>4d82282</code> · node <code>0.4.8</code> · flutter <code>4a6554f</code> (0.0.1) · sapient <code>0.1.0</code><!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
+      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-07-06</b> · incremental refresh · peat <code>2778bd9</code> (rc.29) · mesh <code>b410d7c</code> (rc.45) · btle <code>0.4.0</code> · lite <code>0.2.5</code> · gw <code>1da5002</code> · node <code>0.4.9</code> · flutter <code>291d7e4</code> (0.0.1) · sapient <code>5118afa</code> (0.1.0)<!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
     </span>
       <div class="fb" id="fb">
         <b>Was this helpful?</b>

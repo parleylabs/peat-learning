@@ -288,3 +288,55 @@ the FFI binding only.
   (`peat-ffi/src/dart_ffi.rs`), alongside the existing shims.
 - **FIPS posture unchanged.** The new code adds no crypto; roster persistence is plain JSON. No
   ChaCha20/X25519 reintroduced anywhere in source.
+
+### 2026-07-06 delta — `871776d → 2778bd9` (workspace 0.9.0-rc.28 → **rc.29**; peat-ffi 0.2.9 → **0.2.10**)
+
+Range = 11 commits (#1006/#1007 Android mDNS, #1016 mesh-pin drop, #1017 blob FFI, #1018 supply-chain,
+#1019 release, #1020 tak-bridge move, #1021 ADR-073, + CI). **No enum/role/wire change** — CellRole still
+= 7 (`peat-protocol/src/models/role.rs:14-30`); `cot/event.rs` change is `BytesText::unescape()` →
+`xml10_content()` (behaviour-equivalent, forced by quick-xml 0.37→0.41, RUSTSEC-2026-0194/0195);
+`sync/automerge.rs` +141 is the Android dial handler (additive). No crypto added.
+
+- **UniFFI blob surface + poll-based `blob_fetch_start` (peat#1017) [Shipped].** New `#[uniffi::export]`
+  methods on `PeatNode` (`peat-ffi/src/lib.rs:3358` on, `#[cfg(feature = "sync")]`): `enable_blob_transfer`
+  (`:3369`, now takes `Option<String>` not `Option<SocketAddr>`), `blob_add_peer` (`:3410`),
+  `blob_add_peer_id` (`:3442`, NEW — wraps peat-mesh `add_peer_from_hex_id`), `blob_put` (`:3468`),
+  `blob_exists_locally` (`:3499`), `blob_endpoint_id` (`:3514`), `blob_bound_addr` (`:3522`), and
+  **`blob_fetch_start(hash_hex, size_bytes, peer_id_hex?) -> Arc<BlobFetchHandle>`** (`:3541`). It is a
+  *synchronous* fn that spawns a tokio task (`:3572`) and returns immediately; caller polls
+  `BlobFetchHandle.status() -> BlobFetchStatus {Pending,Started,Downloading,Completed,Failed}` (`:3613,3690`)
+  and cancels via `dispose()` (`:3700`, also on Drop). `Some(peer_id)` → `fetch_blob_from_peer` (direct);
+  `None` → `fetch_blob` (mesh-sync). Dart C-ABI shims mirror all of it (`peat-ffi/src/dart_ffi.rs`).
+  **NEEDS_RUNTIME** (handle/poll semantics confirmed; live transfer not benchmarked here).
+- **Android mDNS: `bindAddress` + formation identity through JNI (peat#1006) [Shipped].**
+  `normalize_bind_address` (`peat-ffi/src/lib.rs:9021`); `createNodeJni`/`createNodeWithConfigJni` gained a
+  trailing nullable `bindAddress` (`:9061`, `:9175`) — **breaking JNI arity**. `create_node` derives the iroh
+  identity via `IrohTransport::from_formation_with_discovery_at_addr` when a base64 shared key is present
+  (`:1859`; legacy `from_seed_...` fallback `:1869`). `base64 = "0.22"` dep added (`peat-ffi/Cargo.toml:152`).
+- **Dial mDNS-discovered peers on Android (peat#1007) [Shipped].** A peat-controlled `_peat._udp` browse
+  consumer in `IrohPeerDiscovery` (`peat-protocol/src/sync/automerge.rs:2682` on): converts
+  `DiscoveryEvent::PeerFound/PeerUpdated` → dialable `NetworkPeerInfo`, dials via `connect_peer`,
+  authenticates via `respond_to_formation_auth`, with a 10 s reconnect-watchdog re-dial and `get_connection`
+  dedup. Non-hex node_id skipped.
+- **Dropped `[patch.crates-io]` git pin on peat-mesh; floor raised (peat#1016) [Shipped/manifest].** The
+  workspace `Cargo.toml` git patch on `peat-mesh` was removed and Cargo.lock flipped to the registry crate.
+  PR title says "bump floor to rc.44", but the **final HEAD floor is `>=0.9.0-rc.45, <0.9.1`**
+  (`Cargo.toml:291`; re-bumped by the blob work #1017 to get `fetch_blob_from_peer`). Ground truth: floor
+  **rc.45**, registry-sourced, no git pin. peat-schema pin bumped in lockstep to `=0.9.0-rc.29`
+  (`peat-protocol/Cargo.toml:26`; `peat-ffi/Cargo.toml:140`).
+- **ADR-073 (peer-ejection Rayfish review) [Proposed, no code].** New `docs/adr/073-peer-ejection-rayfish-review.md`,
+  **Status: Proposed** (`:3`), dated 2026-07-07. A design review comparing "Rayfish" (an external open-source
+  P2P mesh VPN on the same Iroh/QUIC substrate, used only as a comparison reference) against ADR-056
+  (Compromised Node Detection/Isolation/Ejection); Decision = **no change to ADR-056**, with three follow-ups
+  before Phase 1. No code. ADR total is now **79** (`ls docs/adr/*.md` = 79; 75 numbered + 4 reference).
+  Accepted count **unchanged at 11** (002, 009, 015, 016, 023, 024, 030, 041, 047, 057, 070 — must match both
+  `**Status:** Accepted` and `**Status**: Accepted` formats; a single-format grep under-counts to 9).
+- **`examples/peat-tak-bridge` removed, moved to standalone `peat-tak` repo (peat#1020) [Shipped/move].**
+  Deleted from the workspace (`Cargo.toml:17` comment); `peat-tak` is now consumed as a published crate
+  (`=0.0.2`) by peat-sapient-bridge. **Stale refs persist** in `docs/whitepaper/05-...:156`,
+  `docs/adr/070-...:65,484`, `docs/adr/058-...` (several), `DEPENDENCY-LICENSES.md:258` — those are peat-repo
+  docs, not curriculum; curriculum links fixed in Modules 2 & 6.
+- **FIPS posture unchanged.** No crypto added; supply-chain #1018 trusts `cmov`/RustCrypto-utils publishing.
+
+*Could-not-confirm:* Maven AAR version for rc.29 — no AAR version bump found in this diff range (stale
+references only). Logged, not asserted.
