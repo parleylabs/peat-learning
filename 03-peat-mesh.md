@@ -5,7 +5,16 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@b410d7c` (`0.9.0-rc.45`).
+`peat-mesh@b86c2c2` (`0.9.0-rc.47`).
+
+> **iroh reached 1.0 (rc.46, peat-mesh#276) [Shipped].** The QUIC transport that underpins the whole
+> mesh left the release-candidate train: `iroh` is now pinned to the **stable `1.0.2`** line
+> (`iroh-blobs 0.103.0`, `iroh-mdns-address-lookup 0.4.0`), replacing the old `=1.0.0-rc.1` exact pins
+> (`Cargo.toml:136,142,143`). The bump was wire- and API-compatible — "zero API breakage" — so no
+> curriculum protocol fact changes, but the maturity signal is real: earlier drafts that call iroh a
+> pre-1.0 release candidate are now stale. `peat-node` and `peat-cli` moved onto the same `1.0.2`
+> stable line in lockstep (iroh's process-global crypto/ALPN registries require one iroh version
+> across a workspace). The provider stays `tls-aws-lc-rs` (ring deliberately excluded for FIPS).
 
 > **How to read the labels.** Every capability below carries one of four tags so you always know
 > what is real:
@@ -165,9 +174,9 @@ handshake itself lives in `peat-protocol`; Module 2b covers it in detail.
 > case that matters when the local node is behind NAT and can only be peer-initiated. Discovered
 > `PeerInfo` is bridged into a **dialable** `PeerInfo` (`network/peer_info.rs:108`) and connected via
 > `connect_peer`; loopback and link-local addresses (IPv4, and IPv6 `fe80::/10`) are dropped from the
-> dialable set (`is_routable_addr`, `network/peer_info.rs:73`); and the browse daemon now runs under a
-> **supervised, self-respawning `tokio::spawn` loop** with capped backoff (500 ms → 10 s,
-> `discovery/mdns.rs`) instead of dying permanently on an mdns-sd encoder panic — the bug that used
+> dialable set (`is_routable_addr`, `network/peer_info.rs:73`); and the browse loop runs under a
+> **supervised `tokio::spawn` loop** with capped backoff (500 ms → 10 s, `discovery/mdns.rs`) that
+> re-issues `browse()` rather than dying permanently on an mdns-sd encoder panic — the bug that used
 > to freeze the Android peer count at 0. On the client side, `peat-ffi` threads a nullable
 > `bindAddress` through the `createNodeJni` / `createNodeWithConfigJni` JNI entry points and derives
 > the iroh identity from the formation key when present (peat#1006, `peat-ffi/src/lib.rs:9061`,
@@ -301,6 +310,56 @@ instead of one-stream-per-message. The one-stream-per-message characterization a
 results** — treat them as the motivation for the proposal. The durable lesson, true before any fix
 lands: on a degraded, high-latency link, latency and write cadence — not just throughput — shape how
 fast a mesh converges.
+
+### Keeping the store small: write coalescing, adaptive compaction, bounded memory (rc.46–rc.47) **[Shipped]**
+
+A run of `AutomergeStore` work landed to stop a long-lived node's redb file and RSS from growing
+without bound under high-frequency writes (the trigger was a field report of a 14.9 MB uncompacted
+store and saturated tokio workers from hours of heartbeat churn — peat-flutter#22). Four levers,
+all in `storage/automerge_store.rs`:
+
+- **Write coalescing [Shipped, default-on].** Repeated `put`s to the same key inside a short cooldown
+  (`DEFAULT_WRITE_COOLDOWN = 200 ms`, `:85`) defer the redb persist; only the in-memory doc + cache
+  update, and a background task drains deferred writes on a 200 ms cadence (`start_write_coalescing`,
+  `:2000`). In-memory stores set the cooldown to zero (persistence is a no-op there), and it can be
+  disabled per-store or per-collection. **Per-collection write policy [Shipped, peat-mesh#282]:** a
+  registered `WritePolicy` (`:116`) overrides the cooldown and the compaction threshold for a collection,
+  keyed on the **colon-delimited prefix** of a key — the segment before the first `:` (`collection_prefix()`,
+  `:2258`, so `telemetry:sensor-1` resolves to `telemetry`). Note this colon-prefix scheme is a *different*
+  key convention from the slash-delimited `fleet/{id}/{kind}` QoS classifier (Module 2 §2.6) — orthogonal
+  mechanisms, no code link.
+- **Adaptive compaction [Shipped as of the rc.47-era wire-in, peat-mesh#296/#297].** A per-key change
+  counter (`DEFAULT_COMPACTION_THRESHOLD = 50`, `:91`) triggers `compact(key)` — a `fork()` that drops
+  Automerge history — for high-churn documents. Worth being precise: the routine existed and was
+  unit-tested since peat-mesh#280 but was **only ever called from `#[cfg(test)]`** until peat-mesh#296
+  spawned it from `AutomergeBackend::start_sync` on a 30 s interval (`sync/automerge_backend.rs`). So
+  it is genuinely live only from that wire-in, not from the earlier commit.
+- **Byte-bounded LRU cache [Shipped].** `ByteBoundedCache` (`:299`) evicts least-recently-used docs
+  once a heap budget is exceeded (`DEFAULT_CACHE_BYTE_BUDGET = 4 MiB` estimated heap, `:136`; evicted
+  docs reload from the mmap'd redb). Remote-origin (sync-received) puts weight the change counter 10×
+  vs 1× for local writes, so a doc under heavy inbound sync hits the compaction threshold sooner.
+- **Bounded RSS on the sync receive path [Shipped, peat-mesh#289].** The debug `doc.save()` in
+  `receive_sync_message` is now gated behind `DEBUG` tracing, and the dirty-buffer force-flush cap
+  dropped to `MAX_DIRTY_ENTRIES = 16` (`:487`).
+
+> The RSS figures in the commit history (≈930 MB before → <60 MB steady-state, OpTree expansion
+> "250–300×") are field-profile numbers, **not benchmarked here** — treat them as motivation, not a
+> guarantee. Note also that peat-mesh#296/#299/#295 land *after* the tagged rc.47 release commit, so
+> a consumer pinned to the rc.47 artifact gets the memory-bounding but not yet the compaction wire-in
+> or the dialing fixes below.
+
+### Dialing an ID: pull-based address resolution (rc.47, peat-mesh#299) **[Shipped]**
+
+iroh 1.0's `AddressLookupServices` is **pull-based** — `Endpoint::connect` no longer consults
+discovery on its own — so an ID-only dial used to go out with no addresses and no relay and silently
+fail. `connect_by_id` now resolves first: it builds an `EndpointAddr`, calls `endpoint.address_lookup()`
+and polls `resolve(endpoint_id)` under a 2 s deadline before dialing, falling back to the bare address
+on timeout (`network/iroh_transport.rs:1457`). A companion fix (peat-mesh#295) routes the various
+constructors' binds through an interface filter (`bind_with_interface_filter_dual_stack`) so the node
+advertises real LAN IPv4/IPv6 and drops docker-bridge and CGNAT-range (`100.64.0.0/10`) addresses;
+`PEAT_ADVERTISE_ALL_INTERFACES=1` bypasses the filter. (The `dialer_resolves_acceptor_by_id_via_mdns`
+P2P test is CI-verified only — local macOS firewall on unsigned test binaries makes it inconclusive
+off-runner; treat the on-wire behaviour as NEEDS_RUNTIME.)
 
 ---
 

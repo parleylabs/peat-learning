@@ -150,6 +150,33 @@ when omitted it falls back to mesh-sync `fetch_blob`. This is a UniFFI-liftable,
 over the same mesh blob store — no new wire format. (Handle/poll semantics are code-confirmed; live
 transfer behaviour on a device is not benchmarked here.)
 
+**The FFI records are being pulled back to proto-backed fields (peat-ffi `0.2.11`, rc.30, peat#1022).**
+ADR-074 ("peat-schema as the single source of truth for all message types") wants every mesh message
+type to originate in `peat-schema` and every sub-crate to *derive* its types from the proto — not
+hand-copy fields. The ADR itself is **[Proposed]** (`peat/docs/adr/074-schema-single-source-of-truth.md`),
+but a first migration tranche is already **[Shipped]** in `peat-ffi/src/lib.rs`: the UniFFI records
+`NodeInfo`, `TrackInfo`, and `CellInfo` were shrunk to proto-backed fields with generated
+`From<proto>` bridges, `NodeStatus` was folded into a proto-aligned `HealthStatus`, and the hand-rolled
+`MarkerInfo`/`CommandInfo` records — with their `get_markers()`/`get_commands()` accessors — were
+**removed** from the FFI surface. Label it precisely for a reader: the *governing ADR is Proposed*,
+the *first code step is Shipped*; the two are not the same thing, and the rest of the migration has not
+landed. No wire format changed — this is a binding-surface cleanup.
+
+**The Dart client now rides this surface (peat-flutter, still 0.0.1) [Shipped].** `peat-flutter` — the
+Flutter/Dart binding — re-pinned the *published* `peat-ffi 0.2.10` and grew two real client facades over
+it: `PeatFlutterNode.blobDownload(hashHex, sizeBytes, {peerIdHex})` returns a poll-based
+`Stream<BlobFetchStatus>` over the blob surface above (omit the peer → mesh-sync candidate selection;
+pass it → direct P2P pull), and a `MarkerInfo` map-marker facade with `putMarker` / `deleteDocument` and
+delete-event visibility. The marker delete uses an **OR-Set soft-delete tombstone** (`deleted:true`), not
+a hard remove — mesh-wide hard-delete propagation (`ChangeEvent::Removed`) is still **In-flight**, so the
+tombstone sentinel is the shipped cross-mesh mechanism. Two honest caveats for a mobile integrator:
+(1) the Dart client transitively bundles the *published* `peat-btle 0.4.0`, which still ships **non-FIPS**
+ChaCha20-Poly1305 + X25519 (the source is FIPS-clean but was never re-published — see Module 4 and Module 7 §7.8);
+and (2) because these are **hand-maintained** UniFFI bindings pinned to `peat-ffi 0.2.10`, the marker
+records they call (`put_marker`/`get_markers`) were **removed** from `peat-ffi 0.2.11` by the ADR-074
+shrink above — so the next peat-ffi re-pin will need those bindings refactored to the proto-backed schema
+or they fail the UniFFI checksum. (A full `04c` client-bindings module is tracked for the next full sweep.)
+
 **Identity does not travel intact across the bridge.** Trace A reads as one continuous climb, but
 the identity attached to the report is *re-derived* at step 2, because the stack uses four different
 identity schemes. peat-lite's `NodeId` is a bare 32-bit integer (`peat-lite/src/node_id.rs:9-34`,

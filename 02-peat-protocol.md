@@ -18,7 +18,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `2778bd9` (workspace `0.9.0-rc.29`), `peat-mesh` rc.45 (`b410d7c`).
+Audited at `peat` HEAD `cb6a818` (workspace `0.9.0-rc.30`), `peat-mesh` rc.47 (`b86c2c2`).
 Citations below point at the working-tree source.
 
 ---
@@ -444,6 +444,29 @@ classes and their configured targets are verbatim from `src/qos/mod.rs:41-45` (A
 > in-flight Bulk transfer — and the "P1 < 500 ms / < 5 s end-to-end" figures are targets, not a
 > guarantee. QoS enforcement is **In-flight** (peat-node QoS fanout ships; preemption tracked
 > separately). Frame this to a customer as "prioritizes and orders," not "guarantees latency."
+
+**Naming a collection to get its QoS — the `fleet/*` prefix classifier (peat-mesh rc.47, peat-mesh#293) [Shipped].**
+Until now a collection got its QoS/sync/deletion behaviour only if it matched a hard-coded native name
+(`commands`, `cells`, `beacons`, `node-positions`, …). rc.47 adds a fallthrough classifier so a
+*fleet* collection named `fleet/{id}/{kind}` is classified purely from its `{kind}` segment — no code
+change needed to onboard a new fleet or UAS. The mapping is verbatim across four dimensions
+(`peat-mesh/src/qos/{mod,sync_mode,deletion}.rs`):
+
+| `fleet/…/{kind}` | QoS class | Sync mode | Deletion policy | Propagation |
+|---|---|---|---|---|
+| `command` | P1 Critical | FullHistory | SoftDelete | Down-only |
+| `ack` | P2 High | FullHistory | SoftDelete | Bidirectional |
+| `products` | P2 High | FullHistory | Tombstone (24 h) | Bidirectional |
+| `task-state` | P3 Normal | LatestOnly | ImplicitTTL (1 h) | Bidirectional |
+| `heartbeat` | P3 Normal | LatestOnly | ImplicitTTL (1 h) | Bidirectional |
+| `position` | P4 Low | LatestOnly | ImplicitTTL (1 h) | Bidirectional |
+| *unknown / non-`fleet/` / wrong segment count* | P5 Bulk | FullHistory | SoftDelete | Bidirectional |
+
+> **Don't conflate this with the storage write-policy prefix.** The `fleet/*` classifier keys on
+> **slash**-delimited names (`fleet/id/kind`). The separate per-collection *write policy* that tunes
+> the coalescing window and compaction threshold (Module 3, rc.46–rc.47 storage work) keys on the
+> **colon**-delimited prefix (`telemetry:sensor-1` → `telemetry`). They are orthogonal mechanisms
+> over two different key schemes — no code links them.
 
 ---
 

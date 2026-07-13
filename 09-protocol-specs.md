@@ -179,6 +179,19 @@ Highlights, verified against `003-schema.md`:
   shipped in peat-transport (`src/tak/`, ADR-020/028/029); confirm any specific field mapping against
   that code plus spec 003 §9 before quoting it as exact.
 
+> **New at rc.30: richer motion and error fields on tracks [Shipped].** `peat-schema/proto/common.proto`
+> gained two message types: **`Kinematics`** (`velocity` m/s, `heading` 0–360°, `acceleration` m/s²,
+> `vertical_speed` m/s, `common.proto:37`) and **`PositionError`** (`circular_error` = CEP m,
+> `linear_error` = LEP m, `vertical_error` m, `common.proto:45`). Both are wired onto `Track`
+> (`kinematics = 12`, `position_error = 13`) and `NodeState` (fields 8/9, LWW-register merge in
+> `peat-protocol/src/models/node.rs`), and `peat-schema/src/validation/track.rs:123,159` enforces finite
+> (non-NaN) values, non-negative errors, and heading in range. The older `Track.velocity`, `cep_m`,
+> and `vertical_error_m` fields are now marked **`[deprecated]`** in favour of these — but read carefully:
+> consumers such as the SAPIENT bridge **dual-write** old and new fields for backward compatibility
+> (Module 7), so the deprecated fields are still populated, not gone. Note also the proto **schema
+> version** is a separate track from the crate version: every `.proto` header now reads `Version: 0.5.0`
+> (pre-1.0, signalling the wire schema is not yet frozen) while the `peat-schema` *crate* is `0.9.0-rc.30`.
+
 ## 9.4 `004-coordination` — cells, election, hierarchy [spec is normative; mesh runtime differs]
 
 `004-coordination` is the normative version of Module 2·5. It defines the cell state machine

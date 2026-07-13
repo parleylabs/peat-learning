@@ -379,3 +379,36 @@ changed files: no `chacha20`/`x25519` reintroduced — only historical comments 
 - **Diagram impact:** M-017/M-018 + H-006 still hold (dialable/sanitised/durable is a property of the same
   browse path, not a new strategy or wire tag); M-038 provider-gossip sequence still holds (`fetch_blob_from_peer`
   is a parallel direct path, re-announces on success). Rows advanced to 2026-07-06.
+
+### 2026-07-13 delta — `b410d7c → b86c2c2` (0.9.0-rc.45 → rc.47)
+- **iroh reached 1.0 stable [Shipped]** (rc.46, peat-mesh#276, `d2dde2b`). `Cargo.toml:137,143,144`:
+  `iroh 1.0.2`, `iroh-blobs 0.103.0`, `iroh-mdns-address-lookup 0.4.0`, replacing the `=1.0.0-rc.1`/`=0.102.0`/
+  `=0.3.0` exact rc pins. Bump was Cargo.toml-only — "zero API breakage", wire/API-compatible with rc.1. Provider
+  stays `tls-aws-lc-rs` (ring excluded for FIPS). The "iroh is pre-1.0" framing is now retired everywhere.
+- **Store-bounding work, all in `storage/automerge_store.rs` [Shipped]:** write coalescing
+  (`DEFAULT_WRITE_COOLDOWN=200ms` `:85`, default-on, zero for in-memory stores, peat-mesh#279); adaptive
+  compaction (`DEFAULT_COMPACTION_THRESHOLD=50` `:91`, `compact()` = `fork()` dropping history) — existed since
+  #280 but was **only called from `#[cfg(test)]` until #296/#297 spawned it from `AutomergeBackend::start_sync`
+  at a 30s interval**, so genuinely live only from that wire-in; byte-bounded LRU cache (`ByteBoundedCache` `:299`,
+  `DEFAULT_CACHE_BYTE_BUDGET=4 MiB` `:135`, #288); bounded RSS on the sync-receive path (`MAX_DIRTY_ENTRIES=16`
+  `:485`, DEBUG-gated `doc.save()`, #289). Remote-origin puts weight the change counter 10× vs 1× for local.
+  RSS figures (~930 MB→<60 MB, OpTree 250–300×) are field-profile numbers — NEEDS_RUNTIME, not benchmarked here.
+- **`fleet/{id}/{kind}` prefix QoS classifier [Shipped]** (peat-mesh#293, `qos/{mod,sync_mode,deletion}.rs`).
+  Slash-delimited fleet collections classified from `{kind}` across four dimensions:
+  command=P1/FullHistory/SoftDelete/DownOnly · ack=P2/FullHistory/SoftDelete/Bidi ·
+  products=P2/FullHistory/Tombstone(24h)/Bidi · task-state=P3/LatestOnly/ImplicitTTL(1h)/Bidi ·
+  heartbeat=P3/LatestOnly/ImplicitTTL/Bidi · position=P4/LatestOnly/ImplicitTTL/Bidi · unknown=P5/Bulk.
+  Distinct from the colon-prefixed per-collection **write policy** (#282) — orthogonal key schemes, no code link.
+- **mDNS single shared ServiceDaemon [Shipped]** (peat-mesh#291, `discovery/mdns.rs`). Advertise + browse now
+  clone one daemon (one thread/socket on 5353). Prior "self-respawning *independent* browse daemon" is now stale:
+  the supervised re-browse loop remains but re-issues `browse()` on the shared daemon; a daemon-thread panic now
+  takes down both advertise and browse (accepted trade-off — the dual-socket bug broke all macOS/iOS peering).
+- **`connect_by_id` resolves via `address_lookup()` before dialing [Shipped]** (peat-mesh#299,
+  `network/iroh_transport.rs:1457`, 2s deadline) — a direct consequence of iroh 1.0's pull-based
+  `AddressLookupServices`. Bind now routed through `bind_with_interface_filter_dual_stack` (#295): advertises real
+  LAN v4/v6, drops docker-bridge / Tailscale-CGNAT `100.64.0.0/10`; `PEAT_ADVERTISE_ALL_INTERFACES=1` bypasses.
+  (`dialer_resolves_acceptor_by_id_via_mdns` is CI-verified only — NEEDS_RUNTIME off-runner.)
+- **FIPS unchanged:** `derive_iroh_node_secret` still HKDF-SHA-256 (`iroh_transport.rs:128`); no ChaCha20/X25519
+  added anywhere in the diff; crypto deps unchanged. `fetch_blob_from_peer`/`add_peer_from_hex_id`/provider gossip
+  all still present and unchanged. **Note:** rc.47 was *tagged* at `372877e`; #296/#299/#295/#293 land after that
+  tag — a consumer pinned to the rc.47 artifact gets the memory-bounding but not yet the compaction wire-in/dial fixes.

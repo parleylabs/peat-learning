@@ -633,3 +633,55 @@ gossip facts hold), M-027/H-010 (gateway CI-only) all re-derived and advanced to
 dial + self-respawning browse daemon recovery; and the peat-sapient TLS handshake's **actually-negotiated
 key-exchange group** (X25519 is offered by construction but selection needs a runtime capture). Maven AAR
 version for rc.29 could not be confirmed from the tree (no bump in range) — logged, not asserted.
+
+## 2026-07-13 — incremental refresh (CI mode)
+
+Delta-driven sync on the latest model, multi-agent (orchestrator + five read-only per-repo ground-truth
+research agents + the §0b validation gates: independent fact-check, house-rules, cohesion, diagram,
+blast-radius, published-artifact/reference, fact-wide-occurrence). No full sweep due (last_full_run
+2026-06-18, 25 days < 30). **No open curriculum-feedback issues.**
+
+**Repos moved (5 of 8):**
+- **peat** `2778bd9 → cb6a818` (workspace rc.29 → rc.30; peat-ffi 0.2.10 → 0.2.11).
+- **peat-mesh** `b410d7c → b86c2c2` (rc.45 → rc.47).
+- **peat-node** `5df3130 → 7942be5` (v0.4.9, dependency-only — no version bump).
+- **peat-flutter** `291d7e4 → 129c74c` (0.0.1; re-pins published peat-ffi 0.2.10).
+- **peat-sapient** `5118afa → 93d51ac` (0.1.0; +12 commits).
+- peat-btle / peat-gateway / peat-lite: no drift.
+
+**Headline facts (all code-verified, path:line in the per-repo ground-truth deltas dated 2026-07-13):**
+- **iroh reached 1.0 stable** — peat-mesh moved `iroh` from `=1.0.0-rc.1` to `1.0.2` (peat-mesh#276), and
+  peat-node followed. The "iroh is pre-1.0" framing is retired across Modules 1/3/8 + hub. Knock-on: iroh
+  1.0's pull-based address lookup forced `connect_by_id` to resolve via `address_lookup()` before dialing
+  (peat-mesh#299).
+- **New Shipped `fleet/{id}/{kind}` prefix QoS classifier** (peat-mesh#293) — maps fleet collections to
+  QoS class / sync mode / deletion policy / propagation by naming convention (Module 2 §2.6, full table).
+- **Store-bounding [Shipped]** — write coalescing (200 ms), adaptive compaction (live only once wired into
+  `start_sync`, peat-mesh#296/#297), byte-bounded LRU cache (~4 MiB), bounded sync-receive (Module 3 §3.4).
+- **peat-schema `Kinematics` + `PositionError`** on Track/NodeState [Shipped]; `velocity`/`cep_m`/
+  `vertical_error_m` now `[deprecated]` but still populated by consumers (dual-write) — Module 9 §9.3.
+- **ADR-074 (Proposed) "peat-schema single source of truth"** — first migration tranche Shipped: peat-ffi
+  records shrunk to proto-backed fields, `MarkerInfo`/`CommandInfo` + `get_markers`/`get_commands` removed
+  (Module 6). Labelled precisely: ADR Proposed, first code step Shipped.
+- **peat-flutter Dart client** now ships a real blob (`blobDownload` poll-stream) + marker (OR-Set
+  soft-delete tombstone) surface against published peat-ffi 0.2.10 (Module 6). C1 non-FIPS-published-btle
+  caveat unchanged.
+- **peat-sapient**: peat-schema lag closed (rc.24 → rc.30), peat-tak 0.0.2 → 0.0.3, git-dep patches dropped,
+  BSI Flex 335 v2.0 **interop** compliance CI added (not crypto-FIPS), operator guide, `--tak-protocol`
+  encoding flag. TLS/X25519 crypto caveat **unchanged** (connection.rs empty diff); the `tls` feature is now
+  compile-time default-on in the bridge crate but runtime TLS stays opt-in — Module 7 §7.8.
+- **ADR count 79 → 80** (`ls docs/adr/*.md` = 80; 76 numbered incl ADR-074 + 4 reference). **11 Accepted
+  unchanged.** CellRole still 7. **FIPS source posture unchanged** across all repos.
+- Gateway now lags the mesh ecosystem (rc.47) by ~7 RCs (rc.40 pin, gateway did not move this cycle).
+
+**Docs touched:** Modules 01, 02, 03, 06, 07, 08, 09; `index.html` (audited-against box, gateway lag ~7,
+doc-fix rc.47, four new hub mesh cards, SYNC stamp); `peat-constrained-networking.html` (SYNC stamp);
+`changelog.html` (Current-sync card + 8 tags + SYNC block + prepended row); `review/ground-truth/{peat,
+peat-mesh,peat-node,peat-flutter,peat-sapient}.md` (2026-07-13 deltas); `review/diagrams.md` (M-006/H-003,
+M-017/M-018/H-006, M-038 advanced; maintenance note); this file; `REVIEW-STATE.json`.
+
+**New unverifiable / NEEDS_RUNTIME this run:** the rc.46–rc.47 store-bounding RSS figures (~930 MB → <60 MB,
+OpTree 250–300×) are field-profile numbers, not benchmarked here; `dialer_resolves_acceptor_by_id_via_mdns`
+is CI-verified only; the peat-flutter marker-binding forward-incompat with peat-ffi 0.2.11 (bindings will
+fail the UniFFI checksum on the next re-pin) is logged as an open todo. peat-sapient's actually-negotiated
+TLS key-exchange group still needs a runtime handshake capture (X25519 offered by construction).

@@ -247,9 +247,9 @@ Inside `peat/` the most important sub-crates are:
   an iOS demo, an M5Stack/ESP32 demo, etc.
 - **`peat/spec/`** — an IETF-style protocol draft (`draft-peat-protocol-00.md`) and `.proto`
   specs.
-- **`peat/docs/adr/`** — **79 Architecture Decision Records** (counted: `ls peat/docs/adr/*.md` =
-  79; 75 numbered ADRs + 4 reference docs — ADR-073 "peer-ejection Rayfish review" is the newest,
-  Proposed).
+- **`peat/docs/adr/`** — **80 Architecture Decision Records** (counted: `ls peat/docs/adr/*.md` =
+  80; 76 numbered ADRs + 4 reference docs — ADR-074 "peat-schema as the single source of truth" is
+  the newest, Proposed).
   These are gold for understanding *why*. Note that many are still in `Proposed` status — triage
   epic #695 tracks "triage 22 Proposed ADRs before public release," so an ADR existing does not
   mean the decision shipped.
@@ -301,13 +301,13 @@ Concretely, verified from the manifests:
 - `peat-lite` → *(nothing Peat)* — `no_std`, standalone, only `heapless`.
 - `peat-gateway` → `peat-mesh` (an exact `=`-pin, with features `automerge-backend` + `broker`).
   The pin was frozen at `=0.9.0-rc.1` for months but a Dependabot bump (peat-gateway#144) moved it
-  to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (rc.45) by ~5 RCs (Module 5 §5.6).
+  to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (rc.47) by ~7 RCs (Module 5 §5.6).
 
 Rendered as a diagram (solid = required dependency, dashed = optional feature):
 
 ```mermaid
 flowchart TD
-    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, rc.40 (~5 rc behind)| M
+    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, rc.40 (~7 rc behind)| M
     T["peat-transport<br/>(HTTP/REST · TAK/CoT)"] --> P
     FFI["peat-ffi<br/>(Kotlin / Swift)"] --> P
     PER["peat-persistence"] --> P
@@ -341,7 +341,7 @@ this project, and spotting it is part of the job.
 Because `peat-mesh` and `peat-btle` are separate published crates, the `peat` workspace pins
 their versions carefully. Open `peat/Cargo.toml` and you will find a long, heavily commented
 floor-version history (a succession of release-candidate floors; the floor now sits at
-`peat-mesh >=0.9.0-rc.45` and the audited HEAD is the workspace bump to `0.9.0-rc.29`) explaining a
+`peat-mesh >=0.9.0-rc.45` and the audited HEAD is the workspace bump to `0.9.0-rc.30`) explaining a
 cargo **cycle-detection** problem that arose when `peat-btle` and `peat-mesh` each optionally
 depended on the other. As of rc.29 (peat#1016) the workspace also **dropped its `[patch.crates-io]`
 git pin on `peat-mesh`** and now consumes the published registry crate directly — the floor was
@@ -396,7 +396,7 @@ Concretely, from the manifests:
    only a tiny `no_std` CRDT library, or only a cross-platform BLE-mesh transport. The value of
    each edge crate is not locked behind adopting `peat-protocol`.
 2. **Independent versioning and publishing.** Each is its own crate, released on its own cadence
-   (peat-mesh at rc.45, peat-btle at 0.4.0, peat-lite at 0.2.5 — distinct version lines). The
+   (peat-mesh at rc.47, peat-btle at 0.4.0, peat-lite at 0.2.5 — distinct version lines). The
    embedded/mobile crates additionally publish Android artifacts to Maven Central (a
    `publish-maven` workflow exists in `peat-btle`).
 3. **Reaches targets the core cannot.** `peat-lite` compiles for bare-metal microcontrollers and
@@ -426,7 +426,7 @@ one word.
    spot the inverted arrow yourself.
 3. Run `grep -rn "pub use peat_mesh" peat/peat-protocol/src/lib.rs` — that single line is the
    whole "facade" idea.
-4. Run `ls peat/docs/adr/*.md | wc -l` to see the ADR count for yourself (79 at the audited
+4. Run `ls peat/docs/adr/*.md | wc -l` to see the ADR count for yourself (80 at the audited
    HEAD), then skim the file names. You do not need to read them yet; notice how many decisions
    are recorded, and that many are still `Proposed`.
 
