@@ -100,3 +100,23 @@ change.**
   0.9.0-rc.43` — none of these lines moved in `369f05d..4a6554f`. The published-vs-source non-FIPS split
   (C1) **persists**: peat-btle *source* is FIPS-clean, the *published* 0.4.0 that peat-flutter builds is
   not. The only lockfile churn was unrelated transitive minors (libc, etc.).
+
+### 2026-07-13 delta — `291d7e4 → 129c74c` (v0.0.1; re-pins published peat-ffi 0.2.9 → 0.2.10)
+- **Blob client surface [Shipped]** (peat-flutter#20, `982bea6`). `rust/Cargo.toml:28` bumps
+  `peat-ffi =0.2.10` (published crate, checksum `df75222c…`). `PeatFlutterNode.blobDownload(hashHex, sizeBytes,
+  {peerIdHex})` returns a poll-based `Stream<BlobFetchStatus>` (`lib/src/peat_node.dart:451`); omit the peer →
+  mesh-sync candidate selection, pass it → direct P2P pull, no fallback. Supporting facades: `enableBlobTransfer`,
+  `blobAddPeer(Id)`, `blobPut`, `blobExistsLocally`, `blobEndpointId`, `blobBoundAddr`. Hand-maintained (not
+  generated) UniFFI bindings; `BlobFetchStatus` mirrors peat-mesh `BlobProgress`. Verified against published 0.2.10
+  release (`cc93e5e` contains `blob_fetch_start`).
+- **MarkerInfo OR-Set facade + deleteDocument + delete-event visibility [Shipped facade; hard-delete propagation In-flight]**
+  (peat-flutter#21/#2/#3, `129c74c` — surfaced already-present bindings, 0 lines of generated code changed).
+  `putMarker`/`markers`/`deleteDocument`; `MarkerInfo` is a CoT/2525-style map-marker record; delete uses an
+  **OR-Set soft-delete tombstone** (`deleted:true`), because peat-mesh does not fan out `ChangeEvent::Removed`
+  under default SoftDelete (`peat-mesh/src/node/mod.rs:119,206`) — that mesh-wide hard-delete is In-flight.
+- **C1 published-vs-source split still holds, unchanged.** Lockfile still pins **published peat-btle 0.4.0**
+  (checksum `a57dd351…`) which bundles non-FIPS `chacha20poly1305 0.10.1` + `x25519-dalek 2.0.1`, while peat-btle
+  *source* (same 0.4.0) is FIPS-clean. Other pins now: peat-mesh rc.45, peat-protocol rc.29.
+- **Forward-incompat flag (new todo).** The marker FFI (`put_marker`/`get_markers`/`MarkerInfo`) present in the
+  pinned published 0.2.10 was **removed** from peat-ffi source 0.2.11 by peat#1022/ADR-074. When peat-flutter next
+  re-pins 0.2.11, its hand-maintained marker bindings will fail UniFFI checksum unless refactored to the proto schema.

@@ -136,3 +136,30 @@ Range = 13 commits. This supersedes the "single lib, depends on peat-schema ONLY
 - **Curriculum mapping this run:** Module 7 §7.1 (row rewritten to 3-crate workspace + opt-in TLS) and §7.8
   (FIPS-posture note added — flips the prior "plain TCP, no TLS" flag with the precise caveats above). A full
   Module 7 SAPIENT case-study section + a Module 9 BSI-Flex wire-format section remain open_todos for the full sweep.
+
+### 2026-07-13 delta — `5118afa → 93d51ac` (v0.1.0; +12 commits)
+- **peat-schema lag closed [Shipped].** `peat-sapient/Cargo.toml:46` + `peat-mesh-sapient/Cargo.toml:25`
+  bumped `peat-schema 0.9.0-rc.24 → 0.9.0-rc.30` (caret) — now matches the umbrella; the prior 5-RC lag is gone.
+  `peat-mesh` (rc.41) and `peat-protocol` (rc.28, dev-dep) unchanged. Temporary git-dep patches introduced then
+  removed within this window — at HEAD all external deps are plain crates.io pins (no `[patch]`, no `git =`).
+- **position_error migration is DUAL-WRITE, not a removal [Shipped]** (`src/transform/detection.rs:503` etc.).
+  Track now carries `position_error: Some(PositionError{circular_error←CEP, vertical_error←z_error,
+  linear_error=0.0 always})` — but the deprecated `cep_m`/`vertical_error_m` are **still populated** under
+  `#[allow(deprecated)]` (tests assert `pe.circular_error == pos.cep_m`). `Track.kinematics` present but `None`
+  everywhere. Confirms the rc.30 peat-schema surface (new `common::v1::PositionError`, `kinematics` field).
+- **`--tak-protocol` flag [Shipped]** (`peat-sapient-bridge/src/config.rs:100`, consumed `main.rs:191`): selects
+  the CoT **wire encoding** — `raw-xml`/`xml-tcp`/`protobuf-v1` (→ `peat_tak::TakProtocolVersion`), unknown values
+  hard-error. Orthogonal to `--tak-tls` (transport). Inbound framing auto-detected per-message (`0x3C` XML vs `0xBF` protobuf).
+- **peat-tak 0.0.2 → 0.0.3 [Shipped]** (`peat-sapient-bridge/Cargo.toml:22`, feature `mesh-translator`).
+- **BSI Flex 335 v2.0 compliance CI [Shipped]** (peat-sapient#41, `.github/workflows/ci.yml:71-121`). Runs the
+  DSTL `dstl/BSI-Flex-335-v2-Test-Harness` (.NET, pinned ref `6a2999d`) as an HLDMM validator against a Rust
+  `sapient-compliance-client` on port 15066. This is **standards-interop compliance, NOT cryptographic FIPS
+  validation** — do not conflate. Vendored proto pin unchanged (`proto/VERSION` = `244a741…`, a separate DSTL repo).
+- **TLS/FIPS posture UNCHANGED — `connection.rs` has an empty diff this cycle.** `fips_crypto_provider()`
+  (`connection.rs:337-349`) restricts cipher suites to AES-GCM but spreads `aws_lc_rs::default_provider()` so
+  **X25519 (non-FIPS) is still offered at key exchange**, and it is the standard provider, not the aws-lc-rs *fips*
+  module. Report as "AES-GCM suites but X25519 kx still offered," never "FIPS-clean." One change to flag: the
+  `peat-sapient-bridge` crate now enables `tls` **by default at compile time** (`Cargo.toml:15` `default=["tls"]`)
+  — but runtime TLS is still opt-in (`config.*.tls` default false, `main.rs:132,164`) and needs cert paths.
+  Operator guide added (`docs/operator-guide.md`). TAK Server 5.7 mTLS interop is **manually** validated (In-flight),
+  distinct from the automated BSI job. All three crates still 0.1.0, path-linked, unpublished.

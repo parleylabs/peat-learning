@@ -136,11 +136,21 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 ### What the production sidecar (`peat-node`) gained recently — through v0.4.9 **[Shipped]**
 
 If you run `peat-node` (the sidecar most deployments use), a handful of operability changes in the
-`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `5df3130` (v0.4.9). The
+`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `7942be5` (v0.4.9). The
 v0.4.9 release itself adds no new runtime surface — it eliminates a `grpc_test` port-collision flake
 (the test server now binds `127.0.0.1:0` and reads the OS-assigned port instead of a hardcoded one)
 and ships a zero-friction two-node attachment quick-start under `examples/compose/attachments/`
-(no `peer.sh`/`send.sh` needed). The capability facts below are unchanged from v0.4.8:
+(no `peer.sh`/`send.sh` needed).
+
+> **Dependency-only refresh, still v0.4.9 (no version bump) [Shipped].** The latest commits are a
+> dependency bump folded into the same 0.4.9: `peat-mesh =0.9.0-rc.46`, `peat-protocol >=0.9.0-rc.29`,
+> and — the one worth calling out — **`iroh` moved onto the stable `1.0.2` line** (from the old
+> `=1.0.0-rc.1` exact pin). The QUIC transport is no longer a pre-1.0 release candidate. The Helm chart
+> caught up too (`chart/peat-node/Chart.yaml` `0.4.5 → 0.4.9`). Note peat-node pins mesh `rc.46` while
+> mesh HEAD is `rc.47`, so it trails the mesh line by one RC (its own consumption lag, separate from the
+> gateway's ~7-RC lag). No `src/`, proto, or RPC change — the gRPC surface stays 27/27.
+
+The capability facts below are unchanged from v0.4.8:
 
 - **Received files now keep their name and folder layout (v0.4.8, #173).** Earlier builds wrote each
   attachment to `inbox/<distribution_id>/<basename>` — the original filename buried under a UUID

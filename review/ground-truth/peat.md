@@ -340,3 +340,26 @@ Range = 11 commits (#1006/#1007 Android mDNS, #1016 mesh-pin drop, #1017 blob FF
 
 *Could-not-confirm:* Maven AAR version for rc.29 — no AAR version bump found in this diff range (stale
 references only). Logged, not asserted.
+
+### 2026-07-13 delta — `2778bd9 → cb6a818` (workspace 0.9.0-rc.29 → rc.30; peat-ffi 0.2.10 → 0.2.11)
+- **ADR-074 "peat-schema as the single source of truth" [Proposed; first tranche Shipped].**
+  `docs/adr/074-schema-single-source-of-truth.md:3` `**Status**: Proposed`. The ADR wants every mesh
+  message type to originate in peat-schema, with sub-crates deriving via generated `From<proto>`. A first
+  migration step already shipped in code (peat#1022, `f767475`): the UniFFI records `NodeInfo`/`TrackInfo`/
+  `CellInfo` were shrunk to proto-backed fields, `NodeStatus` folded into a proto-aligned `HealthStatus`,
+  and the hand-rolled `MarkerInfo`/`CommandInfo` records + `get_markers()`/`get_commands()` accessors were
+  **removed** from `peat-ffi/src/lib.rs`. Label precisely: governing ADR Proposed, first code step Shipped.
+- **New proto types `Kinematics` + `PositionError` [Shipped].** `peat-schema/proto/common.proto:37,45`.
+  `Kinematics{velocity, heading, acceleration, vertical_speed}`; `PositionError{circular_error(CEP),
+  linear_error(LEP), vertical_error}`. Wired onto `Track` (fields 12/13) and `NodeState` (8/9, LWW merge in
+  `peat-protocol/src/models/node.rs`); NaN/range validation in `peat-schema/src/validation/track.rs:122,158`.
+  `Track.velocity`/`cep_m`/`vertical_error_m` now `[deprecated]` (but still populated by consumers — dual-write).
+- **Proto schema version → 0.5.0 [Shipped].** Every `.proto` header now reads `Version: 0.5.0` (pre-1.0),
+  a wire-schema version distinct from the peat-schema *crate* version (`0.9.0-rc.30`, `version.workspace = true`).
+  CAP→Peat proto-comment rename (a9c2ac0) across 14 files. **Observed (not curriculum, not fixed here):** two
+  residual all-caps `PEAT` in `security.proto:1` and `model.proto:5` (upstream source, house-rule drift there).
+- **crossbeam-epoch 0.9.18 → 0.9.20 [Shipped]** (RUSTSEC-2026-0204, transitive; `Cargo.lock:1078`). No API impact.
+- **ADR total 79 → 80** (`ls docs/adr/*.md` = 80; 76 numbered incl ADR-074 + 4 reference). **Accepted unchanged at 11**
+  (002,009,015,016,023,024,030,041,047,057,070 — both `**Status:**`/`**Status**:` formats). CellRole still 7
+  (`models/role.rs:13-29`). **FIPS posture unchanged** — no crypto touched anywhere in the diff.
+- peat-ffi now exact-pins `peat-schema =0.9.0-rc.30` (fa5643c, `peat-ffi/Cargo.toml:147`), realizing ADR-074 Rule 5.

@@ -16,8 +16,8 @@ download list; the capability map is what tells you whether the system does what
 - **Speculative** — design discussed for teaching, not even an ADR-complete proposal anywhere.
 
 Everything below was checked against the audited HEADs in
-[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `2778bd9` (rc.29), `peat-mesh`
-rc.45 (`b410d7c`), `peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` `1da5002` (0.1.0), `peat-node` 0.4.9. The operating
+[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `cb6a818` (rc.30), `peat-mesh`
+rc.47 (`b86c2c2`), `peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` `1da5002` (0.1.0), `peat-node` 0.4.9. The operating
 principle is **code over everything**: where a README, a spec, or a months-old guide disagrees with
 the source on the audited HEAD, the source wins.
 
@@ -42,7 +42,7 @@ each one's role in a sentence so you know why you'd open it.
 > **Note on registries.** Whether `peat-protocol`, `peat-schema`, `peat-btle`, and `peat-lite` are
 > *published* to crates.io, and `peat-ffi` to Maven Central, is **not verified in this audit**. The
 > crates exist and carry versions, but the peat-mesh README advertises stale versions (0.3.2 against
-> a shipped rc.45), so registry-version trust is shaky. Check the actual registry before relying on a
+> a shipped rc.47), so registry-version trust is shaky. Check the actual registry before relying on a
 > published version; do not assume the README is current.
 
 ---
@@ -140,7 +140,7 @@ open.
 - **[`peat/docs/guides/developer/DEVELOPER_GUIDE.md`](../peat/docs/guides/developer/DEVELOPER_GUIDE.md)**
   — the onboarding guide: environment setup, runtime architecture, core concepts, crate reference,
   testing, mobile, edge AI, and "Extending Peat." This learning track is a guided path through it.
-  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.45, the
+  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.47, the
   rc.12 FIPS crypto swap dated 2026-05-18, the ADR-066 hierarchy rename still in flight). Where the
   guide and the code differ, **the code wins** — quoting the guide without checking the source is how
   the known stale-doc errors (wrong RBAC role names, ChaCha20 crypto, legacy hierarchy terms) get
@@ -173,7 +173,7 @@ open.
 
 ## 7.6 The ADR archive — your deepest primary source
 
-`peat/docs/adr/` holds **79 files (75 numbered ADRs + 4 reference docs), and growing** — confirmed by a file count,
+`peat/docs/adr/` holds **80 files (76 numbered ADRs + 4 reference docs), and growing** — confirmed by a file count,
 not the "~60" an earlier draft estimated; open issue #695 ("triage 22 Proposed ADRs before public
 release") shows the count trending up. `peat-mesh/docs/adr/` (14) and `peat-btle/docs/adr/` (6) hold
 more. When you want to know *why* something is the way it is, these beat any summary — including this
@@ -268,6 +268,21 @@ suggest, and it is exactly what a defense-prime security auditor will probe:
   key-agreement group is still on the table and the module is unvalidated. This is a **source-level**
   posture note — all three crates are `0.1.0` and unpublished, so there is no shipped-artifact CVE,
   and the mesh side (iroh QUIC) is a separate stack.
+  **2026-07 delta:** the crypto file (`connection.rs`) did *not* change this cycle — the caveat above
+  still stands verbatim, X25519 still offered at key exchange. What did change: the `peat-sapient-bridge`
+  crate now enables the `tls` feature **by default at compile time** (`Cargo.toml:15`,
+  `default = ["tls"]`) — but this is compile-time only; a run still needs an explicit `tls=true` plus
+  cert paths, so the runtime default is unchanged (still plain TCP). Do not read "tls on by default"
+  as "encrypted by default." Also this cycle: the SAPIENT crates' `peat-schema` pin caught up
+  `rc.24 → rc.30` (the umbrella lag is now closed), `peat-tak` bumped `0.0.2 → 0.0.3`, the
+  temporary git-dependency patches were dropped for plain crates.io pins, and a
+  **BSI Flex 335 v2.0 compliance CI** job (peat-sapient#41) now runs the DSTL .NET test harness against
+  a Rust `sapient-compliance-client` on every push. Read that carefully: it is **standards-interop
+  compliance, not cryptographic FIPS validation** — the two are unrelated. A new `--tak-protocol` flag
+  selects the CoT *wire encoding* (`raw-xml` / `xml-tcp` / `protobuf-v1`) and is orthogonal to the
+  `--tak-tls` transport toggle; an operator guide (`docs/operator-guide.md`) also landed. One TLS claim
+  to keep honest: the README's TAK Server 5.7 mTLS interop is **manually** validated (label In-flight),
+  distinct from the automated BSI compliance job above.
 
 ---
 

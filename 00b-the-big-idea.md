@@ -227,7 +227,7 @@ one fails. The requirement persists; the implementation adapts.
 **Status — In-flight / partly shipped.** A `composition` engine is part of `peat-protocol`'s public
 API (`peat-protocol/src/lib.rs`), so the building block exists. But the ground-truth audit finds **no
 code or test evidence that the automatic reallocate-on-failure loop is implemented end to end**, and
-`peat-protocol` is at `0.9.0-rc.29` (work in progress). Treat composition as present-but-WIP: the
+`peat-protocol` is at `0.9.0-rc.30` (work in progress). Treat composition as present-but-WIP: the
 capability vocabulary is real; the self-healing "requirement outlives the node" behavior is design
 intent until a code path and test confirm it.
 

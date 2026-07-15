@@ -195,3 +195,15 @@ still 27/27.**
 - **Note:** the commit subject "bump to 0.4.2 — peat-mesh rc.41" (#178) is a mislabel; `Cargo.toml`
   version is **0.4.9**. peat-node's embedded peat-mesh pin (rc.41) is not surfaced in the curriculum
   (the reader-facing mesh ecosystem version is peat-mesh's own rc.45).
+
+### 2026-07-13 delta — `5df3130 → 7942be5` (v0.4.9 — dependency-only, no version bump)
+- **Deps-only refresh folded into 0.4.9 [Shipped].** `Cargo.toml`: `peat-mesh =0.9.0-rc.46` (`:132`),
+  `peat-protocol >=0.9.0-rc.29,<0.9.1` (`:141`), and **`iroh 1.0.2`** (caret) replacing the `=1.0.0-rc.1`
+  exact pin — peat-node is now on the iroh 1.0 stable line, in lockstep with peat-mesh/peat-cli (iroh's
+  process-global crypto/ALPN registries require one iroh version per workspace). Version string stays `0.4.9`;
+  the release commit only re-dated the CHANGELOG entry (2026-07-02→07-07) and added a `### Changed` deps block.
+  Helm chart caught up `0.4.5 → 0.4.9`. peat-node pins mesh rc.46 while mesh HEAD is rc.47 → 1-rc consumption lag
+  (distinct from the gateway's ~7-RC lag).
+- **No src/proto/RPC change.** Diff touches only `Cargo.toml`/`Cargo.lock`/`CHANGELOG.md`/`Chart.yaml`/peat-cli
+  Cargo.toml. RPC surface still **27/27** (`proto/sidecar.proto`, `src/service.rs` untouched). Single-port
+  `PEAT_NODE_LISTEN` (default `tcp://0.0.0.0:50051`), tombstone-GC, per-collection config RPCs all unchanged.
