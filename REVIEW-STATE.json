@@ -759,7 +759,7 @@
         "proposed_check": "Split the trend metric: track needs_runtime_count and unresolved_drift_count (verified-then-wrong / unconfirmed-at-audit) separately instead of one unverifiable_count; the health signal the retrospective reads is unresolved_drift_count (should trend DOWN), while needs_runtime_count is expected to grow with new Shipped capabilities and is neutral. Optionally: a standing cloud runtime-verification harness to actually retire NEEDS_RUNTIME items.",
         "target": "incremental Phase 5 (§6 run_log/quality_trend) + §9b retrospective metric definition",
         "status": "proposed",
-        "issue": null
+        "issue": 18
       }
     ]
   },
