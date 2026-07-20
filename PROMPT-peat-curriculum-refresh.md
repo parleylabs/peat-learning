@@ -200,9 +200,19 @@ Update `learning/REVIEW-STATE.json`:
   `{ drift_found, claims_resolved (prior unverifiable_claims confirmed/closed this run),
   claims_demoted (new unverifiable_claims added), feedback_addressed (curriculum-feedback issues
   fixed/closed), misses_found (claims a recent prior run had marked verified that turned out wrong) }`.
-- append a `quality_trend` snapshot: `{ when: args.now, unverifiable_count, open_feedback_issues }`.
-  Over time both should trend **down**; if they climb, note it for the monthly retrospective (§9b of
-  the full prompt) — that is the loop signalling it is not actually learning.
+- append a `quality_trend` snapshot: `{ when: args.now, needs_runtime_count, unresolved_drift_count,
+  open_feedback_issues }`. **The unverifiable count is split into two lines that must not be conflated**
+  (ADR: issue #18):
+  - **`needs_runtime_count`** — claims code-confirmed from source but not benchmarkable in the cloud
+    env (NEEDS_RUNTIME / declared-constant / not-measured-here). This is **expected to grow** as new
+    Shipped capabilities land each run; it is **neutral, not a health signal**. Do **not** read a rise
+    here as the loop failing.
+  - **`unresolved_drift_count`** — `misses_found` (verified-then-wrong: a claim a prior run marked
+    verified that turned out wrong) **plus** claims genuinely unconfirmed against code at audit time
+    (including external/registry unknowns that can't be checked against the source). **This is the
+    health line; it should trend DOWN.** Only a rise *here* means the loop is not actually learning —
+    note it for the monthly retrospective (§9b of the full prompt).
+  `open_feedback_issues` should also trend **down**.
 - if a full sweep ran, set `last_full_run = args.now`.
 
 Append (do not overwrite) a dated delta section to `learning/review/CHANGELOG-review.md`

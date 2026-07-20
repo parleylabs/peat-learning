@@ -738,3 +738,40 @@ confirms `=0.0.3`. Corrected. Logged to the §9b retrospective (misses_found=1).
 device-profile observation from the commit message, not benchmarked here); the rc.48 IPv6 reachability-probe
 behaviour; rc.49 partial-sync distribution retry under a lossy link; peat-node relay-fanout starvation fix under
 load; peat-flutter 0.1.0 live-device blob/BLE behaviour. All code-confirmed, none exercised live.
+
+---
+
+## 2026-07-20 — prompt-amendment (issue #18, human-approved)
+
+Not a curriculum refresh; no code repos audited and no reader-facing prose changed. This is a
+**tighten-only methodology amendment** filed by the monthly retrospective (issue #18) and applied
+after human approval.
+
+**What changed.** The single monotonic `quality_trend.unverifiable_count` is split into two lines
+that must not be conflated:
+
+- **`needs_runtime_count`** — claims code-confirmed from source but not benchmarkable in the cloud
+  env (NEEDS_RUNTIME / declared-constant / not-measured-here). **Expected to grow** as new Shipped
+  capabilities land each run; **neutral, not a health signal.**
+- **`unresolved_drift_count`** — `misses_found` (verified-then-wrong) plus claims genuinely
+  unconfirmed against code at audit time (incl. external/registry unknowns). **The health line;
+  should trend DOWN.**
+
+**Why.** `unverifiable_count` climbed 8 → 9 → 11 → 13 (→ 14 per the 07-20 retrospective) across five
+runs while `misses_found` stayed 0 — the entire rise was new-capability NEEDS_RUNTIME, yet a single
+count read as the loop failing to learn. The 06-29 / 07-06 / 07-13 `quality_trend` notes each asked
+for exactly this carve-out.
+
+**Retrofit.** All five `quality_trend` snapshots (2026-06-26 … 2026-07-20) were re-expressed in the new
+shape from the `unverifiable_claims` list: `unresolved_drift_count` held flat at **3** (the
+external/registry/standalone-repo unknowns) the whole window, while `needs_runtime_count` grew **5 → 6
+→ 8 → 10 → 11** — making explicit that the health line never moved. No count total changed (each split
+sums to the former `unverifiable_count`). This supersedes the `unverifiable_count: 14` / `status:
+"proposed"` values the same-day full sweep (above) recorded: the amendment it *filed* is now *applied*.
+
+**Files touched:** `PROMPT-peat-curriculum-refresh.md` §6, `PROMPT-peat-training-doc-improvement.md`
+§9b (both the miss-signal gather step and the trend-record step), `REVIEW-STATE.json`
+(`quality_trend` shape retrofit + `self_improvement.proposed_amendments` entry flipped
+proposed → `applied (human-approved this session)`), and this file. Longer-term follow-up (unchanged,
+still open): a standing cloud runtime-verification harness so NEEDS_RUNTIME items can be *retired*
+rather than only accumulated.

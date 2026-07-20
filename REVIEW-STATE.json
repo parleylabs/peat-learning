@@ -754,11 +754,11 @@
       },
       {
         "when": "2026-07-20",
-        "observed_miss": "quality_trend.unverifiable_count has risen every run (8->9->11->13->14) yet misses_found stays 0: the climb is entirely new-capability NEEDS_RUNTIME claims the cloud env cannot benchmark, NOT unresolved drift or regressed prior claims. A single monotonic counter conflates 'we shipped new capabilities we can't live-verify in cloud' with 'the loop is not learning', so the trend reads as failing when it is healthy.",
-        "evidence": "quality_trend notes 2026-06-29/07-06/07-13 all flag this explicitly; 2026-07-20 adds a 5th consecutive run where 100% of the increase is NEEDS_RUNTIME and misses_found=0. See REVIEW-STATE.json quality_trend.",
-        "proposed_check": "Split the trend metric: track needs_runtime_count and unresolved_drift_count (verified-then-wrong / unconfirmed-at-audit) separately instead of one unverifiable_count; the health signal the retrospective reads is unresolved_drift_count (should trend DOWN), while needs_runtime_count is expected to grow with new Shipped capabilities and is neutral. Optionally: a standing cloud runtime-verification harness to actually retire NEEDS_RUNTIME items.",
-        "target": "incremental Phase 5 (§6 run_log/quality_trend) + §9b retrospective metric definition",
-        "status": "proposed",
+        "observed_miss": "A single monotonic quality_trend.unverifiable_count conflated cloud-unbenchmarkable NEEDS_RUNTIME claims (expected to grow as new Shipped capabilities land) with genuine unresolved drift/regressions. It climbed 8->9->11->13->14 over 5 runs while misses_found stayed 0 — reading as the loop failing when it was healthy; the 06-29/07-06/07-13 notes each asked for this carve-out.",
+        "evidence": "REVIEW-STATE.json quality_trend (5 snapshots, 100% of the rise was NEEDS_RUNTIME) + run_log[].meta scorecards (misses_found=0 throughout); issue #18",
+        "proposed_check": "Split the trend metric: needs_runtime_count (code-confirmed from source, not benchmarkable in cloud — neutral, expected to grow) vs unresolved_drift_count (misses_found + claims genuinely unconfirmed against code — the health line, should trend DOWN). Judge health on unresolved_drift_count + open_feedback_issues only.",
+        "target": "PROMPT-peat-curriculum-refresh.md §6 + PROMPT-peat-training-doc-improvement.md §9b + REVIEW-STATE.json quality_trend shape",
+        "status": "applied (human-approved this session)",
         "issue": 18
       }
     ]
@@ -766,33 +766,38 @@
   "quality_trend": [
     {
       "when": "2026-06-26",
-      "unverifiable_count": 8,
+      "needs_runtime_count": 5,
+      "unresolved_drift_count": 3,
       "open_feedback_issues": 0,
-      "note": "baseline after the code-verification pass converged; curriculum-feedback label live but no reader issues yet. Both metrics should trend DOWN."
+      "note": "baseline after the code-verification pass converged; curriculum-feedback label live but no reader issues yet. RETROFIT (issue #18, applied 2026-07-20): the former unverifiable_count=8 is split into needs_runtime_count=5 (4 NEEDS_RUNTIME targets/benchmarks + 1 declared-constant BLE rate/range — code-confirmed, not live-verifiable in cloud; neutral) and unresolved_drift_count=3 (the 3 EXTERNAL/registry/standalone-repo unknowns that can't be checked against local source). unresolved_drift + open_feedback_issues are the health lines and should trend DOWN; needs_runtime is neutral."
     },
     {
       "when": "2026-06-29",
-      "unverifiable_count": 9,
+      "needs_runtime_count": 6,
+      "unresolved_drift_count": 3,
       "open_feedback_issues": 0,
-      "note": "+1 unverifiable: the new peat-ffi reconnect/roster/origin surface + peat-mesh Android browse are code-confirmed but runtime-unverified (NEEDS_RUNTIME). The uptick is new-capability runtime claims, not unresolved drift — no prior verified claim regressed (misses_found=0). Still zero open feedback issues."
+      "note": "+1 NEEDS_RUNTIME (needs_runtime 5->6): the new peat-ffi reconnect/roster/origin surface + peat-mesh Android browse are code-confirmed but runtime-unverified. The uptick is new-capability runtime claims, not unresolved drift — the health line unresolved_drift_count held at 3 and no prior verified claim regressed (misses_found=0). Still zero open feedback issues. (Retrofit per issue #18 — former unverifiable_count=9.)"
     },
     {
       "when": "2026-07-06",
-      "unverifiable_count": 11,
+      "needs_runtime_count": 8,
+      "unresolved_drift_count": 3,
       "open_feedback_issues": 0,
-      "note": "+2 unverifiable, both NEEDS_RUNTIME on THIS run's new capabilities: (1) the rc.45 direct blob path + rc.29 poll-based blob FFI + Android discovered-peer dial/browse-recovery; (2) the peat-sapient opt-in TLS negotiated key-exchange group (X25519 offered by construction, actual selection needs a runtime capture). Consistent with the 06-29 pattern — the climb is new-capability runtime claims, not unresolved drift or a regressed prior claim (misses_found=0). A fact-check CATCH this run (Accepted-ADR grep under-count 9 vs true 11, caused by a status-format variant) was corrected before shipping — no wrong count reached the docs. Still zero open feedback issues. NOTE for the monthly retrospective: the NEEDS_RUNTIME bucket keeps growing because the cloud refresh reads source but never runs a live build/benchmark; a standing runtime-verification harness (or an explicit 'runtime-unverified is expected, not a regression' carve-out in the trend metric) would stop this from reading as the loop failing to learn."
+      "note": "+2 NEEDS_RUNTIME (needs_runtime 6->8) on THIS run's new capabilities: (1) the rc.45 direct blob path + rc.29 poll-based blob FFI + Android discovered-peer dial/browse-recovery; (2) the peat-sapient opt-in TLS negotiated key-exchange group (X25519 offered by construction, actual selection needs a runtime capture). Consistent with the 06-29 pattern — the climb is new-capability runtime claims; the health line unresolved_drift_count held at 3, no regressed prior claim (misses_found=0). A fact-check CATCH this run (Accepted-ADR grep under-count 9 vs true 11, caused by a status-format variant) was corrected before shipping — no wrong count reached the docs. Still zero open feedback issues. NOTE for the monthly retrospective: the needs_runtime bucket keeps growing because the cloud refresh reads source but never runs a live build/benchmark; the explicit needs_runtime/unresolved_drift split (issue #18, applied 2026-07-20) is the carve-out that stops this from reading as the loop failing to learn. (Retrofit per issue #18 — former unverifiable_count=11.)"
     },
     {
       "when": "2026-07-13",
-      "unverifiable_count": 13,
+      "needs_runtime_count": 10,
+      "unresolved_drift_count": 3,
       "open_feedback_issues": 0,
-      "note": "+2 unverifiable, both NEEDS_RUNTIME on THIS run's new capabilities: (1) the rc.46-rc.47 store-bounding efficacy (RSS/compaction/coalescing figures are field-profile numbers, not benchmarked here) + pull-based connect_by_id (CI-verified only); (2) peat-flutter blob download live transfer + the marker OR-Set tombstone cross-mesh convergence (hard-delete propagation is In-flight) + the 0.2.11 marker-binding forward-incompat (design gap, also an open_todo). Same pattern as 06-29/07-06 — the climb is new-capability runtime claims + one design gap, NOT unresolved drift and NOT a regressed prior verified claim (misses_found=0). ADR count re-derived by direct ls+grep, not trusted from an agent. Still zero open feedback issues. The retrospective NOTE from 07-06 stands: NEEDS_RUNTIME grows because the cloud refresh never runs a live build; the standing runtime-harness / trend-carve-out proposal (self_improvement todo) is the fix — a full sweep is due next run (>30d from 2026-06-18)."
+      "note": "+2 NEEDS_RUNTIME (needs_runtime 8->10) on THIS run's new capabilities: (1) the rc.46-rc.47 store-bounding efficacy (RSS/compaction/coalescing figures are field-profile numbers, not benchmarked here) + pull-based connect_by_id (CI-verified only); (2) peat-flutter blob download live transfer + the marker OR-Set tombstone cross-mesh convergence (hard-delete propagation is In-flight) + the 0.2.11 marker-binding forward-incompat (design gap, also an open_todo). Same pattern as 06-29/07-06 — the climb is new-capability runtime claims + one design gap; the health line unresolved_drift_count held at 3, NOT a regressed prior verified claim (misses_found=0). ADR count re-derived by direct ls+grep, not trusted from an agent. Still zero open feedback issues. The retrospective NOTE from 07-06 was actioned: the needs_runtime/unresolved_drift trend split (issue #18) was applied 2026-07-20 as the carve-out; a standing cloud runtime-verification harness remains the longer-term follow-up so needs_runtime items can be retired rather than only accumulated. (Retrofit per issue #18 — former unverifiable_count=13.)"
     },
     {
       "when": "2026-07-20",
-      "unverifiable_count": 14,
+      "needs_runtime_count": 11,
+      "unresolved_drift_count": 3,
       "open_feedback_issues": 0,
-      "note": "Full sweep. unverifiable_count = 14 (one consolidated 2026-07-20 NEEDS_RUNTIME entry added; the 2026-07-13 forward-incompat design-gap RESOLVED by peat-flutter#29). The list keeps climbing ONLY because the cloud refresh reads source but never runs a live build/benchmark, so each run's new Shipped capabilities land as NEEDS_RUNTIME - misses_found stays 0 (no prior verified claim regressed). One verified-then-wrong FACT miss WAS caught+fixed (peat-tak =0.0.2 vs consumer-confirmed =0.0.3 in Module 2; gate-7 fact-wide occurrence lapse from 07-13). open_feedback_issues still 0. Per the standing retrospective NOTE (06-29/07-06/07-13): the NEEDS_RUNTIME climb is expected-not-regression; filed a §9b proposed_amendment this sweep to split the trend metric (needs_runtime vs unresolved-drift) so the signal stops reading as the loop failing to learn - awaiting human approval."
+      "note": "Full sweep. Split shape (issue #18, applied this session): needs_runtime_count=11 (one consolidated 2026-07-20 NEEDS_RUNTIME entry added, 10->11), unresolved_drift_count=3 (unchanged — the external/registry/standalone-repo unknowns that can't be checked against local source). The needs_runtime list keeps climbing ONLY because the cloud refresh reads source but never runs a live build/benchmark, so each run's new Shipped capabilities land as NEEDS_RUNTIME; the health line unresolved_drift_count held flat at 3 and misses_found=0 (no prior verified claim regressed). One verified-then-wrong FACT miss WAS caught+fixed before shipping (peat-tak =0.0.2 vs consumer-confirmed =0.0.3 in Module 2; a gate-7 fact-wide occurrence lapse from 07-13) — no wrong count reached the docs. open_feedback_issues still 0. The §9b trend-metric split proposed by the 06-29/07-06/07-13 notes and filed this sweep (issue #18) is now APPLIED — the needs_runtime climb is explicitly expected-not-regression; a standing cloud runtime-verification harness to retire NEEDS_RUNTIME items remains the longer-term follow-up."
     }
   ]
 }
