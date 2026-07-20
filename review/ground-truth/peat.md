@@ -363,3 +363,30 @@ references only). Logged, not asserted.
   (002,009,015,016,023,024,030,041,047,057,070 — both `**Status:**`/`**Status**:` formats). CellRole still 7
   (`models/role.rs:13-29`). **FIPS posture unchanged** — no crypto touched anywhere in the diff.
 - peat-ffi now exact-pins `peat-schema =0.9.0-rc.30` (fa5643c, `peat-ffi/Cargo.toml:147`), realizing ADR-074 Rule 5.
+
+---
+
+## Delta — 2026-07-20 (full sweep; `cb6a818` → `a1ce620`, rc.30 → rc.31; peat-ffi 0.2.11 → 0.2.12)
+
+- **TAK transport REMOVED from `peat-transport` [Shipped].** peat#1015 (`492fb54`) deleted
+  `peat-transport/src/tak/**` (2 insertions, 3861 deletions across 17 files: `tak/bridge/*`,
+  `cot_translator.rs`, `server.rs`, `queue.rs`, `reconnect.rs`, `mesh.rs`, etc.). `peat-transport`
+  now exposes only `error`, `http`, `lib` (`peat-transport/src/lib.rs`) — a read-only HTTP/REST query
+  surface (`GET /api/v1/{nodes,cells,beacons}`). The TAK/CoT TCP bridge migrated to the standalone
+  `peat-tak` repo. **CoT *translation* stays put** — `peat-protocol/src/cot/{mod,event}.rs` still
+  present (`peat-protocol/src/lib.rs:81 pub mod cot;`, ADR-020/028).
+- **peat-ffi 0.2.12: default-on `dart-ffi` feature gates the FFIBuffer adapter [Shipped].** peat#1031
+  (`1a8cef7`). `peat-ffi/Cargo.toml`: `default = ["sync", "dart-ffi"]`; `peat-ffi/src/lib.rs:199`
+  `#[cfg(feature = "dart-ffi")] pub mod dart_ffi;`. Direct consumers keep symbols by default; a native
+  wrapper owning the adapter builds with `default-features = false` (see peat-flutter#29). UniFFI + JNI
+  surfaces unchanged. peat#1030.
+- **Codex migration.** `peat/CLAUDE.md` → `AGENTS.md` (`7630a9c`); `SKILL.md` → `.agents/skills/peat-ecosystem/SKILL.md`.
+  FIPS hard-rule intact in `AGENTS.md:25-42` (AES-256-GCM; Ed25519/ECDSA-P256/384; ECDH-P256/384; X25519
+  marginal/needs-review; HMAC-SHA-256; SHA-256/384/512; ChaCha20 = violation tracked ADR-060). Curriculum
+  house-rule references to `peat/CLAUDE.md` should now read `peat/AGENTS.md`.
+- **Test re-enables / lint** (no curriculum-facing surface): three-node mesh convergence re-enabled
+  (`36ce5d1`, #829/#1027), transitive gossip lifecycle race fix (`a1ce620`, #1035), Dart shim Arc-handle
+  lifecycle test (`152bfad`, #1028), Rust 1.97 Clippy map-iteration lint (`ce267c0`).
+- **Stable anchors re-derived (full sweep):** `ls docs/adr/*.md` = **80** (76 numbered incl ADR-074; 4 reference);
+  **11 Accepted** unchanged; ADR-074 still **Proposed** (`074-...:3`). `CellRole` still **7** (`peat-protocol/src/models/role.rs:14-29`).
+  peat-mesh floor unchanged `>=0.9.0-rc.45` (`Cargo.toml:291`). **FIPS source posture unchanged** — no crypto in the diff.

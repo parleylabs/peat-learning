@@ -685,3 +685,56 @@ OpTree 250–300×) are field-profile numbers, not benchmarked here; `dialer_res
 is CI-verified only; the peat-flutter marker-binding forward-incompat with peat-ffi 0.2.11 (bindings will
 fail the UniFFI checksum on the next re-pin) is logged as an open todo. peat-sapient's actually-negotiated
 TLS key-exchange group still needs a runtime handshake capture (X25519 offered by construction).
+
+---
+
+## 2026-07-20 — full sweep (monthly, CI mode)
+
+Monthly full sweep (previous full sweep 2026-06-18; 32 days elapsed > 30-day interval). Every prose
+claim and **every diagram row (Phase 6b)** re-derived against current code. Four repos moved; peat-btle,
+peat-gateway, peat-lite, peat-sapient unchanged.
+
+**Repos:** peat `cb6a818→a1ce620` (rc.30→rc.31; `peat-ffi` 0.2.11→0.2.12), peat-mesh `b86c2c2→fa5c403`
+(rc.47→rc.49), peat-node `7942be5→23a2707` (v0.4.9→v0.4.10), peat-flutter `129c74c→1770bc9` (0.0.1→**0.1.0**,
+first real release).
+
+**Headline — TAK/CoT transport removed from `peat-transport` (peat#1015, `492fb54`).** `peat-transport/src/tak/**`
+(3861 deletions across 17 files) deleted; `peat-transport` is now HTTP/REST only. The TAK/CoT TCP bridge migrated
+to the standalone `peat-tak` repo. CoT *translation* stays in `peat-protocol/src/cot/` (unchanged). This fact
+recurred in **9 files + 3 diagram twins** and was propagated everywhere (fact-wide occurrence gate): Modules
+00/00b/01/02/06/08/09, `index.html` (crate card + H-002 SVG node + layer ASCII + Trace-A ASCII + shared-facts),
+Module 07 (new `peat-tak` row in §7.2). Diagrams re-derived: M-003/H-002 (layer model, peat-transport → HTTP/REST
+only), M-006/H-003 (dep graph node label), M-028/M-029 (Trace A CoT-bridge crate → peat-tak), M-032 (system arch).
+
+**peat-flutter forward-incompat RESOLVED (peat-flutter#29).** The 2026-07-13 open_todo — hand-maintained marker
+bindings would fail the UniFFI checksum on the peat-ffi 0.2.11 re-pin — is closed. peat-flutter now pins
+`peat-ffi =0.2.12` with `default-features = false`, **owns the Dart `FFIBuffer` adapter itself**
+(`rust/src/dart_ffi.rs`), and keeps `MarkerInfo`/`CommandInfo` as Flutter-owned JSON DTOs. This is the
+consumer-repo migration peat-ffi's new default-on `dart-ffi` feature (peat#1030/#1031, rc.31) was built for.
+Module 6 rewritten accordingly.
+
+**New Shipped (peat-mesh):** on-disk file vacuum `redb::Database::compact()` (rc.49/#300/#301 — `automerge.redb`
+observed at 14.5 MB/90 min without it), an IPv6 reachability probe + ULA exemption (rc.48/#304/#305), and retry
+of partially synced distributions (rc.49/#307). All in Module 3 §3.4 + hub cards. **New Shipped (peat-node):**
+relay-fanout starvation fix (#189); mesh consumption lag closed (pins rc.49 = mesh HEAD). Module 8.
+
+**Codex migration:** `peat/CLAUDE.md → AGENTS.md` (FIPS hard-rule intact, `AGENTS.md:25-42`); SKILL.md → `.agents/skills/`.
+
+**Stable anchors re-derived (direct `ls`+`grep`, not trusted from prior pass):** ADR count **80** (76 numbered),
+**11 Accepted**, ADR-074 **Proposed**, `CellRole` **7**, peat-node RPC **27/27**, peat-mesh floor `>=rc.45`. FIPS
+source posture unchanged across every diff. C1 published-vs-source non-FIPS BLE split (peat-btle 0.4.0, checksum
+`a57dd351`) unchanged. Gateway lags mesh **~9 RCs** (rc.40 vs rc.49).
+
+**§1c fold-in of `peat-tak` attempted, BLOCKED:** the repo is not reachable in this environment (clone routed to the
+parleylabs-scoped git proxy and 403'd; egress-proxy `curl` also 403s GitHub API). Cannot audit it against code, so
+it is **not** folded into the tracked-clone set / routing tables — added as a §7.2 "referenced, not audited" row and
+kept as an open_todo with the clone-access blocker noted.
+
+**Verified-then-wrong miss caught this sweep (fact-wide occurrence):** Module 2 §2.8 still stated `peat-tak =0.0.2`
+while Module 7 and the 2026-07-13 run_log said 0.0.3; the consumer pin `peat-sapient/peat-sapient-bridge/Cargo.toml:22`
+confirms `=0.0.3`. Corrected. Logged to the §9b retrospective (misses_found=1).
+
+**New unverifiable / NEEDS_RUNTIME this run:** the rc.49 redb file-vacuum shrink efficacy (14.5 MB figure is a
+device-profile observation from the commit message, not benchmarked here); the rc.48 IPv6 reachability-probe
+behaviour; rc.49 partial-sync distribution retry under a lossy link; peat-node relay-fanout starvation fix under
+load; peat-flutter 0.1.0 live-device blob/BLE behaviour. All code-confirmed, none exercised live.

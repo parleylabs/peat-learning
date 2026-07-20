@@ -18,7 +18,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `cb6a818` (workspace `0.9.0-rc.30`), `peat-mesh` rc.47 (`b86c2c2`).
+Audited at `peat` HEAD `a1ce620` (workspace `0.9.0-rc.31`), `peat-mesh` rc.49 (`fa5c403`).
 Citations below point at the working-tree source.
 
 ---
@@ -599,12 +599,13 @@ gates membership.
 Peat bridges to existing tactical systems rather than replacing them. The `cot` module translates
 Peat domain messages (e.g. `TrackUpdate`, `CapabilityAdvertisement`) into **Cursor-on-Target** XML
 with MIL-STD-2525 military symbols, plus a custom `<_peat_>` detail extension. That XML is what any
-**CoT/TAK consumer** ingests. The HTTP/socket plumbing for an actual TAK Server bridge is in
-`peat-transport/src/tak/` (ADR-020/028/029) — see Module 5's neighbor. The TAK/CoT TCP bridge is
-**Shipped** (TLS via `tokio-rustls`). The runnable end-to-end example that used to live at
-`peat/examples/peat-tak-bridge/` was **moved out to a standalone [`peat-tak`](https://github.com/defenseunicorns/peat-tak)
-repo** (peat#1020, workspace `Cargo.toml:17`); `peat-tak` is now a real published crate (`=0.0.2`),
-consumed by the SAPIENT bridge binary (Module 7).
+**CoT/TAK consumer** ingests. The CoT *translation* layer stays in `peat-protocol/src/cot/`
+(ADR-020/028/029), but the HTTP/socket plumbing for an actual CoT/TAK bridge — which used to sit
+at `peat-transport/src/tak/` — was **removed from `peat-transport` at rc.31** (peat#1015, `492fb54`)
+and now lives entirely in the standalone [`peat-tak`](https://github.com/defenseunicorns/peat-tak)
+repo (the runnable example moved there first, peat#1020, then the transport itself). The TAK/CoT TCP
+bridge is **Shipped** (TLS via `tokio-rustls`). `peat-tak` is a published crate consumed by the
+SAPIENT bridge binary at `=0.0.3` (`peat-sapient/peat-sapient-bridge/Cargo.toml:22`; Module 7).
 
 > CoT and TAK are protocol/ecosystem names and are fine to use. Per the curriculum's house rule,
 > generic protocol prose names the *consumer* ("a CoT/TAK consumer"), not specific client products.

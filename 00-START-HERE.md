@@ -124,7 +124,7 @@ apart.
 
 | Repo | What it is | Role |
 |---|---|---|
-| **`peat`** (umbrella) | A Cargo workspace. The crates that matter live inside it: **`peat-protocol`** (the SDK facade — formation, hierarchy, QoS, CoT, discovery, distribution), `peat-schema` (Protobuf), `peat-transport` (HTTP/REST + TAK/CoT bridge), `peat-persistence`, `peat-ffi` (mobile bindings). The bare `peat` crate itself is a reserved-name placeholder with no dependencies. | The application-developer surface |
+| **`peat`** (umbrella) | A Cargo workspace. The crates that matter live inside it: **`peat-protocol`** (the SDK facade — formation, hierarchy, QoS, CoT, discovery, distribution), `peat-schema` (Protobuf), `peat-transport` (HTTP/REST query surface — the TAK/CoT TCP bridge moved out to the standalone `peat-tak` repo at rc.31), `peat-persistence`, `peat-ffi` (mobile bindings). The bare `peat` crate itself is a reserved-name placeholder with no dependencies. | The application-developer surface |
 | **`peat-mesh`** | The P2P networking library: Iroh/QUIC transport, Automerge CRDT sync, negentropy reconciliation, discovery, the pluggable-transport seam. It is a *library* exposing `PeatMesh`/`Node` types — **not** a deployable binary. | The network layer |
 | **`peat-btle`** | Cross-platform BLE mesh (Linux/BlueZ, macOS, iOS *(Beta)*, Android AAR, ESP32/NimBLE). Hand-rolled `no_std`-friendly CRDTs. | The Bluetooth edge |
 | **`peat-lite`** | A `no_std` codec + CRDT library for microcontrollers, targeting devices with as little as ~256 KB RAM (a *design budget* from ADR-035 — there is no allocator cap or static-RAM assertion enforcing it). | The microcontroller edge |
@@ -153,8 +153,10 @@ exotic transports and the autonomy-tasking primitive are not yet built.**
 1. **TAK/CoT operator picture** *(mostly Shipped).* Dismounted teams on phones (BLE),
    a vehicle running a peat-node sidecar, and a Cursor-on-Target client at the command
    post. Positions sync intra-cell over BLE, bridge to the mesh over QUIC, and get
-   encoded to CoT XML by `peat-transport`'s TAK bridge (ADR-020/028/029, **Shipped**).
-   The whole path ships — with the caveat that QoS *preemption* and the "<5 s"
+   encoded to CoT XML through the CoT translation layer (`peat-protocol/cot/`, ADR-020/028/029,
+   **Shipped**) and delivered over a TAK/CoT TCP bridge that now lives in the standalone `peat-tak`
+   repo (moved out of `peat-transport` at rc.31, peat#1015). The whole path ships — with the caveat
+   that QoS *preemption* and the "<5 s"
    Priority-1 latency are targets, not enforced guarantees yet.
 
 2. **A robot joining a cell and being tasked** *(join Shipped; tasking In-flight/Proposed).*

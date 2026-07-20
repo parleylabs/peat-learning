@@ -100,8 +100,10 @@ not exist as an open standard. In its absence, proprietary fleet/coordination pl
 creating lock-in and an O(N²) sprawl of one-off integration adapters across N incompatible approaches.
 
 > **Where this lands in the code.** Peat positions *as* that coordination layer — `peat-protocol`
-> (Module 2). The CoT/TAK bridge (Module 5's `peat-transport`, `src/tak/`, ADRs 020/028/029) is
-> **Shipped**, and it shows Peat *bridging* existing standards rather than replacing them: a CoT
+> (Module 2). The CoT/TAK bridge (ADRs 020/028/029) is **Shipped** — CoT *translation* lives in
+> `peat-protocol/cot/`, and the TAK/CoT TCP bridge itself moved out of `peat-transport` into the
+> standalone `peat-tak` repo at rc.31 (peat#1015; Module 7 §7.2). It shows Peat *bridging* existing
+> standards rather than replacing them: a CoT
 > consumer keeps speaking Cursor-on-Target while Peat carries the coordination underneath.
 
 ## 3. The hierarchy insight — the reframe
@@ -227,7 +229,7 @@ one fails. The requirement persists; the implementation adapts.
 **Status — In-flight / partly shipped.** A `composition` engine is part of `peat-protocol`'s public
 API (`peat-protocol/src/lib.rs`), so the building block exists. But the ground-truth audit finds **no
 code or test evidence that the automatic reallocate-on-failure loop is implemented end to end**, and
-`peat-protocol` is at `0.9.0-rc.30` (work in progress). Treat composition as present-but-WIP: the
+`peat-protocol` is at `0.9.0-rc.31` (work in progress). Treat composition as present-but-WIP: the
 capability vocabulary is real; the self-healing "requirement outlives the node" behavior is design
 intent until a code path and test confirm it.
 
@@ -457,7 +459,7 @@ measured, so they are omitted here.
 | Negentropy reconciliation | Shipped (ADR-040 / #435) | Module 3 §3.4 |
 | Deterministic leader election | Shipped | Module 2b |
 | Targeted command delivery / `command_log` | In-flight (ADR-046 / #853) / Speculative | Module 2 §2.7 |
-| CoT/TAK bridging the existing standards | Shipped | Module 2 §2.8, Module 5 (`peat-transport`) |
+| CoT/TAK bridging the existing standards | Shipped | Module 2 §2.8, Module 7 §7.2 (`peat-protocol/cot/` + standalone `peat-tak`) |
 | Open posture (Apache 2.0, IETF draft) | Shipped (draft on disk) | Module 7 (`peat/spec/`, governance) |
 
 ## Try it

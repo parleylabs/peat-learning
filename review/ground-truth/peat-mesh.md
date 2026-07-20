@@ -412,3 +412,25 @@ changed files: no `chacha20`/`x25519` reintroduced — only historical comments 
   added anywhere in the diff; crypto deps unchanged. `fetch_blob_from_peer`/`add_peer_from_hex_id`/provider gossip
   all still present and unchanged. **Note:** rc.47 was *tagged* at `372877e`; #296/#299/#295/#293 land after that
   tag — a consumer pinned to the rc.47 artifact gets the memory-bounding but not yet the compaction wire-in/dial fixes.
+
+---
+
+## Delta — 2026-07-20 (full sweep; `b86c2c2` → `fa5c403`, rc.47 → rc.49)
+
+- **On-disk file vacuum `redb::Database::compact()` [Shipped, rc.49].** peat-mesh#300/#301 (`3138e86`).
+  The per-doc `AutomergeStore::compact()`/adaptive compaction (#297) shrink a document's *serialized* bytes;
+  redb reuses freed pages internally but never shrinks the *file* on disk by itself, so a long session's
+  file high-water mark only grows. rc.49 calls `redb::Database::compact()` (file-level vacuum, distinct from
+  the per-doc compact) so `automerge.redb` itself shrinks. Device observation (peat-flutter#22): `automerge.redb`
+  grew to **14.5 MB in ~90 min** while `kv-*.automerge` docs stayed bytes-to-KB. Extends the §3.4 store-bounding set.
+- **IPv6 reachability probe + ULA exemption [Shipped, rc.48].** peat-mesh#304/#305 (`19d4fa0`/`5cafbf8`).
+  #295's dual-stack fix re-enabled IPv6 binding (was accidentally IPv4-only), which exposed nodes advertising
+  IPv6 addresses with no functional route; `interface_filter` now runs a per-candidate IPv6 reachability probe
+  and drops unreachable IPv6, with a **ULA (`fc00::/7`) exemption** for on-LAN use.
+- **Retry partially synced distributions [Shipped, rc.49].** peat-mesh#307 (`b673de4`),
+  `src/storage/file_distribution.rs` (+295) + `tests/iroh_file_distribution_e2e.rs`. A receiver whose blob
+  fetch was incomplete/failed mid-transfer now re-drives it instead of leaving the distribution stuck.
+- **Test hygiene:** remove write-coalescing timing races (`aa25187`, #309).
+- **FIPS posture unchanged** — no crypto in the `b86c2c2..fa5c403` diff. `derive_iroh_node_secret` still HKDF-SHA-256.
+- **NEEDS_RUNTIME:** the 14.5 MB redb high-water figure and file-shrink efficacy; IPv6 reachability-probe
+  behaviour; partial-sync-retry under a lossy link — all code-confirmed, none benchmarked here.

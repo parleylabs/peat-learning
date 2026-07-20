@@ -315,7 +315,7 @@ for CDC watching. It never starts a mesh node and never routes mesh data.
 
 That `=` pin moved a long way this cycle. It sat on `=0.9.0-rc.1` for months — a deliberately frozen
 pin that lagged the live mesh by ~40 release candidates — but a Dependabot bump (peat-gateway#144)
-fast-forwarded it to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (`rc.47`) by ~7 RCs.
+fast-forwarded it to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (`rc.49`) by ~9 RCs.
 That bump was **not** a one-line version change: the same PR adapted the CDC watcher to `peat-mesh`'s
 newer `ChangeEvent` surface — the `Updated`/`Removed`/`Initial` variants now carry an `origin` field
 (and `Initial` a `collection`), with a catch-all arm added (`src/cdc/watcher.rs:81,154,202`) — and rode
