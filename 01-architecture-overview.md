@@ -30,7 +30,8 @@ precisely, because each carries a different maturity:
   platforms; each contributes what it can. **(Shipped)**
 - **Several transports are supported.** The shipped transports are QUIC/Iroh (the default),
   BLE mesh (`peat-btle`, opt-in `bluetooth` feature), a peat-lite UDP bridge to embedded nodes
-  (opt-in `lite-bridge` feature), HTTP/REST, and a TAK/CoT TCP bridge. **(All Shipped.)** What
+  (opt-in `lite-bridge` feature), HTTP/REST, and a TAK/CoT TCP bridge (which moved out of
+  `peat-transport` into the standalone `peat-tak` repo at rc.31 — §1.5, Module 7 §7.2). **(All Shipped.)** What
   is *not* yet shipped is running all of them **simultaneously with automatic PACE-style
   failover** — that is a README roadmap item (**Proposed**). Note also that low-level "UDP" is
   not itself a peer transport: `UdpBypassChannel` is a send/receive primitive, not a
@@ -114,7 +115,7 @@ crate owns what**, bottom-up. **(Shipped — this matches the member-crate roles
 │ BINDING       peat-ffi  (Kotlin/Swift via UniFFI + JNI)        │
 ├───────────────────────────────────────────────────────────────┤
 │ TRANSPORT     peat-mesh (QUIC/Iroh, discovery, topology)       │
-│               peat-transport (HTTP/REST + TAK/CoT TCP)          │
+│               peat-transport (HTTP/REST only)                   │
 │               peat-btle (BLE mesh)   peat-lite (MCU UDP)        │
 ├───────────────────────────────────────────────────────────────┤
 │ PROTOCOL      peat-protocol — DocumentStore · Security · etc.   │
@@ -131,10 +132,10 @@ crate owns what**, bottom-up. **(Shipped — this matches the member-crate roles
 - **Schema** (`peat-schema`) — the wire format (Protobuf). No Peat dependencies; the foundation.
 - **Protocol** (`peat-protocol`) — the SDK core you program against (CRDT sync, auth, cells,
   hierarchy, QoS).
-- **Transport** — `peat-mesh` (P2P QUIC/Iroh), `peat-transport` (HTTP/REST + TAK/CoT TCP),
-  `peat-btle` (BLE), `peat-lite` (MCU UDP).
+- **Transport** — `peat-mesh` (P2P QUIC/Iroh), `peat-transport` (HTTP/REST only; the TAK/CoT TCP
+  bridge moved to the standalone `peat-tak` repo at rc.31), `peat-btle` (BLE), `peat-lite` (MCU UDP).
 - **Binding** (`peat-ffi`) — Kotlin/Swift bindings for mobile.
-- **Application** — the TAK/CoT bridge, edge ML, simulators, your apps.
+- **Application** — the TAK/CoT bridge (now the standalone `peat-tak` repo), edge ML, simulators, your apps.
 
 The **whitepaper** (`peat/docs/whitepaper/05-technical-architecture.md` §4.3) presents this same
 5-layer model, numbered bottom-up (Layer 1 Schema → Layer 5 Application) — so the whitepaper and
@@ -239,7 +240,9 @@ Inside `peat/` the most important sub-crates are:
 - **`peat-protocol`** — the SDK facade. *This is where you start as an app developer.* It
   re-exports `peat_mesh` and `peat_schema`, so a consumer depends on `peat-protocol` alone.
 - **`peat-schema`** — Protobuf wire types (`.proto` files under `peat/peat-schema/proto/`).
-- **`peat-transport`** — HTTP/REST server (Axum) + the **TAK/CoT TCP bridge** (`src/tak/`).
+- **`peat-transport`** — the read-only **HTTP/REST server** (Axum) over node/cell/beacon state.
+  The **TAK/CoT TCP bridge** that used to live at `src/tak/` was removed at rc.31 (peat#1015) and
+  migrated to the standalone `peat-tak` repo; CoT *translation* stays in `peat-protocol/cot/`.
 - **`peat-persistence`** — storage adapters (e.g. beacon persistence) and an external store
   server.
 - **`peat-ffi`** — UniFFI + JNI bindings for Android/iOS.
@@ -301,14 +304,14 @@ Concretely, verified from the manifests:
 - `peat-lite` → *(nothing Peat)* — `no_std`, standalone, only `heapless`.
 - `peat-gateway` → `peat-mesh` (an exact `=`-pin, with features `automerge-backend` + `broker`).
   The pin was frozen at `=0.9.0-rc.1` for months but a Dependabot bump (peat-gateway#144) moved it
-  to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (rc.47) by ~7 RCs (Module 5 §5.6).
+  to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (rc.49) by ~9 RCs (Module 5 §5.6).
 
 Rendered as a diagram (solid = required dependency, dashed = optional feature):
 
 ```mermaid
 flowchart TD
-    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, rc.40 (~7 rc behind)| M
-    T["peat-transport<br/>(HTTP/REST · TAK/CoT)"] --> P
+    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, rc.40 (~9 rc behind)| M
+    T["peat-transport<br/>(HTTP/REST)"] --> P
     FFI["peat-ffi<br/>(Kotlin / Swift)"] --> P
     PER["peat-persistence"] --> P
     P["peat-protocol<br/><b>SDK facade</b><br/>re-exports mesh + schema"] --> S["peat-schema<br/>(Protobuf — foundation)"]
@@ -321,6 +324,11 @@ flowchart TD
 > **Diagram legend.** Solid arrow = a required dependency declared in `Cargo.toml`; dashed arrow
 > = an optional dependency gated behind a Cargo feature (the feature name is on the arrow). The
 > bold box is the SDK facade you program against.
+>
+> **`peat-transport` is now HTTP/REST only.** As of `peat` rc.31 (peat#1015, `492fb54`) the TAK/CoT
+> bridge that used to live under `peat-transport/src/tak/` was **removed** and migrated out to a
+> standalone `peat-tak` repo (Module 7 §7.2). `peat-transport` today is just the read-only HTTP/REST
+> query surface (`peat-transport/src/lib.rs`, `http/`) — nodes, cells, and beacons over `GET`.
 
 ### Why the arrows changed direction (history worth knowing)
 
@@ -341,7 +349,7 @@ this project, and spotting it is part of the job.
 Because `peat-mesh` and `peat-btle` are separate published crates, the `peat` workspace pins
 their versions carefully. Open `peat/Cargo.toml` and you will find a long, heavily commented
 floor-version history (a succession of release-candidate floors; the floor now sits at
-`peat-mesh >=0.9.0-rc.45` and the audited HEAD is the workspace bump to `0.9.0-rc.30`) explaining a
+`peat-mesh >=0.9.0-rc.45` and the audited HEAD is the workspace bump to `0.9.0-rc.31`) explaining a
 cargo **cycle-detection** problem that arose when `peat-btle` and `peat-mesh` each optionally
 depended on the other. As of rc.29 (peat#1016) the workspace also **dropped its `[patch.crates-io]`
 git pin on `peat-mesh`** and now consumes the published registry crate directly — the floor was
@@ -396,7 +404,7 @@ Concretely, from the manifests:
    only a tiny `no_std` CRDT library, or only a cross-platform BLE-mesh transport. The value of
    each edge crate is not locked behind adopting `peat-protocol`.
 2. **Independent versioning and publishing.** Each is its own crate, released on its own cadence
-   (peat-mesh at rc.47, peat-btle at 0.4.0, peat-lite at 0.2.5 — distinct version lines). The
+   (peat-mesh at rc.49, peat-btle at 0.4.0, peat-lite at 0.2.5 — distinct version lines). The
    embedded/mobile crates additionally publish Android artifacts to Maven Central (a
    `publish-maven` workflow exists in `peat-btle`).
 3. **Reaches targets the core cannot.** `peat-lite` compiles for bare-metal microcontrollers and

@@ -5,7 +5,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@b86c2c2` (`0.9.0-rc.47`).
+`peat-mesh@fa5c403` (`0.9.0-rc.49`).
 
 > **iroh reached 1.0 (rc.46, peat-mesh#276) [Shipped].** The QUIC transport that underpins the whole
 > mesh left the release-candidate train: `iroh` is now pinned to the **stable `1.0.2`** line
@@ -311,7 +311,7 @@ results** — treat them as the motivation for the proposal. The durable lesson,
 lands: on a degraded, high-latency link, latency and write cadence — not just throughput — shape how
 fast a mesh converges.
 
-### Keeping the store small: write coalescing, adaptive compaction, bounded memory (rc.46–rc.47) **[Shipped]**
+### Keeping the store small: write coalescing, adaptive compaction, bounded memory (rc.46–rc.49) **[Shipped]**
 
 A run of `AutomergeStore` work landed to stop a long-lived node's redb file and RSS from growing
 without bound under high-frequency writes (the trigger was a field report of a 14.9 MB uncompacted
@@ -341,12 +341,21 @@ all in `storage/automerge_store.rs`:
 - **Bounded RSS on the sync receive path [Shipped, peat-mesh#289].** The debug `doc.save()` in
   `receive_sync_message` is now gated behind `DEBUG` tracing, and the dirty-buffer force-flush cap
   dropped to `MAX_DIRTY_ENTRIES = 16` (`:487`).
+- **On-disk file vacuum [Shipped as of rc.49, peat-mesh#300/#301].** The four levers above shrink a
+  *document's* serialized bytes and cap *memory*, but redb reuses freed pages internally and **never
+  shrinks the file on disk by itself** — over a long session (new docs, tombstoned keys, repeatedly
+  rewritten docs) the file's high-water mark only ever grows. `redb::Database::compact()` — a
+  file-level vacuum, distinct from `AutomergeStore`'s per-document `compact()` — was never being
+  called; rc.49 now invokes it so the `automerge.redb` file itself can shrink. The trigger was a
+  physical-device observation during peat-flutter#22: `automerge.redb` grew to **14.5 MB in ~90 min**
+  of normal use while the separate `kv-*.automerge` docs stayed bytes-to-KB.
 
 > The RSS figures in the commit history (≈930 MB before → <60 MB steady-state, OpTree expansion
-> "250–300×") are field-profile numbers, **not benchmarked here** — treat them as motivation, not a
-> guarantee. Note also that peat-mesh#296/#299/#295 land *after* the tagged rc.47 release commit, so
-> a consumer pinned to the rc.47 artifact gets the memory-bounding but not yet the compaction wire-in
-> or the dialing fixes below.
+> "250–300×") and the 14.5 MB redb high-water observation are field-profile numbers, **not
+> benchmarked here** — treat them as motivation, not a guarantee. History note: peat-mesh#296/#299/#295
+> landed *after* the tagged rc.47 release commit, so a consumer pinned to the exact rc.47 artifact got
+> the memory-bounding but not yet the compaction wire-in or the dialing fixes below — all of which are
+> now in the released rc.48/rc.49 line (the file-vacuum above shipped in rc.49).
 
 ### Dialing an ID: pull-based address resolution (rc.47, peat-mesh#299) **[Shipped]**
 
@@ -357,7 +366,12 @@ and polls `resolve(endpoint_id)` under a 2 s deadline before dialing, falling ba
 on timeout (`network/iroh_transport.rs:1457`). A companion fix (peat-mesh#295) routes the various
 constructors' binds through an interface filter (`bind_with_interface_filter_dual_stack`) so the node
 advertises real LAN IPv4/IPv6 and drops docker-bridge and CGNAT-range (`100.64.0.0/10`) addresses;
-`PEAT_ADVERTISE_ALL_INTERFACES=1` bypasses the filter. (The `dialer_resolves_acceptor_by_id_via_mdns`
+`PEAT_ADVERTISE_ALL_INTERFACES=1` bypasses the filter. **rc.48 (peat-mesh#304/#305) tightened the
+IPv6 side [Shipped]:** the dual-stack fix had re-enabled IPv6 binding where it had accidentally been
+IPv4-only, which then exposed nodes advertising IPv6 addresses with no functional route; the
+`interface_filter` now runs a **per-candidate IPv6 reachability probe** and drops unreachable IPv6
+addresses, with a **ULA exemption** so unique-local (`fc00::/7`) addresses stay eligible for on-LAN
+use. (The `dialer_resolves_acceptor_by_id_via_mdns`
 P2P test is CI-verified only — local macOS firewall on unsigned test binaries makes it inconclusive
 off-runner; treat the on-wire behaviour as NEEDS_RUNTIME.)
 
@@ -430,6 +444,13 @@ This is a *targeted* pull that lives alongside provider gossip, not a replacemen
 direct fetch still records the holding and re-announces it, so the two paths reinforce the same
 `BlobPeerIndex`. (The e2e proof `tests/blob_direct_peer_fetch_e2e.rs` fetches over real QUIC with no
 document/sync engine attached — code-confirmed, runtime unbenchmarked here.)
+
+**Retrying partially synced distributions [Shipped as of rc.49, peat-mesh#307].** A distribution can
+land its *document* on a receiver while the referenced *blob* fetch is still incomplete or fails
+mid-transfer. rc.49 reworks `file_distribution.rs` so a receiver retries a partially synced
+distribution instead of leaving it stuck — the receive watcher re-drives the blob fetch until the
+payload is whole. (Retry/backoff behaviour under a lossy link is code-confirmed via
+`tests/iroh_file_distribution_e2e.rs`, not benchmarked here — NEEDS_RUNTIME.)
 
 **Interest-driven convergence — the ADR-071 seam [Proposed; seam Shipped-but-inert].** rc.43 also
 lands the additive Phase-1 seam for **ADR-071 (Proposed): subscription-based convergence**. The

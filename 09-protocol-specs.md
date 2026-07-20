@@ -176,8 +176,10 @@ Highlights, verified against `003-schema.md`:
   affiliation + dimension compose to a CoT type (e.g. `MEMBER + GROUND → a-f-G`, `003-schema.md:789-795`);
   Peat-specific fields ride in a **`<__peat>`** CoT detail extension (double underscore,
   `003-schema.md:804-809` — *not* the `<_peat_>` form some prose uses). The bridge itself is real and
-  shipped in peat-transport (`src/tak/`, ADR-020/028/029); confirm any specific field mapping against
-  that code plus spec 003 §9 before quoting it as exact.
+  shipped, but as of `peat` rc.31 (peat#1015) the TAK/CoT TCP transport lives in the standalone
+  `peat-tak` repo, not `peat-transport/src/tak/`; the CoT *translation* stays in `peat-protocol/cot/`
+  (ADR-020/028/029). Confirm any specific field mapping against that code plus spec 003 §9 before
+  quoting it as exact.
 
 > **New at rc.30: richer motion and error fields on tracks [Shipped].** `peat-schema/proto/common.proto`
 > gained two message types: **`Kinematics`** (`velocity` m/s, `heading` 0–360°, `acceleration` m/s²,
@@ -190,7 +192,7 @@ Highlights, verified against `003-schema.md`:
 > consumers such as the SAPIENT bridge **dual-write** old and new fields for backward compatibility
 > (Module 7), so the deprecated fields are still populated, not gone. Note also the proto **schema
 > version** is a separate track from the crate version: every `.proto` header now reads `Version: 0.5.0`
-> (pre-1.0, signalling the wire schema is not yet frozen) while the `peat-schema` *crate* is `0.9.0-rc.30`.
+> (pre-1.0, signalling the wire schema is not yet frozen) while the `peat-schema` *crate* is `0.9.0-rc.31`.
 
 ## 9.4 `004-coordination` — cells, election, hierarchy [spec is normative; mesh runtime differs]
 
@@ -366,7 +368,8 @@ labeled by status so you know what actually runs. (Full set in the curriculum's 
 
 - **TAK/CoT operator picture — mostly [Shipped].** Phones sync over **BLE** within a `Cell`; the cell
   leader's vehicle node bridges to the mesh over **QUIC/Iroh**; the command post bridges to a CoT/TAK
-  consumer over **TAK/CoT TCP** (peat-transport, ADR-028). A position is a small Automerge change
+  consumer over **TAK/CoT TCP** (the standalone `peat-tak` repo — moved out of `peat-transport` at
+  rc.31, ADR-028). A position is a small Automerge change
   reconciled by negentropy, then encoded as Cursor-on-Target XML via the §9.3 mapping (`track_id → uid`,
   affiliation → `a-f/a-h/a-n/a-u`, `<__peat>` extension). Contact reports are Critical QoS and are
   *ordered* ahead of position updates — but **cross-class wire-level preemption is not enforced in v1

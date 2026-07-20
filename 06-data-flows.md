@@ -29,7 +29,7 @@ across three different crates and at least two transports. Every leg below is **
 
 ```
 ESP32 sensor                 Cell leader (phone)            Zone / command post
- (peat-lite)                 (peat-protocol + peat-mesh)    (peat-transport CoT/TAK bridge)
+ (peat-lite)                 (peat-protocol + peat-mesh)    (peat-tak CoT/TAK bridge)
      │                              │                               │
  1. Position encoded as a           │                               │
     peat-lite wire frame            │                               │
@@ -51,10 +51,10 @@ ESP32 sensor                 Cell leader (phone)            Zone / command post
      │                              │                             cell summaries
      │                              │                             (hierarchy/aggregation)
      │                              │                               │
-     │                              │                          6. peat-transport CoT bridge
+     │                              │                          6. peat-tak CoT bridge
      │                              │                             encodes CoT XML (MIL-STD-2525
      │                              │                             type mapping + _peat_ ext.)
-     │                              │                             → CoT consumer / TAK Server
+     │                              │                             → CoT/TAK consumer
 ```
 *(\*) Identity is **re-derived at the bridge**, not carried unchanged — see the "Identity does not
 travel intact" note at the end of this trace.*
@@ -68,7 +68,7 @@ sequenceDiagram
     participant S as ESP32 sensor (peat-lite)
     participant L as Cell leader (peat-protocol + peat-mesh)
     participant Z as Zone / parent node
-    participant T as CoT bridge (peat-transport)
+    participant T as CoT bridge (peat-tak)
     S->>L: 16-byte wire frame, MessageType::Document (0x07) — over UDP or BLE
     Note over L: lite-bridge ingests -> Document in "tracks"<br/>AutomergeBackend commits LOCALLY first (offline-safe)
     L->>Z: negentropy reconcile + delta sync (Iroh QUIC)
@@ -76,7 +76,7 @@ sequenceDiagram
     Note over Z: HierarchicalAggregator folds CellDelta into the cohort summary
     Z->>T: aggregated picture
     T->>T: encode CoT XML (MIL-STD-2525 type mapping + _peat_ extension, ADR-028)
-    Note over T: -> CoT consumer / TAK Server display
+    Note over T: -> CoT/TAK consumer display
 ```
 
 **Where each step lives:**
@@ -102,11 +102,13 @@ sequenceDiagram
    `hierarchy/aggregation_coordinator.rs`, surfaced via `update_cell_summary`) folds this cell's
    `CellDelta` in with its siblings; the `HierarchicalRouter` (`hierarchy/router.rs`) enforces that
    the update went *up through the leader*, not sideways across cells.
-6. `peat-transport/src/tak/` + `peat-protocol/src/cot/` — the aggregated picture is encoded as
+6. `peat-protocol/src/cot/` + the standalone `peat-tak` repo — the aggregated picture is encoded as
    Cursor-on-Target XML (MIL-STD-2525 *type-code mapping*, not full symbology rendering, plus the
-   `<_peat_>` extension from ADR-028) and pushed over the TAK/CoT TCP bridge (TLS) to a CoT consumer.
-   (Runnable example: the standalone [`peat-tak`](https://github.com/defenseunicorns/peat-tak) repo —
-   moved out of `peat/examples/` in peat#1020.)
+   `<_peat_>` extension from ADR-028) by the CoT *translation* layer, then pushed over the TAK/CoT TCP
+   bridge (TLS) to a CoT consumer. The bridge transport itself is no longer in `peat-transport`: it was
+   **removed at rc.31** (peat#1015) and now lives entirely in the standalone
+   [`peat-tak`](https://github.com/defenseunicorns/peat-tak) repo (which had already taken the runnable
+   example in peat#1020). `peat-transport` today is HTTP/REST only.
 
 **QoS along the way (ordering Shipped, enforcement In-flight).** A contact report is classified P1
 Critical, so at every bandwidth-constrained hop (`peat-protocol/src/qos/`, `peat-mesh/src/qos/`) it
@@ -162,20 +164,42 @@ but a first migration tranche is already **[Shipped]** in `peat-ffi/src/lib.rs`:
 the *first code step is Shipped*; the two are not the same thing, and the rest of the migration has not
 landed. No wire format changed — this is a binding-surface cleanup.
 
-**The Dart client now rides this surface (peat-flutter, still 0.0.1) [Shipped].** `peat-flutter` — the
-Flutter/Dart binding — re-pinned the *published* `peat-ffi 0.2.10` and grew two real client facades over
-it: `PeatFlutterNode.blobDownload(hashHex, sizeBytes, {peerIdHex})` returns a poll-based
-`Stream<BlobFetchStatus>` over the blob surface above (omit the peer → mesh-sync candidate selection;
-pass it → direct P2P pull), and a `MarkerInfo` map-marker facade with `putMarker` / `deleteDocument` and
-delete-event visibility. The marker delete uses an **OR-Set soft-delete tombstone** (`deleted:true`), not
-a hard remove — mesh-wide hard-delete propagation (`ChangeEvent::Removed`) is still **In-flight**, so the
-tombstone sentinel is the shipped cross-mesh mechanism. Two honest caveats for a mobile integrator:
-(1) the Dart client transitively bundles the *published* `peat-btle 0.4.0`, which still ships **non-FIPS**
-ChaCha20-Poly1305 + X25519 (the source is FIPS-clean but was never re-published — see Module 4 and Module 7 §7.8);
-and (2) because these are **hand-maintained** UniFFI bindings pinned to `peat-ffi 0.2.10`, the marker
-records they call (`put_marker`/`get_markers`) were **removed** from `peat-ffi 0.2.11` by the ADR-074
-shrink above — so the next peat-ffi re-pin will need those bindings refactored to the proto-backed schema
-or they fail the UniFFI checksum. (A full `04c` client-bindings module is tracked for the next full sweep.)
+A follow-on at **peat-ffi `0.2.12`, rc.31 (peat#1030/#1031)** adds a default-enabled **`dart-ffi`
+Cargo feature** (`peat-ffi/Cargo.toml`, `default = ["sync", "dart-ffi"]`) that gates the
+hand-maintained `FFIBuffer` Dart adapter (`#[cfg(feature = "dart-ffi")] pub mod dart_ffi`,
+`peat-ffi/src/lib.rs:199`). Direct consumers keep their existing exported symbols by default; a native
+wrapper that wants to **own** the adapter builds `peat-ffi` with `default-features = false` and selects
+its protocol features explicitly, avoiding duplicate C symbols while the adapter migrates to its
+consumer repo. The standard UniFFI and JNI surfaces are unchanged.
+
+**The Dart client now rides this surface (peat-flutter `0.1.0`, first real release, peat-flutter#26) [Shipped].**
+`peat-flutter` — the Flutter/Dart binding — cut its **first real versioned release `0.1.0`** and grew two
+real client facades over the published `peat-ffi`: `PeatFlutterNode.blobDownload(hashHex, sizeBytes,
+{peerIdHex})` returns a poll-based `Stream<BlobFetchStatus>` over the blob surface above (omit the peer →
+mesh-sync candidate selection; pass it → direct P2P pull), and a `MarkerInfo` map-marker facade with
+`putMarker` / `deleteDocument` and delete-event visibility. The marker delete uses an **OR-Set soft-delete
+tombstone** (`deleted:true`), not a hard remove — mesh-wide hard-delete propagation (`ChangeEvent::Removed`)
+is still **In-flight**, so the tombstone sentinel is the shipped cross-mesh mechanism.
+
+**The forward-incompat is resolved: the client now owns the adapter (peat-flutter#29) [Shipped].** The
+last sweep flagged a break: peat-flutter's hand-maintained `MarkerInfo`/`CommandInfo` bindings were pinned
+to the *published* `peat-ffi 0.2.10`, but those records were removed from `peat-ffi 0.2.11` by the ADR-074
+shrink above — so the next re-pin was going to fail the UniFFI checksum. peat-flutter#29 fixed it the clean
+way rather than breaking: it re-pins **`peat-ffi =0.2.12` with `default-features = false`**
+(`peat-flutter/rust/Cargo.toml`, imported as `peat_ffi_upstream`), **owns the Dart `FFIBuffer` adapter
+itself** (`peat-flutter/rust/src/dart_ffi.rs`, +1200 lines — this is the consumer-repo migration the
+`dart-ffi` feature above was built for), and keeps `MarkerInfo`/`CommandInfo` as **Flutter-owned JSON
+DTOs** (`lib/src/generated/peat_ffi.dart` — "CommandInfo and MarkerInfo remain Flutter-owned JSON DTOs")
+rather than FFI records. Because the marker types no longer cross the FFI boundary, the 0.2.11 removal
+can't break the re-pin. Two more mobile-hardening fixes rode the same release: native calls now run on a
+**background isolate** (peat-flutter#25) so the UI thread never blocks, and a BLE peer's **GATT service and
+characteristic are validated before it is announced** (peat-flutter#27).
+
+One honest caveat still stands for a mobile integrator: the Dart client transitively bundles the
+*published* `peat-btle 0.4.0` (`peat-flutter/rust/Cargo.lock`, checksum `a57dd351…`), which still ships
+**non-FIPS** ChaCha20-Poly1305 + X25519 — the source is FIPS-clean but that migration was never
+re-published (see Module 4 and Module 7 §7.8). (A full `04c` client-bindings module is tracked for the
+next full sweep.)
 
 **Identity does not travel intact across the bridge.** Trace A reads as one continuous climb, but
 the identity attached to the report is *re-derived* at step 2, because the stack uses four different
@@ -371,7 +395,8 @@ Files: `peat-protocol/src/hierarchy/` (aggregation, routing, flow control),
    │                  └── peat-lite   (no_std CRDT primitives; ~256 KB design target, not enforced)│
    │                                                                       — feature "lite-bridge" │
    │                                                                                             │
-   │   peat-transport (HTTP/REST + TAK/CoT bridge)      peat-ffi (Kotlin/Swift bindings)          │
+   │   peat-transport (HTTP/REST only)                 peat-ffi (Kotlin/Swift bindings)          │
+   │   [standalone repo] peat-tak (TAK/CoT TCP bridge, ex-peat-transport at rc.31)               │
    │                                                                                             │
    │   [Proposed, NOT built]  peat-sbd (Iridium SBD, ADR-051) · peat-lora (LoRa, ADR-052)         │
    └─────────────────────────────────────────────────────────────────────────────────────────────┘

@@ -16,8 +16,8 @@ download list; the capability map is what tells you whether the system does what
 - **Speculative** — design discussed for teaching, not even an ADR-complete proposal anywhere.
 
 Everything below was checked against the audited HEADs in
-[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `cb6a818` (rc.30), `peat-mesh`
-rc.47 (`b86c2c2`), `peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` `1da5002` (0.1.0), `peat-node` 0.4.9. The operating
+[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `a1ce620` (rc.31), `peat-mesh`
+rc.49 (`fa5c403`), `peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` `1da5002` (0.1.0), `peat-node` 0.4.10. The operating
 principle is **code over everything**: where a README, a spec, or a months-old guide disagrees with
 the source on the audited HEAD, the source wins.
 
@@ -37,12 +37,12 @@ each one's role in a sentence so you know why you'd open it.
 | `peat-gateway/` | https://github.com/defenseunicorns/peat-gateway | The enterprise **control plane** — binary, library, web UI, and Helm/Zarf/UDS packaging. It is **not a mesh node and not in the data path**; it observes and manages. Server-side, not an SDK crate. |
 | `peat-node/` | https://github.com/defenseunicorns/peat-node | The deployable **production node**: a gRPC / Connect / gRPC-Web sidecar that embeds `peat-mesh` + `peat-protocol` and exposes them on one port. Iroh QUIC only — no BLE path. (See §7.2 for how it differs from the in-`peat-mesh` demo binary.) |
 | `peat-flutter/` | https://github.com/defenseunicorns/peat-flutter | The **Flutter/Dart client binding** over `peat-ffi` (hand-maintained UniFFI bindings). Wraps the native crate for mobile consumers; transitively bundles peat-btle + peat-mesh. |
-| `peat-sapient/` | https://github.com/defenseunicorns/peat-sapient | The **SAPIENT sensor-standard bridge** (ADR-070, Accepted) — the sensor-standard analog of peat-transport's TAK/CoT bridge. As of 2026-07 it is a **three-crate workspace**: `peat-sapient` (core BSI Flex 335 v2.0 codec + transforms + C2, `peat-schema` optional), `peat-mesh-sapient` (a one-way `Translator`/`Transport` adapter onto `peat-mesh`, ADR-059 Amendment 4), and `peat-sapient-bridge` (a deployable bidirectional SAPIENT↔mesh↔TAK bridge binary that also consumes `peat-tak`). It now ships **opt-in TLS** (see §7.8). |
+| `peat-sapient/` | https://github.com/defenseunicorns/peat-sapient | The **SAPIENT sensor-standard bridge** (ADR-070, Accepted) — the sensor-standard analog of the TAK/CoT bridge (which itself moved out of `peat-transport` into the standalone `peat-tak` repo at `peat` rc.31, peat#1015 — see §7.2). As of 2026-07 it is a **three-crate workspace**: `peat-sapient` (core BSI Flex 335 v2.0 codec + transforms + C2, `peat-schema` optional), `peat-mesh-sapient` (a one-way `Translator`/`Transport` adapter onto `peat-mesh`, ADR-059 Amendment 4), and `peat-sapient-bridge` (a deployable bidirectional SAPIENT↔mesh↔TAK bridge binary that also consumes `peat-tak`). It now ships **opt-in TLS** (see §7.8). |
 
 > **Note on registries.** Whether `peat-protocol`, `peat-schema`, `peat-btle`, and `peat-lite` are
 > *published* to crates.io, and `peat-ffi` to Maven Central, is **not verified in this audit**. The
 > crates exist and carry versions, but the peat-mesh README advertises stale versions (0.3.2 against
-> a shipped rc.47), so registry-version trust is shaky. Check the actual registry before relying on a
+> a shipped rc.49), so registry-version trust is shaky. Check the actual registry before relying on a
 > published version; do not assume the README is current.
 
 ---
@@ -59,6 +59,7 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 | **peat-registry** | https://github.com/defenseunicorns/peat-registry | UDS registry replication for disconnected/DDIL environments — ADR-054 (`054-UDS-registry-replication-ddil.md`, on disk). Relevant to gateway and air-gapped deployment. | **Status unverified.** ADR-054 exists; the gateway's mesh wire-tier enum is "explicitly modeled on peat-registry artifact routing," so the concept is real, but the repo and its implementation status are not audited here. Medium priority. |
 | **peat-sdk-go** | https://github.com/defenseunicorns/peat-sdk-go | A Go SDK, useful if any consumer service is written in Go. | **Proposed / Planned.** The peat-mesh README lists Go/Python/Kotlin SDKs as **Phase 3 (Future)**. Treat as roadmap, not a clonable shipped repo, until confirmed. Low priority. |
 | **peat-android / android demo** | A demo lives **locally** at `peat/examples/android-peat-demo` (confirmed present); a standalone repo is referenced in peat-mesh issue #828 | Android consumer integration and user-acceptance testing. | **In-repo example is present and is the one to start from.** Whether a separate standalone repo exists is unconfirmed. Medium priority for mobile work. |
+| **peat-tak** | https://github.com/defenseunicorns/peat-tak | The **TAK/CoT bridge**, split out of `peat/examples` (peat#1020) and then given the TAK *transport* itself when `peat-transport/src/tak/` was removed at `peat` rc.31 (peat#1015, `492fb54`). It is a published crate consumed by `peat-sapient-bridge` (=0.0.3). | **Referenced, not audited here.** The migration out of `peat-transport` is confirmed from the `peat` diff, but the `peat-tak` repo is **not reachable in this environment** (the clone routed to the parleylabs-scoped proxy and 403'd), so its own contents/version are unverified this run and it is **not yet folded into the tracked-clone set / routing tables**. Medium priority; tracked in `REVIEW-STATE.json` `open_todos`. |
 
 > **peat-node is a real component — drop the old "is this a repackaging?" hedge.**
 >
@@ -69,7 +70,7 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 >
 > - **`peat-mesh-node`** (inside peat-mesh) is a small demo / reference binary for bringing up a mesh
 >   by hand.
-> - **`peat-node`** (its own repo, audited at v0.4.9) is the **production sidecar**: it embeds
+> - **`peat-node`** (its own repo, audited at v0.4.10) is the **production sidecar**: it embeds
 >   peat-mesh + peat-protocol and exposes them as a gRPC / Connect / gRPC-Web API on a single port. It
 >   is the Kubernetes sidecar pattern's node, it ships a Helm chart plus Zarf and UDS bundles, and it
 >   is the UDS Remote Agent integration target. The proto defines **27 RPCs** and `service.rs`
@@ -140,7 +141,7 @@ open.
 - **[`peat/docs/guides/developer/DEVELOPER_GUIDE.md`](../peat/docs/guides/developer/DEVELOPER_GUIDE.md)**
   — the onboarding guide: environment setup, runtime architecture, core concepts, crate reference,
   testing, mobile, edge AI, and "Extending Peat." This learning track is a guided path through it.
-  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.47, the
+  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.49, the
   rc.12 FIPS crypto swap dated 2026-05-18, the ADR-066 hierarchy rename still in flight). Where the
   guide and the code differ, **the code wins** — quoting the guide without checking the source is how
   the known stale-doc errors (wrong RBAC role names, ChaCha20 crypto, legacy hierarchy terms) get

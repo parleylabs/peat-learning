@@ -120,3 +120,24 @@ change.**
 - **Forward-incompat flag (new todo).** The marker FFI (`put_marker`/`get_markers`/`MarkerInfo`) present in the
   pinned published 0.2.10 was **removed** from peat-ffi source 0.2.11 by peat#1022/ADR-074. When peat-flutter next
   re-pins 0.2.11, its hand-maintained marker bindings will fail UniFFI checksum unless refactored to the proto schema.
+
+---
+
+## Delta — 2026-07-20 (full sweep; `129c74c` → `1770bc9`, 0.0.1 → 0.1.0 first real release)
+
+- **First real versioned release 0.1.0 [Shipped].** peat-flutter#26 (`5f1404a`); `pubspec.yaml` `version: 0.1.0`.
+- **Owns the Dart FFIBuffer adapter — forward-incompat RESOLVED [Shipped].** peat-flutter#29 (`1770bc9`).
+  Re-pins **peat-ffi `=0.2.12` with `default-features = false`** (`rust/Cargo.toml:38`, imported as
+  `peat_ffi_upstream`), selects protocol features explicitly, and **owns the Dart `FFIBuffer` adapter itself**
+  (`rust/src/dart_ffi.rs`, +1212). `MarkerInfo`/`CommandInfo` are now **Flutter-owned JSON DTOs**
+  (`lib/src/generated/peat_ffi.dart:11` "CommandInfo and MarkerInfo remain Flutter-owned JSON DTOs"), not FFI
+  records — so the ADR-074 removal of those records from peat-ffi 0.2.11 no longer breaks the re-pin. This is the
+  consumer-repo migration peat-ffi's default-on `dart-ffi` feature (peat#1030/#1031) was built for. Closes the
+  2026-07-13 FORWARD-INCOMPAT open_todo.
+- **BLE + isolate hardening [Shipped].** #27 (`6ed4970`) validates a peer's GATT service/characteristic before
+  announcing it as a BLE peer; #25 (`98db52b`) runs `PeatFlutterNode` native calls on a background isolate so the
+  UI thread never blocks; #22/#23 (`bbb28e9`) enables the `relay-n0-hosted` peat-ffi feature.
+- **C1 published-vs-source non-FIPS BLE split UNCHANGED.** `rust/Cargo.lock:3498-3501` still locks
+  `peat-btle 0.4.0` checksum `a57dd351…`, pulling `chacha20poly1305 0.10.x` + `x25519-dalek 2.x` (non-FIPS).
+  Source is FIPS-clean; that migration was never re-published. Same version string, different shipped crypto.
+- **NEEDS_RUNTIME:** live-device blob transfer/backpressure + BLE announce behaviour — code-confirmed, not benchmarked here.

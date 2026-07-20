@@ -133,22 +133,25 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 > it takes `--bind` / `--name` CLI flags. When something does not pick up an env var, first confirm
 > which binary you are actually running.
 
-### What the production sidecar (`peat-node`) gained recently — through v0.4.9 **[Shipped]**
+### What the production sidecar (`peat-node`) gained recently — through v0.4.10 **[Shipped]**
 
 If you run `peat-node` (the sidecar most deployments use), a handful of operability changes in the
-`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `7942be5` (v0.4.9). The
-v0.4.9 release itself adds no new runtime surface — it eliminates a `grpc_test` port-collision flake
+`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `23a2707` (v0.4.10). The
+v0.4.9 release itself added no new runtime surface — it eliminated a `grpc_test` port-collision flake
 (the test server now binds `127.0.0.1:0` and reads the OS-assigned port instead of a hardcoded one)
-and ships a zero-friction two-node attachment quick-start under `examples/compose/attachments/`
+and shipped a zero-friction two-node attachment quick-start under `examples/compose/attachments/`
 (no `peer.sh`/`send.sh` needed).
 
-> **Dependency-only refresh, still v0.4.9 (no version bump) [Shipped].** The latest commits are a
-> dependency bump folded into the same 0.4.9: `peat-mesh =0.9.0-rc.46`, `peat-protocol >=0.9.0-rc.29`,
-> and — the one worth calling out — **`iroh` moved onto the stable `1.0.2` line** (from the old
-> `=1.0.0-rc.1` exact pin). The QUIC transport is no longer a pre-1.0 release candidate. The Helm chart
-> caught up too (`chart/peat-node/Chart.yaml` `0.4.5 → 0.4.9`). Note peat-node pins mesh `rc.46` while
-> mesh HEAD is `rc.47`, so it trails the mesh line by one RC (its own consumption lag, separate from the
-> gateway's ~7-RC lag). No `src/`, proto, or RPC change — the gRPC surface stays 27/27.
+> **v0.4.10: relay-fanout starvation fix + mesh catch-up [Shipped].** v0.4.10 pins the Peat stack
+> forward — `peat-mesh =0.9.0-rc.49` (up from `rc.46`) and `peat-protocol >=0.9.0-rc.31`, still on the
+> stable `iroh 1.0.2` line — and lands one real sync fix: **relay fanout no longer starves**
+> (peat-node#189, `src/fanout.rs` + `src/attachments/handlers.rs`). Under load, a relay node
+> fanning a document or attachment out to many peers could let a slow or stalled recipient hold up the
+> others; the rework prevents that head-of-line starvation. The Helm chart moved to `0.4.10`
+> (`chart/peat-node/Chart.yaml`). Note the earlier mesh **consumption lag is now closed** — peat-node
+> pins `rc.49`, which is the current mesh HEAD, so the two are back in lockstep (distinct from the
+> gateway's ~9-RC lag). No proto or RPC change — the gRPC surface stays 27/27. (The fanout-starvation
+> behaviour is covered by `tests/attachments_e2e_test.rs`; on-wire load behaviour is NEEDS_RUNTIME.)
 
 The capability facts below are unchanged from v0.4.8:
 
@@ -399,8 +402,9 @@ stale beacon views, not a stalled ballot.
 ## 8.7 CoT / TAK integration (operator view) **[Shipped subsystem; config values guide-documented]**
 
 Peat bridges to a CoT consumer via Cursor-on-Target translation. The bridge code is **[Shipped]** —
-the TAK/CoT TCP path lives in `peat-transport/src/tak/` and the CoT encoding in
-`peat-protocol/src/cot/` (ADR-020/028/029, Modules 2 §2.8 and 5). The operator guide documents the
+the CoT encoding lives in `peat-protocol/src/cot/`, while the TAK/CoT TCP path was **removed from
+`peat-transport` at rc.31** (peat#1015) and now lives in the standalone `peat-tak` repo
+(ADR-020/028/029, Modules 2 §2.8 and 7 §7.2). The operator guide documents the
 configuration: a `[cot]` block (`bind_port` 8087, tcp/udp/multicast), configurable capability→CoT
 type mappings (e.g. `platform_uav = "a-f-A-M-F-Q"`), a `<peat:capability>` / `<__peat>` CoT detail
 extension, and the ability to *receive* waypoints/targets/chat from a CoT consumer gated by a

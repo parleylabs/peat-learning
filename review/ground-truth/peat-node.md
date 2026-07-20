@@ -207,3 +207,20 @@ still 27/27.**
 - **No src/proto/RPC change.** Diff touches only `Cargo.toml`/`Cargo.lock`/`CHANGELOG.md`/`Chart.yaml`/peat-cli
   Cargo.toml. RPC surface still **27/27** (`proto/sidecar.proto`, `src/service.rs` untouched). Single-port
   `PEAT_NODE_LISTEN` (default `tcp://0.0.0.0:50051`), tombstone-GC, per-collection config RPCs all unchanged.
+
+---
+
+## Delta — 2026-07-20 (full sweep; `7942be5` → `23a2707`, v0.4.9 → v0.4.10)
+
+- **Relay fanout starvation fix [Shipped].** peat-node#189 (`07dd7eb`), `src/fanout.rs` +
+  `src/attachments/handlers.rs` + `src/node.rs` (+ `tests/attachments_e2e_test.rs`). Under load a relay
+  fanning a doc/attachment to many peers could let a slow/stalled recipient hold up the others; the rework
+  prevents that head-of-line starvation.
+- **Stack bump / lag closed.** `Cargo.toml`: `peat-mesh =0.9.0-rc.49` (`:145`, up from rc.46), `peat-protocol
+  >=0.9.0-rc.31` (`:156`), iroh `1.0.2` (`:162`). Helm chart `0.4.10` (`chart/peat-node/Chart.yaml`). peat-node
+  now pins rc.49 = current mesh HEAD, so the prior 1-rc consumption lag is **closed** (lockstep; distinct from
+  the gateway ~9-RC lag).
+- **RPC surface unchanged: 27/27** (proto `rpc` lines = 27; `src/service.rs` untouched in the diff). Single-port
+  `PEAT_NODE_LISTEN`, tombstone-GC, per-collection config RPCs all unchanged.
+- **NEEDS_RUNTIME:** fanout-starvation behaviour under real load (covered by `tests/attachments_e2e_test.rs`,
+  not benchmarked here).

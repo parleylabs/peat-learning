@@ -26,7 +26,8 @@ the command post consumes the common operating picture.
 - **Transports.** Phones ↔ phones over **BLE** (`bluetooth`, **Shipped**); phone ↔ vehicle node via a
   BLE→QUIC bridge (the peat-mesh `bluetooth` translator, ADR-059 codec **Shipped**, ADR itself
   Proposed); vehicle node ↔ command post over **QUIC/Iroh** (**Shipped**); command post bridged to the
-  TAK client over **TAK/CoT TCP** (peat-transport `src/tak/`, ADR-020/028/029, **Shipped**).
+  CoT/TAK consumer over **TAK/CoT TCP** (standalone `peat-tak` repo — moved out of `peat-transport`
+  at `peat` rc.31, peat#1015; CoT translation stays in `peat-protocol/cot/`; ADR-020/028/029, **Shipped**).
 - **Collections / profiles.** `tracks` (Normal QoS), `contact-reports` (Critical), `beacons` (Normal).
   Tactical streaming profile 256 KiB/30 s.
 - **Hierarchy placement.** Each phone/vehicle is a `Node`; a dismounted team forms a `Cell` (4–13
