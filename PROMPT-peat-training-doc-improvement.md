@@ -337,8 +337,14 @@ and a human approves the merge — never loosen or remove a gate autonomously.
 1. **Gather the miss signal** since `self_improvement.last_retrospective` (or `last_full_run`): the
    `run_log` `meta` scorecards; every **"verified-then-wrong"** miss (a claim a recent prior run marked
    verified that you corrected this sweep — the strongest signal); the closed/open `curriculum-feedback`
-   issues (`gh issue list … --label curriculum-feedback`); and the `quality_trend` (are
-   `unverifiable_count` / `open_feedback_issues` falling?).
+   issues (`gh issue list … --label curriculum-feedback`); and the `quality_trend`. **Read the two
+   unverifiable lines separately (issue #18) — do not conflate them:** `needs_runtime_count` (claims
+   code-confirmed from source but not live-benchmarkable in the cloud env) is **expected to grow** as
+   new Shipped capabilities land and is **neutral**; `unresolved_drift_count` (`misses_found` +
+   claims genuinely unconfirmed against code at audit time) is **the health line and should fall**.
+   Ask only of the health lines: are `unresolved_drift_count` / `open_feedback_issues` falling? A
+   rising `needs_runtime_count` alongside `misses_found = 0` is a healthy loop shipping new capability,
+   not a failing one.
 2. **Classify each miss** and ask the operative question: *"what single check, in which gate, would have
    caught this automatically?"* — the question that produced §1c. Fold recurring misses into one
    proposed check each.
@@ -354,10 +360,12 @@ and a human approves the merge — never loosen or remove a gate autonomously.
    **Low-risk mechanical amendments may be applied in the same PR** (a new repo added to the routing
    table; a corrected count); **methodology changes — new or strengthened gates — are proposed-only**
    and wait for a human to merge the change.
-4. **Record the trend.** Append a `quality_trend` snapshot and set
-   `self_improvement.last_retrospective` to the run date. If a trend line is going the wrong way
-   (unverifiable claims rising, feedback piling up), **say so explicitly in the PR** — that is the loop
-   telling you it is not learning.
+4. **Record the trend.** Append a `quality_trend` snapshot (`{ when, needs_runtime_count,
+   unresolved_drift_count, open_feedback_issues }`) and set `self_improvement.last_retrospective` to
+   the run date. Judge health on the two health lines only: if `unresolved_drift_count` or
+   `open_feedback_issues` is rising, **say so explicitly in the PR** — that is the loop telling you it
+   is not learning. A rising `needs_runtime_count` with `misses_found = 0` is **expected and neutral**
+   (new Shipped capabilities the cloud env can't live-verify); do not report it as a regression.
 
 The goal: each monthly sweep leaves the next month's runs measurably sharper than this month's, and the
 evidence for "sharper" lives in the trend, not in a feeling.
