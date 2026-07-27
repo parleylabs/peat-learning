@@ -18,7 +18,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `a1ce620` (workspace `0.9.0-rc.31`), `peat-mesh` rc.49 (`fa5c403`).
+Audited at `peat` HEAD `75029ee` (workspace `0.9.0-rc.31`), `peat-mesh` rc.54 (`cecae9a`).
 Citations below point at the working-tree source.
 
 ---

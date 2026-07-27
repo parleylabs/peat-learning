@@ -42,7 +42,7 @@ design** — that is correct for a design note, but the note does not flag it as
 3. **Claim** (line 45): peat-lite NodeId is "a 32-bit `NodeId`."
    **Reality** (ground truth §4): correct — `u32`, `#[repr(transparent)]`, **bare integer, no key
    derivation** (`peat-lite/src/node_id.rs:9-34`). Note that peat-btle's NodeId is a *different*
-   u32 (first 4 bytes of BLAKE3(pubkey)).
+   u32 (first 4 bytes of SHA-256(pubkey)).
    **Correction:** none required for the bit-width; optionally add that the lite NodeId has no key
    derivation (so the "name derived from a keypair" framing in Layer 1 does not apply to lite).
 

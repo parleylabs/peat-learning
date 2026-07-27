@@ -20,8 +20,8 @@ crates: [`peat-btle/`](../peat-btle/) (Bluetooth LE mesh transport) and
 > **standalone leaf crates**: they depend on nothing else in Peat (beyond `peat-btle`'s one optional
 > link to `peat-lite`), and `peat-mesh` pulls them in only through opt-in Cargo features.
 
-**Audited against:** peat-btle `bcfa954` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `fa5c403` /
-0.9.0-rc.49.
+**Audited against:** peat-btle `654db7b` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `cecae9a` /
+0.9.0-rc.54.
 
 ---
 
@@ -157,44 +157,61 @@ Data**, the same body fits: `3 + 18 = 21` bytes, comfortably **inside the legacy
 advertising limit** as a single frame (`beacon.rs:42-49`). So whether extended advertising is
 required depends on the layout chosen, not on the body itself. **[Shipped]**
 
-### Security — FIPS-clean in code
+### Security — FIPS-approved crypto through AWS-LC
 
 Security is two-phase (`security/`):
 
 - **Phase 1** is a mesh-wide **AES-256-GCM** key derived via **HKDF-SHA-256** from a shared secret
-  (`mesh_key.rs:23-25,124-128`).
+  (`mesh_key.rs:21-23,121`; info string `PEAT-BTLE-mesh-encryption-v2`).
 - **Phase 2** adds per-peer end-to-end encryption via **ECDH P-256** key agreement
-  (`peer_key.rs:33`), with **Ed25519** device identities (`security/identity.rs`).
+  (`peer_key.rs:28-29,55`), with **Ed25519** device identities (`security/identity.rs`).
 
-Every one of these is a **FIPS-approved** primitive (ADR-060, *Proposed* — but §5 of the ADR is
-already implemented in code; the crate migrated off ChaCha20-Poly1305 / X25519 to AES-256-GCM /
-ECDH-P256 on 2026-05-18, commit `c8b013e`). This module reflects the **source reality**; the
-peat-btle **README is stale** and still advertises ChaCha20/X25519 (`README.md:196,218,242,282`).
-Two honest caveats for a defense-prime auditor:
+As of the **2026-07-23 crypto migration** (peat-btle #81, tracked by
+[peat-btle #75](https://github.com/defenseunicorns/peat-btle/issues/75) and recorded in peat
+ADR-060 §5), every one of these primitives — plus SHA-256 hashing and HMAC-SHA-256 — is routed
+through **`aws-lc-rs 1.17`** rather than the pure-Rust RustCrypto crates the code used between the
+2026-05-18 ChaCha20→AES swap and now. The direct `aes-gcm`, `p256`, `hkdf`, `sha2`, and `blake3`
+dependencies are gone (`Cargo.toml:111-112,116`). **[Shipped]** in source. The peat-btle
+**README is stale** and still advertises ChaCha20/X25519 — a doc bug, not source behaviour.
 
-- **Published-vs-source split — the shipped crate is not yet FIPS-clean.** The FIPS-clean code above
-  is the *source* at HEAD `bcfa954` (`Cargo.toml:106,116`; `src/security/mesh_key.rs:23-25`,
-  `peer_key.rs:33,93`). The peat-btle 0.4.0 **published to crates.io** (checksum `a57dd351`) — the
-  one a downstream consumer like peat-flutter actually builds — still depends on `chacha20poly1305`
-  + `x25519-dalek` (`peat-flutter/rust/Cargo.lock:3542-3575,630-631,6451-52`). Same version string,
-  same `0.4.0`: the FIPS migration landed in git but was **never re-published**. So a build that
-  pulls peat-btle 0.4.0 from the registry today gets the non-FIPS BLE crypto.
-- **The algorithms are FIPS-approved; the modules are not CMVP-validated.** `aes-gcm` and `p256` are
-  pure-Rust RustCrypto crates, not a certified FIPS 140-3 cryptographic module. For a real FIPS 140
-  boundary today, the path is the KMS/Vault HSM backends in peat-gateway (Module 5), not this local
-  software AES.
-- peat-btle's `NodeId` derivation hashes the Ed25519 public key with **BLAKE3**, which is **not a
-  FIPS algorithm**. This is addressing-only (it picks a `u32` id, `src/security/identity.rs:141`),
-  **not** a security boundary, so it does not affect the FIPS posture of the encrypted channel.
+The migration is a clean wire and identity cutover, so it is **not** backward compatible:
+mesh-encrypted documents carry crypto version 2 (`mesh_key.rs:27`), per-peer E2EE messages version 2
+(`peer_key.rs:36`), and encrypted beacons version 3 (`encrypted_beacon.rs:69`); receivers reject
+earlier versions, so mixed-version meshes are unsupported. The `KeyExchangeMessage` grows from 37 to
+**71 bytes** — a version byte plus the 65-byte uncompressed SEC1 P-256 public key that replaces the
+old 32-byte X25519 key (`peer_key.rs:42,251`). Three honest caveats for a defense-prime auditor:
+
+- **FIPS-approved *algorithms*, through a provider that can be the CMVP-validated module.** The
+  default build (`default = ["std", "aws-lc-non-fips"]`, `Cargo.toml:17,25`) links the regular AWS-LC
+  provider (`aws-lc-sys`) — FIPS-*approved* algorithms, but not the validated module. A validated
+  deployment opts into the mutually exclusive **`fips` feature** (`Cargo.toml:26`), which links
+  `aws-lc-fips-sys` — the **CMVP-validated AWS-LC FIPS module**. So, unlike the previous RustCrypto
+  posture, a FIPS 140 boundary is now reachable inside the BLE crate itself (opt-in), not only via
+  the KMS/Vault HSM backends in peat-gateway (Module 5). A binary may claim the validated module only
+  when built with `--features fips`.
+- **Published-vs-source split — the shipped crate is not yet FIPS-clean, and the source is now two
+  migrations ahead of it.** The FIPS-approved code above is the *source* at HEAD `654db7b`, still
+  version **0.4.0 / [Unreleased]**. The peat-btle 0.4.0 **published to crates.io** — the one a
+  downstream consumer like peat-flutter actually builds — still depends on `chacha20poly1305` +
+  `x25519-dalek` (`peat-flutter/rust/Cargo.lock:3498-3531,631,6402`). Same version string, same
+  `0.4.0`: neither the 2026-05-18 RustCrypto swap nor the 2026-07-23 AWS-LC migration was ever
+  re-published. A build that pulls peat-btle 0.4.0 from the registry today still gets the non-FIPS
+  BLE crypto.
+- **NodeId derivation is now SHA-256, not BLAKE3.** peat-btle's `NodeId` is the first four bytes of
+  **SHA-256**(Ed25519 public key) as a little-endian `u32` (`identity.rs:314-315`); the mesh ID is
+  HMAC-SHA-256 of the mesh name, and the mesh secret / beacon keys derive via HKDF-SHA-256
+  (`security/genesis.rs:141-179`). The BLAKE3 hash the crate used for addressing is gone — closing
+  the one non-FIPS primitive the module previously carried. NodeId remains addressing-only, not a
+  security boundary.
 
 > **Cross-cutting — the four identity schemes.** A common over-simplification is "NodeId = SHA-256 of
-> an Ed25519 key, everywhere." That is false across the stack. peat-btle uses a `u32` from
-> BLAKE3(pubkey)[..4]; peat-lite uses a bare `u32` with no key derivation (Part B); peat-mesh's
-> crypto identity is `DeviceId = SHA-256(Ed25519 key)[..16]` (128 bits, *16* bytes — not the
-> "256-bit" or "32-byte" figure some specs state); peat-node uses the raw iroh `EndpointId`. The
-> cross-transport identity bridge (the `u32 ↔ DeviceId` hop) lives behind peat-mesh's `Translator` /
-> `BleTranslator` (ADR-059, *Proposed*; codec **[Shipped]**), and a function literally named
-> `btle_to_peat_node_id` is **not** present in the source — do not cite it.
+> an Ed25519 key, everywhere." The *hash* is now SHA-256 in peat-btle too, but the *shape* still is
+> not uniform. peat-btle uses a `u32` from SHA-256(pubkey)[..4]; peat-lite uses a bare `u32` with no
+> key derivation (Part B); peat-mesh's crypto identity is `DeviceId = SHA-256(Ed25519 key)[..16]`
+> (128 bits, *16* bytes — not the "256-bit" or "32-byte" figure some specs state); peat-node uses the
+> raw iroh `EndpointId`. The cross-transport identity bridge (the `u32 ↔ DeviceId` hop) lives behind
+> peat-mesh's `Translator` / `BleTranslator` (ADR-059, *Proposed*; codec **[Shipped]**), and a
+> function literally named `btle_to_peat_node_id` is **not** present in the source — do not cite it.
 
 ---
 

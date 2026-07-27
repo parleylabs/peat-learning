@@ -133,10 +133,10 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 > it takes `--bind` / `--name` CLI flags. When something does not pick up an env var, first confirm
 > which binary you are actually running.
 
-### What the production sidecar (`peat-node`) gained recently — through v0.4.10 **[Shipped]**
+### What the production sidecar (`peat-node`) gained recently — through v0.4.15 **[Shipped]**
 
 If you run `peat-node` (the sidecar most deployments use), a handful of operability changes in the
-`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `23a2707` (v0.4.10). The
+`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `14d81e9` (v0.4.15). The
 v0.4.9 release itself added no new runtime surface — it eliminated a `grpc_test` port-collision flake
 (the test server now binds `127.0.0.1:0` and reads the OS-assigned port instead of a hardcoded one)
 and shipped a zero-friction two-node attachment quick-start under `examples/compose/attachments/`
@@ -147,11 +147,37 @@ and shipped a zero-friction two-node attachment quick-start under `examples/comp
 > stable `iroh 1.0.2` line — and lands one real sync fix: **relay fanout no longer starves**
 > (peat-node#189, `src/fanout.rs` + `src/attachments/handlers.rs`). Under load, a relay node
 > fanning a document or attachment out to many peers could let a slow or stalled recipient hold up the
-> others; the rework prevents that head-of-line starvation. The Helm chart moved to `0.4.10`
-> (`chart/peat-node/Chart.yaml`). Note the earlier mesh **consumption lag is now closed** — peat-node
-> pins `rc.49`, which is the current mesh HEAD, so the two are back in lockstep (distinct from the
-> gateway's ~9-RC lag). No proto or RPC change — the gRPC surface stays 27/27. (The fanout-starvation
-> behaviour is covered by `tests/attachments_e2e_test.rs`; on-wire load behaviour is NEEDS_RUNTIME.)
+> others; the rework prevents that head-of-line starvation. The Helm chart is at `0.4.10`
+> (`chart/peat-node/Chart.yaml`; it tracks behind the crate version). No proto or RPC change — the
+> gRPC surface stays 27/27. (The fanout-starvation behaviour is covered by
+> `tests/attachments_e2e_test.rs`; on-wire load behaviour is NEEDS_RUNTIME.)
+
+> **v0.4.11–v0.4.15: OS packaging, bounded connection lifetimes, and a mesh-pin step [Shipped].**
+> The `v0.4.11 → v0.4.15` line is mostly a **deployment-packaging** story plus one server-hardening fix:
+>
+> - **Native Debian & RPM systemd packages (v0.4.13–v0.4.15).** Tagged releases now build and verify
+>   `.deb` and `.rpm` packages natively for **x86_64 and ARM64**. A package installs both the
+>   `peat-node` service and the `peat` operator CLI, runs the service under a dedicated **`peat`** user
+>   (`packaging/*/peat-node.service`: `User=peat`, `EnvironmentFile=-/etc/peat-node/peat-node.env`),
+>   and persists state in `/var/lib/peat-node`. Stable releases also publish **signed APT and DNF
+>   repository metadata to GitHub Pages** for package-manager install/upgrade. v0.4.14 makes upgrades
+>   migrate legacy `/var/lib/peat-node` ownership to the `peat` account, and v0.4.15 makes the env file
+>   canonical and self-repairing — install/upgrade restores an accidentally emptied
+>   `/etc/peat-node/peat-node.env` and CI asserts the obsolete `/etc/peat-node.env` path is never
+>   created. This is the first non-container install path; earlier releases shipped only the Helm chart
+>   and Compose examples.
+> - **Bounded client connection lifetimes (v0.4.12, peat-node#198).** The Connect/gRPC server now caps
+>   client-asserted RPC deadlines and adds HTTP/1.1 header timeouts, idle-connection retirement, HTTP/2
+>   keepalives, and per-connection stream limits — tunable via `PEAT_NODE_HTTP_MAX_CONNECTION_IDLE_SECS`,
+>   `PEAT_NODE_HTTP2_KEEPALIVE_INTERVAL_SECS`, `PEAT_NODE_HTTP2_KEEPALIVE_TIMEOUT_SECS`
+>   (`src/main.rs:78,87,96,965-968`), so a stalled plain-TCP client is reclaimed without disrupting
+>   healthy writes. An opt-in glibc allocator-stats hook (`PEAT_NODE_ALLOCATOR_STATS_INTERVAL_SECS`,
+>   `src/main.rs:115,699`) helps diagnose RSS growth.
+> - **Mesh pin stepped to rc.52 — no longer lockstep with mesh HEAD.** v0.4.11 adopts the bounded
+>   `LatestOnly` mesh API and v0.4.12 pins `peat-mesh =0.9.0-rc.52` (disabling UDP segmentation offload
+>   on tactical Iroh endpoints — Module 3). Mesh HEAD is now rc.54, so peat-node lags the mesh by **2
+>   RCs** — the "back in lockstep" state after v0.4.10 was momentary; budget the usual integration lag.
+>   No proto/RPC change — still 27/27.
 
 The capability facts below are unchanged from v0.4.8:
 
@@ -356,13 +382,15 @@ no split-brain stall, and two independently-elected leaders converge determinist
   **[Shipped]** for the FIPS-*approved algorithms*.
 
   Two honest caveats for a procurement auditor:
-  - **Approved algorithm ≠ validated module.** AES-256-GCM and ECDH-P256 are FIPS-approved
-    *algorithms*, but they run in pure-Rust RustCrypto crates that are **not CMVP-validated
-    cryptographic modules**. For a real FIPS 140-3 boundary the path is the gateway's KMS / Vault HSM
-    backends (Module 5). The peat-btle local crypto is itself already FIPS-clean — it uses the
-    RustCrypto `aes-gcm` / `p256` crates (FIPS-approved algorithms, **[Shipped]** as of commit
-    c8b013e), so it does *not* depend on `aws-lc-rs` and there is no in-flight migration there.
-    Residual `ring` symbols still remain transitively linked and are tracked for removal under #923.
+  - **Approved algorithm ≠ validated module — but peat-btle now has a validated-module path.** For the
+    mesh/protocol crates, AES-256-GCM and ECDH-P256 are FIPS-approved *algorithms* running in pure-Rust
+    RustCrypto crates that are **not CMVP-validated modules**; for a real FIPS 140-3 boundary there the
+    path is the gateway's KMS / Vault HSM backends (Module 5). **peat-btle changed this on 2026-07-23**
+    (peat-btle #81, tracked by #75): it routes all crypto through `aws-lc-rs`, and its `fips` feature
+    links `aws-lc-fips-sys` — the CMVP-validated AWS-LC FIPS module (default builds use the non-FIPS
+    AWS-LC provider). So the BLE crate can now be built to a validated module directly (Module 4).
+    Residual `ring` symbols still remain transitively linked in the mesh stack and are tracked for
+    removal under #923.
   - **P-384 is not in code.** Only ECDH **P-256** is implemented; any "P-256/P-384" claim is
     aspirational. And note **ADR-060 (the FIPS-posture ADR) is formally [Proposed]** even though its
     §5 algorithm choices are already implemented — the code is ahead of the ADR's status.

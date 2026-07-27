@@ -197,15 +197,17 @@ characteristic are validated before it is announced** (peat-flutter#27).
 
 One honest caveat still stands for a mobile integrator: the Dart client transitively bundles the
 *published* `peat-btle 0.4.0` (`peat-flutter/rust/Cargo.lock`, checksum `a57dd351…`), which still ships
-**non-FIPS** ChaCha20-Poly1305 + X25519 — the source is FIPS-clean but that migration was never
-re-published (see Module 4 and Module 7 §7.8). (A full `04c` client-bindings module is tracked for the
-next full sweep.)
+**non-FIPS** ChaCha20-Poly1305 + X25519. The source is now **two migrations ahead** of that published
+artifact — the RustCrypto AES/P-256 swap (2026-05-18) and then the AWS-LC migration (2026-07-23, #81/#75)
+that routes all crypto through `aws-lc-rs` — but neither was ever re-published, so the registry crate a
+Flutter build pulls is unchanged (see Module 4 and Module 7 §7.8). (A full `04c` client-bindings module is
+tracked for the next full sweep.)
 
 **Identity does not travel intact across the bridge.** Trace A reads as one continuous climb, but
 the identity attached to the report is *re-derived* at step 2, because the stack uses four different
 identity schemes. peat-lite's `NodeId` is a bare 32-bit integer (`peat-lite/src/node_id.rs:9-34`,
-no key derivation); peat-btle's `NodeId` is the first 4 bytes of BLAKE3 over the Ed25519 public key
-(`peat-btle/src/security/identity.rs:139-148`); the mesh identity is a `security::DeviceId` =
+no key derivation); peat-btle's `NodeId` is the first 4 bytes of SHA-256 over the Ed25519 public key
+(`peat-btle/src/security/identity.rs:314-315`; BLAKE3 until the 2026-07-23 AWS-LC migration); the mesh identity is a `security::DeviceId` =
 **first 16 bytes of SHA-256 over the Ed25519 verifying key** (`peat-mesh/src/security/device_id.rs`),
 surfaced on the transport as a string `NodeId`. The cross-crate hop (a 32-bit id ↔ a `DeviceId`) is
 non-trivial and partly unverified — there is no single `btle_to_peat_node_id` function; bridging
@@ -419,6 +421,24 @@ where tagged. Two clarifications a skeptical reader will check:
 
 The `~256 KB` next to peat-lite is a **design target** (ADR-035), not an allocator cap or a measured
 RAM ceiling — there is no static-RAM assertion in code.
+
+### A second egress path: the peat-node Core NATS bridge **[Shipped, opt-in]**
+
+There are now two ways Peat data reaches an external message bus, and it is worth keeping them
+distinct. The **gateway** streams CDC to NATS JetStream / Webhook as a *control-plane observation* of
+mesh changes (the gateway box above). Separately, **`peat-node` itself gained an opt-in Core NATS
+bridge** (v0.4.x, `src/nats_bridge/`) that maps **NATS subjects ↔ Peat collections** bidirectionally:
+mesh document changes egress onto a subject, and messages on a subject ingress into a collection as
+documents. It is **Core NATS only** (JetStream/WebSocket deliberately excluded) and **disabled unless
+configured** — with no `subject=collection` mapping the node opens no NATS connection and starts no
+bridge task (`nats_bridge/config.rs`; `docs/CONFIGURATION.md §Core NATS bridge`). An operator turns it
+on with `PEAT_NODE_NATS_URL` (only `nats://` / `tls://` accepted) plus one or more
+`PEAT_NODE_NATS_MAPPING` routes, e.g. `--nats-mapping vision.summary=vision_frames`
+(`src/main.rs:143,150`); the URL's credentials are redacted from startup output. Delivery is
+crash-consistent (a journal/ledger dedupes and replays; egress is fail-closed), but live throughput
+and multi-broker behaviour are **NEEDS_RUNTIME** — the in-repo proofs are isolated e2e harnesses, not a
+fielded benchmark. This is a node-level integration seam for CoT/telemetry consumers that speak NATS,
+complementing (not replacing) the gateway CDC sink.
 
 ## Checkpoint (synthesis)
 

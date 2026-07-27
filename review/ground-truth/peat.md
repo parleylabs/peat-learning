@@ -390,3 +390,21 @@ references only). Logged, not asserted.
 - **Stable anchors re-derived (full sweep):** `ls docs/adr/*.md` = **80** (76 numbered incl ADR-074; 4 reference);
   **11 Accepted** unchanged; ADR-074 still **Proposed** (`074-...:3`). `CellRole` still **7** (`peat-protocol/src/models/role.rs:14-29`).
   peat-mesh floor unchanged `>=0.9.0-rc.45` (`Cargo.toml:291`). **FIPS source posture unchanged** — no crypto in the diff.
+
+## Delta — 2026-07-27 (incremental; `a1ce620` → `75029ee`, workspace rc.31 — ADR/docs only, no code)
+
+Five commits, all documentation/ADR/CI — no source or version change (`Cargo.toml` untouched, still rc.31):
+- **ADR-060 (#1042) — record the peat-btle FIPS cutover.** ADR-060 §5 now documents that peat-btle #75
+  routes mesh-wide + per-peer AEAD/ECDH/HKDF/HMAC/hashing through `aws-lc-rs`, with explicit regular-vs-
+  validated (`fips` feature) provider selection; `KeyExchangeMessage` grows 37 → **71 bytes**, mesh/E2EE
+  wire = crypto v2, beacon v3, NodeId/mesh-key derivations move to SHA-256/HKDF. Status stays **Proposed**
+  (membership-authentication boundary clarified 2026-07-21). ADR-060 also gained a T2/T4/T6
+  FormationKey-vs-membership-certificate boundary clarification (ADR-006/048 own the follow-up).
+- **ADR-075 (#1037, NEW, Proposed) — top-level Rust facade + FFI distribution boundary.** Proposes making
+  the currently-empty `peat` crate the canonical thin Rust facade / compatibility BOM re-exporting the
+  component crates behind features (no protocol/transport/storage/FFI logic), resolving the facade-vs-anchor
+  cycle. No code ships (crate still empty). Related: ADR-049, ADR-062, ADR-074.
+- Minor ADR touch-ups (006/048/049/055) + a QA-review CI workflow gaining doc/ADR review criteria and a
+  linked-issue coverage check.
+- **Stable anchors:** ADR count now **81** files (77 numbered incl. ADR-075); **11 Accepted** unchanged;
+  `CellRole` still 7. peat-mesh floor unchanged `>=0.9.0-rc.45`. **FIPS source posture unchanged in this repo.**
