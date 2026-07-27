@@ -775,3 +775,68 @@ sums to the former `unverifiable_count`). This supersedes the `unverifiable_coun
 proposed → `applied (human-approved this session)`), and this file. Longer-term follow-up (unchanged,
 still open): a standing cloud runtime-verification harness so NEEDS_RUNTIME items can be *retired*
 rather than only accumulated.
+
+## 2026-07-27 — incremental refresh (CI mode)
+
+Delta-driven refresh against the 2026-07-20 audited baseline (7 days; no full sweep due). Six repos
+moved — substantive drift in **peat** (ADRs), **peat-mesh** (rc.49→rc.54), **peat-btle** (AWS-LC crypto
+migration), **peat-node** (v0.4.10→v0.4.15); CI-only in **peat-gateway** (`1da5002→5035cba`) and
+**peat-flutter** (`1770bc9→411c87a`); no drift in peat-lite/peat-sapient. No open `curriculum-feedback`
+issues this run.
+
+**Headline — peat-btle crypto migrated to AWS-LC (peat-btle #81, tracked by #75; recorded in peat
+ADR-060 §5).** The BLE crate now routes **all** of its AEAD, ECDH, HKDF, HMAC, and hashing through
+`aws-lc-rs 1.17` (`Cargo.toml:111-112`), removing the direct RustCrypto `aes-gcm`/`p256`/`hkdf`/`sha2`
+and `blake3` deps. Provider selection is explicit: the default build (`aws-lc-non-fips` → `aws-lc-sys`)
+uses FIPS-approved algorithms; the mutually exclusive **`fips` feature** links `aws-lc-fips-sys` — the
+**CMVP-validated AWS-LC FIPS module** — so a validated FIPS 140 boundary is now reachable in the crate
+itself (opt-in). **BLAKE3 is gone:** NodeId is now first-4-bytes of **SHA-256**(pubkey)
+(`identity.rs:314-315`), mesh IDs use HMAC-SHA-256, secrets derive via HKDF-SHA-256
+(`genesis.rs:141-179`). Clean, non-backward-compatible wire cutover: mesh docs `MESH_ENCRYPTION_VERSION=2`,
+per-peer `E2EE_PROTOCOL_VERSION=2`, `ENCRYPTED_BEACON_VERSION=0x03`; `KeyExchangeMessage` grows 37 → **71
+bytes** (65-byte uncompressed SEC1 P-256 key replaces the 32-byte X25519 key + a version byte). This
+**corrects two now-stale prior facts** carried since the last audit: the curriculum's "there is no
+`aws-lc-rs` migration and no `peat-btle#75`" statement and "NodeId uses BLAKE3" — both were correct at
+`bcfa954` and changed under #81 (normal code drift, not a verified-then-wrong miss).
+
+- **Published-vs-source split persists and widens.** The crates.io-published `peat-btle 0.4.0` (checksum
+  `a57dd351…`) that peat-flutter transitively bundles still depends on `chacha20poly1305` + `x25519-dalek`
+  (`peat-flutter/rust/Cargo.lock:3498-3531`). Source is still version `0.4.0 / [Unreleased]` and now two
+  migrations ahead of the registry crate — neither the 2026-05-18 RustCrypto swap nor the 2026-07-23
+  AWS-LC migration was re-published. Propagated to Modules 4, 6, 9, hub, and the constrained track.
+
+**peat-mesh rc.49 → rc.54 — sync recovery + store bounding (all Shipped, no wire-protocol change).**
+rc.50 bounds `LatestOnly` document history (#314); rc.51 activates recovered duplex QUIC connections
+after a reconnect (#316); rc.52 disables UDP segmentation offload on tactical Iroh endpoints where Docker
+veth/netem paths reject GSO sends with `EIO` (#320/#321); rc.53–rc.54 preserve per-peer sync state across
+local edits and commit outbound state only after peer confirmation (#323); an `[Unreleased]` fix coalesces
+stable-key fanout while confirmation is pending (#329/#330). Module 3 §3.4 gained a rc.50 `LatestOnly`
+bullet and a new rc.51–rc.54 sync-recovery subsection; hub store-bounding cards mirrored.
+
+**peat-node v0.4.10 → v0.4.15 — packaging, connection hardening, opt-in NATS bridge.** Native Debian & RPM
+**systemd packages** for x86_64 + ARM64 (dedicated `peat` user, `/etc/peat-node/peat-node.env`,
+`/var/lib/peat-node`, signed APT/DNF repos on GitHub Pages) — the first non-container install path
+(v0.4.13–v0.4.15). Bounded client connection lifetimes (RPC-deadline caps, HTTP/2 keepalives, idle
+retirement, per-connection stream limits; v0.4.12, #198). New opt-in **Core NATS bridge** mapping NATS
+subjects ↔ Peat collections bidirectionally, disabled unless a `subject=collection` mapping is set
+(Modules 6 §6.4, 8). Mesh pin stepped to `=0.9.0-rc.52`, so peat-node now trails mesh HEAD (rc.54) by ~2
+RCs — the post-v0.4.10 "lockstep" claim was corrected. Proto/RPC surface unchanged (27/27).
+
+**peat — ADR-only.** ADR-060 §5 updated to record the peat-btle AWS-LC cutover and gained a
+FormationKey-vs-membership-certificate boundary clarification (status stays Proposed). **NEW ADR-075
+(Proposed)** proposes making the empty `peat` crate the canonical thin Rust facade / compatibility BOM —
+added to Module 7 §7.1. Gateway now lags mesh by ~14 RCs (rc.40 vs rc.54); propagated to Modules 1, 5,
+hub.
+
+**New unverifiable / NEEDS_RUNTIME claims (2):** (1) the peat-mesh rc.50–54 sync-recovery + tactical
+UDP-GSO-off behaviour — code-confirmed, not benchmarked here; (2) the peat-node Core NATS bridge live
+throughput / multi-broker behaviour and bounded-connection reclaim under stalled clients — code-confirmed
+via isolated e2e harnesses, not a fielded benchmark. `unresolved_drift_count` held at 3; `misses_found=0`.
+
+**Gates:** all §0b validation gates run and passed — independent fact-check (every changed claim
+re-verified to `path:line`), house-rules (labels, FIPS-only, no vendor names, autonomy framing), cohesion,
+diagram re-derivation (registry rows advanced), regression/blast-radius (hub↔module mirroring, SYNC stamps,
+cross-refs), published-artifact/reference (peat-flutter lock re-checked; peat-btle #75 confirmed in ADR-060),
+and fact-wide-occurrence (BLAKE3→SHA-256 and rc.49→rc.54 grepped across all `0*.md` + both HTML tracks +
+registry + ground-truth). `peat-tak` remains unreachable (403 via the scoped proxy) — still an open todo,
+not folded into the tracked-clone set.

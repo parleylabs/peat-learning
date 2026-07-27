@@ -434,3 +434,23 @@ changed files: no `chacha20`/`x25519` reintroduced — only historical comments 
 - **FIPS posture unchanged** — no crypto in the `b86c2c2..fa5c403` diff. `derive_iroh_node_secret` still HKDF-SHA-256.
 - **NEEDS_RUNTIME:** the 14.5 MB redb high-water figure and file-shrink efficacy; IPv6 reachability-probe
   behaviour; partial-sync-retry under a lossy link — all code-confirmed, none benchmarked here.
+
+## Delta — 2026-07-27 (incremental; `fa5c403` → `cecae9a`, rc.49 → **rc.54** + one `[Unreleased]` fix)
+
+Fourteen commits, all sync-reliability / store-bounding — no wire-protocol change, no crypto change:
+- **rc.50 (#314):** bound `LatestOnly` document history — a `LatestOnly` write is rebased to a single
+  snapshot before cache/persistence; persisted docs migrate on read; divergent bounded snapshots are
+  preserved so a coalescing flush can't resurrect a stale value (`src/storage/automerge_store.rs:463-464,866-954`).
+- **rc.51 (#316):** activate recovered duplex QUIC connections so both endpoints service peer-initiated
+  streams after a reconnect (`src/storage/mesh_sync_transport.rs`).
+- **rc.52 (#320/#321):** disable UDP segmentation offload on tactical Iroh endpoints —
+  `create_tactical_transport_config()` sets `enable_segmentation_offload(false)` because Docker
+  veth/netem paths reject GSO `sendmsg` with `EIO` (`src/network/iroh_transport.rs:~263`).
+- **rc.53–rc.54 (#323):** preserve per-peer Automerge sync state across local edits; commit outbound
+  sync state only after the peer confirms application (lost final frames stay replayable); origin-aware
+  fanout doesn't echo remote changes to the source peer.
+- **`[Unreleased]` (#329/#330):** coalesce stable-key fanout while confirmation is pending; keep a
+  cache-evicted deferred snapshot authoritative during a coalescing flush.
+- **FIPS posture unchanged** — no crypto in the `fa5c403..cecae9a` diff.
+- **NEEDS_RUNTIME:** all of the above are code-confirmed but not benchmarked here (on-wire recovery,
+  GSO-off throughput trade, coalescing correctness under sustained load).

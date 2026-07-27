@@ -51,12 +51,14 @@ pinned `bluetooth` feature → **peat-btle 0.4.0**, `rust/Cargo.lock`) **`chacha
 artifact. `aes-gcm`/`p256`/`ring`/`rustls`/`hmac`/`sha2` (FIPS-approvable set) coexist for the
 QUIC/iroh path. **This contradicts the "code already migrated off ChaCha20/X25519" narrative, which
 held for peat-mesh (rc.12) — the BLE transport in peat-btle 0.4.0 evidently did NOT migrate.**
-→ **VERIFIED against `peat-btle` source:** the source DID migrate to AES-256-GCM/ECDH-P256 (commit
-`c8b013e`), but the **crates.io-published `0.4.0`** this lockfile pins was never re-published, so the
-shipped artifact is still non-FIPS. There is **no `peat-btle#75` and no `aws-lc-rs` migration** (the
-`aws-lc-rs` in this lock is the TLS stack, not BLE crypto); `peat-current-state` §6 must be corrected
-to the published-vs-source split. The demo hardcodes an all-zeros `sharedKey`
-(`example/lib/main.dart:433`) — demo-only.
+→ **VERIFIED against `peat-btle` source:** the source migrated to AES-256-GCM/ECDH-P256 (2026-05-18,
+commit `c8b013e`) and then, on **2026-07-23 (#81, tracked by #75)**, to **`aws-lc-rs`** (with a `fips`
+feature linking the CMVP-validated `aws-lc-fips-sys` module) — but the **crates.io-published `0.4.0`**
+this lockfile pins was never re-published through either migration, so the shipped artifact is still
+non-FIPS ChaCha20/X25519. The source is now **two migrations ahead** of the published crate. (Note the
+`aws-lc-rs` symbols in *this Flutter lock* are the TLS stack, distinct from — but now aligned with — the
+BLE crypto provider in peat-btle source.) The published-vs-source split is the correct framing. The demo
+hardcodes an all-zeros `sharedKey` (`example/lib/main.dart:433`) — demo-only.
 
 ## README-vs-code drift
 Empty `lib/src/proto/` vs README:36-39 "committed proto stubs"; pin `=0.2.9` vs CHANGELOG "0.2.8"

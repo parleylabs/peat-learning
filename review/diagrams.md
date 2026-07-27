@@ -28,7 +28,9 @@ SVG and must stay self-contained (no external renderer/CDN). The same concept ma
 (hub SVG + module ASCII) — those copies must agree; the **Twin** column notes the pairing.
 
 **Last verified** baseline: `2026-07-20` full sweep (previous full sweep `2026-06-18`), at the per-repo
-commits recorded in `REVIEW-STATE.json` → `audited_commits`. Update per-row as diagrams are re-derived.
+commits recorded in `REVIEW-STATE.json` → `audited_commits`. Rows re-derived in the `2026-07-27`
+incremental (M-006, H-003, H-006, M-038, H-008) carry that later date; all others hold at the full-sweep
+baseline until the next Phase 6b. Update per-row as diagrams are re-derived.
 
 > **Provenance status — read this.** The **Provenance** column records the `path:line`/ADR each
 > diagram *cites in the curriculum*; it was transcribed from the docs, **not independently
@@ -49,7 +51,7 @@ commits recorded in `REVIEW-STATE.json` → `audited_commits`. Update per-row as
 | M-003 | `01-architecture-overview.md:106` | Lens A — crate/packaging 5-layer model | ascii | `ARCHITECTURE.md` (verified vs code) | — | H-002 | 2026-07-20 |
 | M-004 | `01-architecture-overview.md:174` | Lens B — local change → peer state | mermaid | `DEVELOPER_GUIDE.md §3.2` | — | H-001 | 2026-07-20 |
 | M-005 | `01-architecture-overview.md:181` | Lens B legend | ascii | teaching | — | — | 2026-07-20 |
-| M-006 | `01-architecture-overview.md:297` | Cargo dependency graph (facade points down) | mermaid | `Cargo.toml` (verified) | optional edges | H-003 | 2026-07-20 |
+| M-006 | `01-architecture-overview.md:297` | Cargo dependency graph (facade points down) | mermaid | `Cargo.toml` (verified) | optional edges | H-003 | 2026-07-27 |
 | M-007 | `02-peat-protocol.md:108` | Three phases as a flow | mermaid | `peat-protocol/src/lib.rs`; `hierarchy/maintenance.rs:227,252,312` | — | — | 2026-07-20 |
 | M-008 | `02-peat-protocol.md:267` | Routing rule `is_route_valid` | ascii | `router.rs:101+` | — | — | 2026-07-20 |
 | M-009 | `02-peat-protocol.md:496` | HierarchyLevel enum tiers | ascii | `peat-mesh/src/beacon/types.rs:56-67`; ADR-066 | — | — | 2026-07-20 |
@@ -81,7 +83,7 @@ commits recorded in `REVIEW-STATE.json` → `audited_commits`. Update per-row as
 | M-035 | `06-data-flows.md:253` | Tasking today vs wanted (`command_log`) | mermaid | `peat-node/proto/sidecar.proto:342-373`; ADR-046 #853 | Shipped / In-flight / Speculative | — | 2026-07-20 |
 | M-036 | `09-protocol-specs.md:25` | Five specs — reading order & freshness | mermaid | spec README; `005` amended 2026-05-18 | Draft / current | — | 2026-07-20 |
 | M-037 | `09-protocol-specs.md:40` | Spec vs shipped-code divergences | table | `001-transport.md:95-101`; `device_id.rs:39-47` | mixed (code is the contract) | — | 2026-07-20 |
-| M-038 | `03-peat-mesh.md:§3.4b` | Provider gossip: locating a blob beyond direct peers (`peat/blob-announce/1`) | mermaid | `peat-mesh/src/storage/blob_announce.rs` (ALPN, `DEFAULT_ANNOUNCE_TTL=3`, `classify_announce`); peat-mesh#262 | Shipped | H-006 | 2026-07-20 |
+| M-038 | `03-peat-mesh.md:§3.4b` | Provider gossip: locating a blob beyond direct peers (`peat/blob-announce/1`) | mermaid | `peat-mesh/src/storage/blob_announce.rs` (ALPN, `DEFAULT_ANNOUNCE_TTL=3`, `classify_announce`); peat-mesh#262 | Shipped | H-006 | 2026-07-27 |
 | M-039 | `02-peat-protocol.md:210` | Capability composition (four rules → Emergent) | mermaid | `src/composition/`; `composition/engine.rs:151` | Shipped | — | 2026-07-20 |
 | M-040 | `02b-formation-and-leadership.md:345` | `check_formation_complete` — six gates | mermaid | `coordinator.rs:97-168,66-87,174-179` | Shipped | M-012 | 2026-07-20 |
 | M-041 | `03-peat-mesh.md:415` | Tombstone lifecycle: delete → retention → GC | mermaid | `storage/` TtlManager; peat-node#136; peat-btle#73 | Shipped; In-flight (BLE) | — | 2026-07-20 |
@@ -95,12 +97,12 @@ commits recorded in `REVIEW-STATE.json` → `audited_commits`. Update per-row as
 |---|---|---|---|---|---|---|
 | H-001 | `index.html:385` | Lens B in motion — local change → peer state | svg | mirrors M-004 | M-004 | 2026-07-20 |
 | H-002 | `index.html:437` | Repo constellation / layer model (incl. peat-node) | svg | mirrors M-003/M-032 | M-003 | 2026-07-20 |
-| H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-07-20 |
+| H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-07-27 |
 | H-004 | `index.html:670` | peat-protocol surface / phases | svg | mirrors Module 2 | — | 2026-07-20 |
 | H-005 | `index.html:707` | (Module 2/2b deep-dive figure) | svg | mirrors Module 2b | — | 2026-07-20 |
-| H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-07-20 |
+| H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-07-27 |
 | H-007 | `index.html:854` | (Module 3 figure) | svg | mirrors Module 3 | — | 2026-07-20 |
-| H-008 | `index.html:936` | BLE / lite edge | svg | mirrors Module 4 | — | 2026-07-20 |
+| H-008 | `index.html:936` | BLE / lite edge | svg | mirrors Module 4 | — | 2026-07-27 |
 | H-009 | `index.html:1054` | Gateway / formation security | svg | mirrors Module 2b/5 | M-014 | 2026-07-20 |
 | H-010 | `index.html:1113` | Gateway CDC / control plane | svg | mirrors M-027 | M-027 | 2026-07-20 |
 | H-011 | `index.html:1393` | Repo map / what to clone next | svg | mirrors Module 7 | — | 2026-07-20 |
@@ -137,8 +139,8 @@ for a refresh run with the source) plus a few deliberately deferred low-value/re
 
 | ID | Diagram | Home (xref) | Type | Status labels | Build here? | Priority |
 |---|---|---|---|---|---|---|
-| P-01 | Crypto key hierarchy + the two encryption layers (mesh-wide AES-256-GCM, per-peer ECDH-P256 E2EE) + FIPS boundary | 05 (03/04/07) | mermaid/SVG | Shipped; In-flight (aws-lc-rs); Proposed (LoRa ChaCha20) | needs code (exact derivation chain) | **High** |
-| P-02 | Identity "name family": Ed25519 key → DeviceId (SHA-256[..16]) → NodeId variants (BLAKE3→u32, bare u32) → transport address, with the Translator bridge | 03 (06/09) | mermaid mapping | Shipped | mostly safe; confirm widths vs code | **High** |
+| P-01 | Crypto key hierarchy + the two encryption layers (mesh-wide AES-256-GCM, per-peer ECDH-P256 E2EE) + FIPS boundary (default AWS-LC provider vs CMVP-validated `fips` feature) | 05 (03/04/07) | mermaid/SVG | Shipped (btle crypto via aws-lc-rs, 2026-07-23 #81/#75); Proposed (LoRa ChaCha20) | needs code (exact derivation chain) | **High** |
+| P-02 | Identity "name family": Ed25519 key → DeviceId (SHA-256[..16]) → NodeId variants (btle SHA-256[..4]→u32, bare u32) → transport address, with the Translator bridge | 03 (06/09) | mermaid mapping | Shipped | mostly safe; confirm widths vs code (btle moved BLAKE3→SHA-256 on 2026-07-23) | **High** |
 | P-03 | Deployment topologies: single-host / multi-node seed+joiners / edge / Docker Compose / k8s StatefulSet | 08 | mermaid | Shipped | safe | ✅ authored M-042 |
 | P-04 | Gateway enrollment sequence: Open / Controlled / Strict + OIDC (RFC 7662) introspection | 05 | sequence | Shipped / In-flight | needs code (confirm flow) | **High** |
 | P-05 | Connection-health state machine: Healthy → Degraded → Suspect → Dead | 03 | state | Shipped | needs code (triggers/thresholds) | Med-High |
@@ -304,3 +306,33 @@ pattern, to preserve when editing or adding diagrams:
   fact-propagation across 9 files + 3 diagram twins); the ASCII→SVG backlog (M-001/M-003/M-008/M-010/… ) carries
   forward unchanged. **Backlog triage:** no newly-unblocked high-value entry (P-01/P-02/P-04/P-05 still need a
   dedicated derivation pass); no entry dropped.
+
+- **2026-07-27 INCREMENTAL — diagram re-derivation for the drifted repos (peat `a1ce620→75029ee` rc.31 /
+  peat-mesh `fa5c403→cecae9a` rc.49→rc.54 / peat-btle `bcfa954→654db7b` / peat-node `23a2707→14d81e9`
+  v0.4.10→v0.4.15 / peat-gateway `1da5002→5035cba` CI-only / peat-flutter `1770bc9→411c87a` CI-only;
+  peat-lite/sapient unchanged).** Diagram **FACTS that changed**:
+  - **M-006 (+ H-003 twin) — Cargo dependency graph.** Gateway edge label `rc.40 (~9 rc behind)` →
+    `rc.40 (~14 rc behind)` as the mesh ecosystem advanced rc.49 → rc.54 (gateway pin held at rc.40).
+    Node/edge set otherwise unchanged. H-003 SVG carries no rc label (prose only). `Last verified` → 2026-07-27.
+  - **H-006 store-bounding + sync-recovery cards (Module 3 §3.4, twin M-038).** Re-derived: the store-bounding
+    card header advanced rc.46–rc.49 → **rc.46–rc.50** (adds rc.50 bounded `LatestOnly` history, peat-mesh#314),
+    and a new **sync-recovery card (rc.51–rc.54)** was added — recovered-connection activation (#316), tactical
+    UDP-GSO disable (#320/#321), peer-confirmed sync-state replay (#323). All Shipped, no wire-protocol change.
+    M-038 provider-gossip facts (ALPN, TTL=3, `classify_announce`) unchanged. `Last verified` → 2026-07-27.
+  - **H-008 — BLE/lite edge (Module 4).** Re-derived for the peat-btle **AWS-LC crypto migration** (#81/#75):
+    the crypto-suite subtext now reads "all crypto via `aws-lc-rs`; `fips` feature → CMVP-validated
+    `aws-lc-fips-sys`" and NodeId addressing changed **BLAKE3 → SHA-256** (`identity.rs:314-315`). Wire cutover
+    facts (mesh/E2EE crypto v2, beacon v3, `KeyExchangeMessage` 37→71 bytes) added to the surrounding prose.
+    `Last verified` → 2026-07-27.
+  Rows **re-derived/spot-checked and confirmed UNCHANGED** (provenance repo moved but facts hold): M-022 BLE
+  platform matrix (Linux/macOS/Android/ESP32 Shipped, iOS Beta, Windows in-flight — the #84/#86 link-state fixes
+  refine adapters, no matrix change); M-023/M-024 GATT sync sequence (the crypto version bytes ride inside the
+  existing chunked framing — no new GATT step); M-025 edge dependency flow (ADR-059 Amend.4 back-edge unchanged);
+  M-019 SyncMessageType wire bytes (rc.50–54 add no new sync message type — "no wire-protocol change"); M-017/M-018
+  discovery flow; M-020/M-021/M-041 (negentropy/transport/tombstone); M-033/M-042/M-043 peat-node topology & QoS
+  (the v0.4.11–15 work is packaging + connection-lifetime + opt-in NATS bridge, none of which alters the depicted
+  deployment topologies or QoS pipeline); M-027/H-010 gateway CDC (peat-gateway CI-only). These rows keep their
+  prior `Last verified` (2026-07-20) — a full re-derivation of every row is the monthly sweep's Phase 6b job.
+  No diagram fact was left unconfirmable → nothing added to `unverifiable_claims` from diagrams this run.
+  **Backlog triage:** P-01 (crypto hierarchy) and P-02 (identity name-family) descriptions updated for the
+  aws-lc-rs migration + BLAKE3→SHA-256 change; both still await a dedicated derivation pass. No entry dropped.

@@ -264,8 +264,9 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
   - peat-mesh transport `NodeId` = a transport-assigned *string* (an iroh endpoint string, or the hex of
     a DeviceId) — not itself a hash;
   - peat-node network identity = the raw iroh `EndpointId` (the Ed25519 public key, **no SHA-256 wrap**);
-  - peat-btle `NodeId` = first 4 bytes of **BLAKE3**(pubkey) as a `u32`; peat-lite `NodeId` = a bare
-    `u32` with no key derivation.
+  - peat-btle `NodeId` = first 4 bytes of **SHA-256**(pubkey) as a `u32` (moved off BLAKE3 in the
+    2026-07-23 AWS-LC migration, `identity.rs:314-315`); peat-lite `NodeId` = a bare `u32` with no
+    key derivation.
 
   A reader who greps for one identity derivation finds four. Cross-transport identity bridging lives
   behind the `Translator` trait, and the cross-crate hop (`u32` ↔ `DeviceId`) is non-trivial and only
@@ -302,18 +303,25 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
   **HKDF-SHA-256**, and **HMAC-SHA-256**, with TLS/QUIC running under the **`aws-lc-rs`** provider —
   not `ring`, which is not FIPS-validated (peat-mesh `Cargo.toml`; spec `005-security.md:402-411,701`).
   This is verified against shipped code.
-  > **Algorithm vs. module — the distinction an auditor will press.** The *algorithms* are FIPS-approved,
-  > but the `aes-gcm` / `p256` crates are pure-Rust RustCrypto implementations, **not CMVP-validated
-  > cryptographic modules**. For a real FIPS 140 boundary the path is the KMS / Vault HSM backends in
-  > peat-gateway; the local-key path uses non-validated software AES. **One published-vs-source split to
-  > flag:** peat-btle *source* (HEAD `bcfa954`) is already FIPS-clean — `aes-gcm` + `p256` (AES-256-GCM,
-  > ECDH P-256), migrated in commit `c8b013e` (`peat-btle/Cargo.toml:106,116`). But the crates.io-published
-  > peat-btle 0.4.0 (checksum `a57dd351`) that downstream binaries like peat-flutter build against still
-  > depends on `chacha20poly1305` + `x25519-dalek` — same version string, the FIPS migration was never
-  > re-published. There is **no `aws-lc-rs` migration and no `peat-btle#75`** in the repo. Also note the
-  > spec mentions **P-384** and lists X25519
-  > as "marginal, pending FIPS review" — **only ECDH P-256 is in the code**, so "P-256/384" overstates
-  > what ships. ADR-060 is itself formally `Status: Proposed` even though its §5 is implemented.
+  > **Algorithm vs. module — the distinction an auditor will press.** The *algorithms* are FIPS-approved.
+  > Whether the *module* is CMVP-validated now depends on the crate and how it is built. peat-btle's
+  > **2026-07-23 AWS-LC migration** (peat-btle #81, tracked by
+  > [peat-btle #75](https://github.com/defenseunicorns/peat-btle/issues/75)) routes all of its
+  > AEAD, ECDH, HKDF, HMAC, and hashing through `aws-lc-rs 1.17`: the default build links the regular
+  > AWS-LC provider (`aws-lc-sys` — approved algorithms, not the validated module), while the mutually
+  > exclusive **`fips` feature** links `aws-lc-fips-sys`, the **CMVP-validated AWS-LC FIPS module**
+  > (`peat-btle/Cargo.toml:17,25,26`). So a validated FIPS 140 boundary is now reachable in the BLE
+  > crate itself when built `--features fips`; the KMS / Vault HSM backends in peat-gateway remain the
+  > path where a crate still uses non-validated software AES. **The published-vs-source split still
+  > stands, and is now wider:** peat-btle *source* (HEAD `654db7b`) is FIPS-approved through AWS-LC and
+  > has also dropped BLAKE3 for SHA-256 identity derivation, but it is still version **0.4.0 /
+  > [Unreleased]**. The crates.io-published peat-btle 0.4.0 that downstream binaries like peat-flutter
+  > build against still depends on `chacha20poly1305` + `x25519-dalek`
+  > (`peat-flutter/rust/Cargo.lock:3498-3531`) — same version string; neither the 2026-05-18 RustCrypto
+  > swap nor the 2026-07-23 AWS-LC migration was ever re-published. Also note the spec mentions
+  > **P-384** and lists X25519 as "marginal, pending FIPS review" — **only ECDH P-256 is in the code**,
+  > so "P-256/384" overstates what ships. ADR-060 is itself formally `Status: Proposed` (membership-
+  > authentication boundary clarified 2026-07-21) even though its §5 is implemented.
   > This **supersedes** the ChaCha20-Poly1305 named in older prose (see §9.6 fact 8 for which docs are
   > actually stale).
 - **Key management — group forward secrecy is [Proposed], not shipped.** Formation-key rotation on
@@ -336,8 +344,9 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
 
 1. **`DeviceId` is *not* one derivation used everywhere [Shipped reality].** The code's `DeviceId` is
    `SHA-256(Ed25519 pubkey)[0..16]` (16 bytes), but peat-node uses the raw iroh `EndpointId`, peat-btle
-   uses `BLAKE3[0..4]` as a `u32`, and peat-lite uses a bare `u32`. Four schemes, not one. (The spec's
-   "32 bytes, everywhere" framing is wrong on both width and uniformity.)
+   uses `SHA-256[0..4]` as a `u32` (BLAKE3 until the 2026-07-23 AWS-LC migration), and peat-lite uses a
+   bare `u32`. Four schemes, not one — the *hash* is now SHA-256 in three of them, but the width and
+   wrapping still differ. (The spec's "32 bytes, everywhere" framing is wrong on both width and uniformity.)
 2. **Automerge + negentropy is the sync stack [Shipped].** Conflict resolution is deterministic —
    LWW with Lamport timestamps and an actor-id tie-break, tombstones GC'd after a retention window.
 3. **QUIC/Iroh is the primary transport [Shipped]; stream-id ranges partition control / CRDT / app
@@ -353,9 +362,12 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
 7. **Emergent capabilities are a formal spec vocabulary [spec-defined].** Pattern-driven *tasking* is
    largely **[In-flight]** (ADR-046 epic #853); it is not a shipped runtime mechanism yet.
 8. **Crypto uses FIPS-approved algorithms (AES-256-GCM / ECDH P-256 / Ed25519) under `aws-lc-rs`
-   [Shipped]** — but the modules are not CMVP-validated, and only P-256 ships (not P-384). One
-   published-vs-source split: peat-btle *source* (`bcfa954`) is FIPS-clean (`aes-gcm` + `p256`, commit
-   `c8b013e`), but the crates.io-published peat-btle 0.4.0 still ships ChaCha20/X25519 — never re-published.
+   [Shipped]** — approved algorithms, and now with a route to the CMVP-validated module: peat-btle's
+   2026-07-23 AWS-LC migration lets a build opt into the validated `aws-lc-fips-sys` module via the
+   `fips` feature (default builds use the non-FIPS AWS-LC provider). Only P-256 ships (not P-384). One
+   published-vs-source split persists: peat-btle *source* (`654db7b`) routes all crypto through
+   `aws-lc-rs` and derives identity with SHA-256, but the crates.io-published peat-btle 0.4.0 still
+   ships ChaCha20/X25519 — neither migration was ever re-published.
    The docs that *still* advertise ChaCha20-Poly1305 / X25519 are the **peat-mesh and peat-btle READMEs**
    and **pre-FIPS ADRs 048/049** (plus **ADR-052 for LoRa, which carries a live ChaCha20 FIPS conflict**)
    — **not** spec 005, which was already corrected on 2026-05-18, and **not** ADRs 006/044, which were

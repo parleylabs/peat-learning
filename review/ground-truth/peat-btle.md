@@ -1,6 +1,6 @@
 # Ground truth — `peat-btle`
 
-**Audited commit:** `3d70f48` (HEAD = origin/main, branch `main`, up to date with origin — `git fetch` showed 0 commits ahead/behind). Working tree had one unrelated modified file (`peat-btle-implementation-kickstart.md`); no pull/modification performed.
+**Audited commit:** `654db7b` (HEAD = origin/main; advanced from `bcfa954` in the 2026-07-27 incremental — 6 commits, headlined by the AWS-LC crypto migration #81).
 **Crate version:** `0.4.0` (`Cargo.toml:3`).
 **Repo role:** BLE mesh transport for the Peat Protocol. Multi-platform Rust crate (`crate-type = ["rlib", "cdylib"]`, `Cargo.toml:14`) plus an Android AAR via UniFFI and an Apple FFI package under `ios/`.
 
@@ -10,11 +10,11 @@ Code is the source of truth throughout. Every claim below is cited to `path:line
 
 ## 0 · Headline corrections (a skeptical reader will catch these)
 
-1. **Crypto is NOT ChaCha20-Poly1305 anymore — it is AES-256-GCM + ECDH-P256.** The crate migrated 2026-05-18 to FIPS-approved primitives, but **`README.md` still documents ChaCha20-Poly1305 and X25519 as the live algorithms** (`README.md:196, 218, 242, 282`). This is the single most embarrassing live-doc/code drift. The actual code uses `aes-gcm` (`Aes256Gcm`) and `p256` (`Cargo.toml:108,112`; `src/security/mesh_key.rs:23-25,146,176`; `src/security/peer_key.rs:33`). All `chacha`/`x25519` strings remaining in `src/` are historical comments only (`grep` confirmed: `src/security/mesh_key.rs:21`, `peer_key.rs:24`, `document.rs:106`).
-2. **The FIPS migration shipped in source but was never re-published to crates.io.** The source at HEAD `3d70f48` is FIPS-clean — `aes-gcm`/`p256` (`Cargo.toml:106,116`; migration commit `c8b013e`) — but the **crates.io-published `peat-btle 0.4.0`** (checksum `a57dd351…`) that downstream consumers build against **still depends on `chacha20poly1305` + `x25519-dalek`**: same version string, the FIPS migration never re-published. peat-flutter's lockfile pins exactly that published artifact (`peat-flutter/rust/Cargo.lock:3542-3575,630-631`). So a consumer adding `peat-btle = "0.4.0"` gets the non-FIPS crypto today. There is **no issue #75 and no `aws-lc-rs` plan** in peat-btle (grep over the repo = zero hits); the `aws-lc-rs` that appears in peat-flutter's lock is a TLS-stack transitive dep (rustls/rustls-webpki), unrelated to BLE crypto (`peat-flutter/rust/Cargo.lock:321-322`). Separately, the `aes-gcm`/`p256` crates are pure-Rust RustCrypto implementations — *FIPS-approved algorithms*, **not** a CMVP-validated module.
-3. **The crypto swap is undocumented in CHANGELOG.md.** It appears only in `Cargo.toml` comments (`Cargo.toml:101-112`) and inline source comments. `CHANGELOG.md` `[Unreleased]` and `[0.4.0]` say nothing about the AES/P-256 swap (grep for `aes`/`fips`/`chacha` in CHANGELOG returns nothing).
+1. **Crypto is NOT ChaCha20-Poly1305 anymore — it is AES-256-GCM + ECDH-P256, now through `aws-lc-rs`.** The crate migrated 2026-05-18 to FIPS-approved primitives (RustCrypto `aes-gcm`/`p256`), then on **2026-07-23 (#81, tracked by #75; commit `35cf716`)** routed **all** AEAD/ECDH/HKDF/HMAC/hash through **`aws-lc-rs 1.17`** and removed the direct `aes-gcm`/`p256`/`hkdf`/`sha2`/`blake3` deps. Code uses `aws_lc_rs::aead::AES_256_GCM` + `agreement::ECDH_P256` + `hkdf`/`hmac`/`digest::SHA256` (`Cargo.toml:111-112`; `src/security/mesh_key.rs:21-23,121`; `src/security/peer_key.rs:28-29,55`; `src/security/identity.rs:49`). `README.md` **still documents ChaCha20-Poly1305 and X25519** — a live doc-bug drift, not source behaviour.
+2. **The FIPS migration shipped in source but was never re-published to crates.io — the source is now two migrations ahead of the published crate.** Source at HEAD `654db7b` is FIPS-approved through AWS-LC (`Cargo.toml:111-112`), still version `0.4.0 / [Unreleased]`. The **crates.io-published `peat-btle 0.4.0`** (checksum `a57dd351…`) **still depends on `chacha20poly1305` + `x25519-dalek`**: same version string; neither the 2026-05-18 RustCrypto swap nor the 2026-07-23 AWS-LC migration was re-published. peat-flutter's lockfile pins exactly that published artifact (`peat-flutter/rust/Cargo.lock:3498-3531,631,6402`). **Provider posture:** default build (`default = ["std","aws-lc-non-fips"]`) links the regular AWS-LC provider (`aws-lc-sys`) — approved algorithms, not the validated module — while the mutually exclusive **`fips` feature** links `aws-lc-rs-fips` = `aws-lc-fips-sys`, the **CMVP-validated AWS-LC FIPS module** (`Cargo.toml:17,25,26,111,112`). Issue **#75 now exists** and is cited by peat ADR-060 §5.
+3. **The crypto migration IS now documented in CHANGELOG.md.** `[Unreleased]` records the BREAKING change: AES-256-GCM/ECDH-P256/HKDF-SHA256/HMAC-SHA256/SHA-256 via `aws-lc-rs`; removed RustCrypto AEAD/ECDH/KDF and BLAKE3; NodeId/mesh-id/genesis/beacon derivation moved to SHA-256/HMAC/HKDF; explicit crypto version bytes (mesh docs v2, E2EE v2, encrypted beacons v3); ECDH-P256 keys as 65-byte uncompressed SEC1; earlier wire formats rejected (mixed-version meshes unsupported); Apple XCFramework now targets iOS 13+.
 4. **GATT service UUID is inconsistent across three places.** `README.md:187` advertises 16-bit `0xF47A`; the code constant is `PEAT_SERVICE_UUID_16BIT = 0xA1B2` derived from `PEAT_SERVICE_UUID = a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d` (`src/lib.rs:337,343`); and `src/gatt/mod.rs:23` doc-comments a *third* value `f47ac10b-58cc-4372-a567-0e02b2c3d479`. **Code of record = `a1b2c3d4…` / `0xA1B2`** (`src/gatt/service.rs:213` uses `PEAT_SERVICE_UUID`, and the test at `src/lib.rs:577-582` pins it).
-5. **`NodeId` is a 32-bit `u32`, not a SHA-256 hash.** The prompt hypothesized "NodeId = SHA-256 of Ed25519 public key." Reality: `NodeId` wraps a `u32` (`src/lib.rs:367-371`). When derived from identity it is the **first 4 bytes of the BLAKE3 hash** of the Ed25519 public key, interpreted little-endian (`src/security/identity.rs:139-148`). 4 bytes = 32 bits → birthday-collision risk at ~77k nodes; relevant to the "1,000+ node" claim. It can also be derived non-cryptographically from a BLE MAC (`src/lib.rs:408-447`) or set to any literal.
+5. **`NodeId` is a 32-bit `u32`, not a full-width hash — and as of 2026-07-23 the hash is SHA-256, not BLAKE3.** `NodeId` wraps a `u32` (`src/lib.rs:367-371`). When derived from identity it is the **first 4 bytes of SHA-256(Ed25519 public key)**, interpreted little-endian (`src/security/identity.rs:314-315`; the AWS-LC migration #81 replaced the previous BLAKE3 derivation). 4 bytes = 32 bits → birthday-collision risk at ~77k nodes; relevant to the "1,000+ node" claim. It can also be derived non-cryptographically from a BLE MAC (`src/lib.rs:408-447`) or set to any literal.
 6. **The hierarchy enum uses legacy military vocabulary, not ADR-066.** `HierarchyLevel` = `Platform / Squad / Platoon / Company` (`src/lib.rs:495-507`), **not** the ADR-066 Platform/Cell/Cohort/Federation/Coalition vocabulary. Material citing ADR-066 names against this crate is wrong for peat-btle.
 
 ---
@@ -77,16 +77,17 @@ All in `src/sync/crdt.rs`. These are hand-rolled, byte-packed CRDTs for `no_std`
 
 | Use | Primitive | Evidence | FIPS posture |
 |---|---|---|---|
-| Mesh-wide AEAD | **AES-256-GCM** (NIST SP 800-38D) | `src/security/mesh_key.rs:23-25,146,176` | FIPS-approved algorithm |
-| Per-peer key exchange | **ECDH on NIST P-256** (SP 800-56A) | `src/security/peer_key.rs:33,89-143` | FIPS-approved |
+| Provider | **`aws-lc-rs 1.17`** (default `aws-lc-sys`; `fips` feature → `aws-lc-fips-sys`) | `Cargo.toml:17,25,26,111,112` | FIPS-approved algorithms; the `fips` feature links the **CMVP-validated AWS-LC FIPS module** |
+| Mesh-wide AEAD | **AES-256-GCM** (NIST SP 800-38D) | `src/security/mesh_key.rs:21-23,121` | FIPS-approved algorithm |
+| Per-peer key exchange | **ECDH on NIST P-256** (SP 800-56A) | `src/security/peer_key.rs:28-29,55` | FIPS-approved |
 | Per-peer AEAD | **AES-256-GCM** | `src/security/peer_session.rs:31-33` | FIPS-approved |
-| Key derivation | **HKDF-SHA256** | `src/security/mesh_key.rs:124-128` | FIPS-approved |
-| Signing / identity | **Ed25519** | `src/security/identity.rs:49,157` | Ed25519 is in FIPS 186-5; CMVP coverage uneven — note for compliance |
-| NodeId hash | **BLAKE3** | `src/security/identity.rs:141` | **NOT a FIPS-approved hash.** Used only for NodeId derivation (non-secret addressing), not for any security boundary — but worth flagging. |
+| Key derivation | **HKDF-SHA256** | `src/security/mesh_key.rs:121`; `src/security/genesis.rs:159-179` | FIPS-approved |
+| Signing / identity | **Ed25519** | `src/security/identity.rs:157` (`ed25519-dalek`, `Cargo.toml:116`) | Ed25519 is in FIPS 186-5; CMVP coverage uneven — note for compliance |
+| NodeId / mesh-id hash | **SHA-256 / HMAC-SHA256** | `src/security/identity.rs:49,314-315`; `src/security/genesis.rs:141-147` | **FIPS-approved hash** (moved off BLAKE3 in the 2026-07-23 AWS-LC migration). NodeId = first 4 bytes of SHA-256(pubkey) — addressing-only, not a security boundary. |
 | Mesh-wide overhead | 30 bytes (2 marker + 12 nonce + 16 tag) | `README.md:220` | — |
 | Per-peer E2EE overhead | README says 46 bytes (`README.md:298-304`); `src/security/mod.rs:71` doc says 44 bytes | conflicting docs — verify against `PeerEncryptedMessage::encode` | unverified-number |
 
-**FIPS verdict vs ADR-060:** The crate's *source* has already moved off ChaCha20-Poly1305/X25519 to AES-256-GCM/P-256 to satisfy ADR-060 §5 (per `Cargo.toml:101-112`). So the old "ChaCha20 is a live ADR-060 violation" framing is **outdated for the source** — but **still true two ways**: (1) `README.md` advertises the non-FIPS primitives, and (2) the **crates.io-published `0.4.0` (checksum `a57dd351…`) still ships `chacha20poly1305`/`x25519-dalek`** — the FIPS migration was never re-published, so consumers pinning `0.4.0` get the non-FIPS crypto (`peat-flutter/rust/Cargo.lock:3542-3575,630-631`). Remaining real FIPS gaps: the un-republished crate, no CMVP-validated module (pure-Rust RustCrypto algorithms only — and there is **no issue #75 / `aws-lc-rs` plan** in peat-btle), and BLAKE3 for NodeId (cosmetic, non-security).
+**FIPS verdict vs ADR-060:** The crate's *source* satisfies ADR-060 §5 and has gone further — as of 2026-07-23 (#81/#75) all crypto routes through `aws-lc-rs`, and the `fips` feature links the CMVP-validated AWS-LC FIPS module, so a validated FIPS 140 boundary is now reachable in the crate itself (opt-in). BLAKE3 is gone (NodeId now SHA-256). The old "ChaCha20 is a live ADR-060 violation" framing remains **true two ways**: (1) `README.md` still advertises the non-FIPS primitives, and (2) the **crates.io-published `0.4.0` (checksum `a57dd351…`) still ships `chacha20poly1305`/`x25519-dalek`** — the source is now two migrations ahead but neither was re-published, so consumers pinning `0.4.0` get the non-FIPS crypto (`peat-flutter/rust/Cargo.lock:3498-3531,631,6402`). Remaining real FIPS gaps: the un-republished crate, and that the *default* build uses the non-FIPS AWS-LC provider (a `--features fips` build is required to claim the validated module).
 
 ---
 
@@ -118,8 +119,8 @@ Document/wire markers (`src/document.rs:51-175`): `EXTENDED 0xAB`, `EMERGENCY 0x
 | `peat-lite-frame` Document carrier | **Shipped (optional feature)** | `Cargo.toml:47,174` depends on `peat-lite 0.2.5` |
 | Windows transport | **In flight** | code present, untested (`README.md:44`) |
 | iOS CoreBluetooth full support | **In flight** | "Beta", incomplete callbacks (`README.md:43`; `apple/central.rs:209`) |
-| CMVP/FIPS-validated crypto module | **Not planned in this crate** | source uses pure-Rust RustCrypto (`aes-gcm`/`p256`) — FIPS-approved algorithms, not a CMVP module; **no issue #75 / `aws-lc-rs` plan exists in peat-btle** (grep = zero hits) |
-| Re-publish FIPS source to crates.io | **In flight (gap)** | source `3d70f48` is FIPS-clean but published `0.4.0` (`a57dd351…`) still ships `chacha20poly1305`/`x25519-dalek` (`peat-flutter/rust/Cargo.lock:3542-3575`) |
+| CMVP/FIPS-validated crypto module | **Available opt-in (Shipped, #75/#81)** | the `fips` feature links `aws-lc-fips-sys` (the CMVP-validated AWS-LC FIPS module); the default build uses the non-FIPS AWS-LC provider (`aws-lc-sys`) — `Cargo.toml:17,25,26,111,112` |
+| Re-publish FIPS source to crates.io | **Still an open gap** | source `654db7b` routes crypto through `aws-lc-rs` but published `0.4.0` (`a57dd351…`) still ships `chacha20poly1305`/`x25519-dalek` (`peat-flutter/rust/Cargo.lock:3498-3531`) — two source migrations un-republished |
 | Public chat-send (originate, not just relay) | **In flight** | issue #26 (open) |
 | Reconnect re-delivery of pending CRDT state | **In flight** | issue #73 (open) |
 | `peer_link_info` on production adapters | **In flight** | issue #45 (open, ADR-032 Amendment A) |
@@ -150,7 +151,7 @@ Document/wire markers (`src/document.rs:51-175`): `EXTENDED 0xAB`, `EMERGENCY 0x
 ## 9 · ADRs present in this repo (local, not umbrella numbering)
 
 `docs/adr/` contains **repo-local** ADRs, NOT the peat umbrella ADR-039/051/052/059/060/066 set:
-`001-hive-lite-primitives.md`, `03-peat-mesh-app-architecture-v2.md`, `04-mobile-desktop-architecture.md`, `ADR-001-trust-architecture.md`, `ADR-002-mesh-provisioning.md`, `ADR-003-extensible-document-registry.md`. The umbrella ADR numbers (032, 059, 060) are referenced only in code comments/doc-strings, not as files here. No `ROADMAP.md`. CHANGELOG is current through `[0.4.0] - 2026-05-06` with an empty `[Unreleased]`.
+`001-hive-lite-primitives.md`, `03-peat-mesh-app-architecture-v2.md`, `04-mobile-desktop-architecture.md`, `ADR-001-trust-architecture.md`, `ADR-002-mesh-provisioning.md`, `ADR-003-extensible-document-registry.md`. The umbrella ADR numbers (032, 059, 060) are referenced only in code comments/doc-strings, not as files here. No `ROADMAP.md`. CHANGELOG now carries a populated `[Unreleased]` section (the 2026-07-23 AWS-LC crypto migration + Android/Apple adapter link-state fixes) above `[0.4.0] - 2026-05-06`.
 
 ---
 
@@ -161,3 +162,24 @@ Document/wire markers (`src/document.rs:51-175`): `EXTENDED 0xAB`, `EMERGENCY 0x
 - **iOS/Windows treated as In-flight** rather than Shipped based on README status labels corroborated by in-code TODOs.
 - Battery/range/RAM figures treated as **doc estimates** (unverifiable) absent any in-repo measurement harness output.
 - Did not run `cargo build/test` (read-only audit sufficient to establish reality; 723 test fns observed but not executed).
+
+## Delta — 2026-07-27 (incremental; `bcfa954` → `654db7b`, 0.4.0 source, first delta since first audit)
+
+Six commits, headlined by the **AWS-LC crypto migration (#81, tracked by #75; `35cf716`, 2026-07-23)** —
+see §0 headline corrections and §5 above, all rewritten this run. Summary:
+- **All crypto now routes through `aws-lc-rs 1.17`** (AES-256-GCM, ECDH-P256, HKDF/HMAC-SHA-256, SHA-256);
+  direct `aes-gcm`/`p256`/`hkdf`/`sha2`/`blake3` deps removed (`Cargo.toml:111-112`). Default feature
+  `aws-lc-non-fips` → `aws-lc-sys`; mutually exclusive **`fips` feature → `aws-lc-fips-sys` = the
+  CMVP-validated AWS-LC FIPS module** (`Cargo.toml:17,25,26`).
+- **BLAKE3 removed.** NodeId = first 4 bytes of SHA-256(pubkey) (`identity.rs:314-315`); mesh-id =
+  HMAC-SHA-256 of mesh name; secrets via HKDF-SHA-256 (`genesis.rs:141-179`).
+- **Clean wire + identity cutover (not backward compatible):** mesh docs `MESH_ENCRYPTION_VERSION=2`
+  (`mesh_key.rs:27`), per-peer `E2EE_PROTOCOL_VERSION=2` (`peer_key.rs:36`), `ENCRYPTED_BEACON_VERSION=0x03`
+  (`encrypted_beacon.rs:69`); `KeyExchangeMessage` 37 → **71 bytes** (`ENCODED_LEN = 1+4+1+65`,
+  `peer_key.rs:236,251`), ECDH keys as 65-byte uncompressed SEC1 (`ECDH_PUBLIC_KEY_SIZE=65`, `peer_key.rs:42`).
+- **Also this run:** production BLE link-state reporting + generic Android adapter link state (#84/#86),
+  state redelivery after reconnect (#83), Apple XCFramework now targets iOS 13+ (AWS-LC requirement).
+- **Published-vs-source gap persists and widens:** crates.io `0.4.0` (`a57dd351…`) still ships
+  ChaCha20/X25519; source is now two migrations ahead, never re-published
+  (`peat-flutter/rust/Cargo.lock:3498-3531`).
+- **NEEDS_RUNTIME:** BLE-rate/range constants unchanged (declared, not measured); no `cargo build/test` run.

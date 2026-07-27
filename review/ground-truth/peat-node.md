@@ -224,3 +224,25 @@ still 27/27.**
   `PEAT_NODE_LISTEN`, tombstone-GC, per-collection config RPCs all unchanged.
 - **NEEDS_RUNTIME:** fanout-starvation behaviour under real load (covered by `tests/attachments_e2e_test.rs`,
   not benchmarked here).
+
+## Delta — 2026-07-27 (incremental; `23a2707` → `14d81e9`, v0.4.10 → **v0.4.15**)
+
+A large release run — mostly deployment packaging plus one server-hardening fix and the mesh-pin step:
+- **v0.4.11:** adopt the bounded `LatestOnly` mesh API (peat-mesh rc.50).
+- **v0.4.12 (#198):** bound Connect/gRPC request receipt + client connection lifetimes — configurable RPC
+  deadlines, HTTP/1.1 header timeouts, idle retirement, HTTP/2 keepalives, per-connection stream limits
+  (`PEAT_NODE_HTTP_MAX_CONNECTION_IDLE_SECS`, `PEAT_NODE_HTTP2_KEEPALIVE_*`, `src/main.rs:78,87,96,965-968`);
+  opt-in glibc allocator-stats hook (`PEAT_NODE_ALLOCATOR_STATS_INTERVAL_SECS`, `src/main.rs:115,699`).
+  **Mesh pin stepped `=0.9.0-rc.49` → `=0.9.0-rc.52`** (`Cargo.toml:158`; disables tactical UDP GSO). Mesh
+  HEAD is now rc.54, so peat-node trails mesh by ~2 RCs — no longer lockstep.
+- **v0.4.13–v0.4.15:** native **Debian & RPM systemd packages** for x86_64 + ARM64 — install both
+  `peat-node` service and `peat` CLI, run under dedicated **`peat`** user (`packaging/*/peat-node.service`:
+  `User=peat`, `EnvironmentFile=-/etc/peat-node/peat-node.env`), state in `/var/lib/peat-node`; signed
+  **APT/DNF repos** on GitHub Pages; upgrades migrate legacy state ownership (v0.4.14); env file is
+  canonical/self-repairing and the obsolete `/etc/peat-node.env` path is asserted-absent (v0.4.15).
+- **New opt-in capability:** a **Core NATS bridge** (`src/nats_bridge/`) mapping NATS subjects ↔ Peat
+  collections bidirectionally, Core-NATS-only, disabled unless a `subject=collection` mapping is set
+  (`PEAT_NODE_NATS_URL` + `PEAT_NODE_NATS_MAPPING`, `src/main.rs:143,150`; `docs/CONFIGURATION.md §Core NATS bridge`).
+- **Proto/RPC surface unchanged** — still 27/27. Helm chart still `0.4.10` (tracks behind the crate).
+- **FIPS posture unchanged.** **NEEDS_RUNTIME:** connection-reclaim under stalled clients; NATS bridge
+  live throughput / multi-broker behaviour (in-repo proofs are isolated e2e harnesses).

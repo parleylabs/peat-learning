@@ -102,7 +102,7 @@ claim is false:
 | **peat-mesh transport identity** | `transport::NodeId` = `pub struct NodeId(String)` | a transport-assigned string (iroh EndpointId string, or hex of a DeviceId via `From<DeviceId>`) — NOT itself a hash | `peat-mesh/src/transport/mod.rs:107`, `device_id.rs:109-121` |
 | **iroh seed / NodeId** | iroh `SecretKey` | **HKDF-SHA-256** (v2 salt/info) since rc.14 (replaced legacy `SHA-256("peat-iroh-key-v1:"‖seed)`) — **wire-visible NodeId break at rc.13→rc.14**; pre-rc.14 static-peer TOML must be regenerated | `peat-protocol/src/network/iroh_transport.rs:11-19` |
 | **peat-node network identity** | iroh `EndpointId` (raw Ed25519 public key — **no SHA-256 wrap**); `--node-id` is a separate human UUID label / HKDF info input | deterministic `HKDF-SHA256(IKM=shared_key, info="iroh:"+node_id)`; pinned by known-answer test; 16-byte IKM floor | `peat-node/src/crypto.rs:119-132`, `src/identity.rs:38-74` |
-| **peat-btle NodeId** | `u32` (4 bytes) | **first 4 bytes of BLAKE3(Ed25519 pubkey) LE** (or from BLE MAC, or literal). 32-bit ⇒ birthday-collision risk ~77k nodes | `peat-btle/src/lib.rs:367-371`, `src/security/identity.rs:139-148` |
+| **peat-btle NodeId** | `u32` (4 bytes) | **first 4 bytes of SHA-256(Ed25519 pubkey) LE** (moved off BLAKE3 in the 2026-07-23 AWS-LC migration) (or from BLE MAC, or literal). 32-bit ⇒ birthday-collision risk ~77k nodes | `peat-btle/src/lib.rs:367-371`, `src/security/identity.rs:314-315` |
 | **peat-lite NodeId** | `u32`, `#[repr(transparent)]` (4 bytes) | **bare integer — no key derivation.** From BLE MAC or provisioning; `<1000 nodes` collision stated as design assumption | `peat-lite/src/node_id.rs:9-34` |
 
 `btle_to_peat_node_id` bridging (hypothesized in the design note): **not found by that name** in
@@ -183,21 +183,23 @@ The READMEs are stale; the code is clean.**
 |---|---|---|---|
 | Identity / signatures | **Ed25519** | FIPS 186-5 (CMVP coverage uneven) | `ed25519-dalek = 2` across all repos |
 | Symmetric AEAD | **AES-256-GCM** | SP 800-38D | peat-mesh `encryption.rs:38-41`; peat-btle `mesh_key.rs`/`peer_session.rs`; peat-gateway `crypto/`; peat-node at-rest `crypto.rs` |
-| Key agreement | **ECDH P-256** (swapped from X25519, rc.12) | SP 800-56A | peat-mesh `encryption.rs:43` (`p256 = 0.13`); peat-btle `peer_key.rs:33` |
-| KDF | **HKDF-SHA-256** | SP 800-56C / 800-108 | iroh seed derivation; peat-btle `mesh_key.rs:124-128`; peat-node `crypto.rs` |
-| MAC / formation auth | **HMAC-SHA-256** | FIPS 198-1 | `formation_handshake.rs:49`; `formation_key.rs` |
-| Hash | **SHA-256** | FIPS 180-4 | `sha2 = 0.10` everywhere |
+| Key agreement | **ECDH P-256** (swapped from X25519, rc.12) | SP 800-56A | peat-mesh `encryption.rs:43` (`p256 = 0.13`); peat-btle `peer_key.rs:28-29` (now `aws_lc_rs::agreement::ECDH_P256`) |
+| KDF | **HKDF-SHA-256** | SP 800-56C / 800-108 | iroh seed derivation; peat-btle `mesh_key.rs:121` / `genesis.rs:159-179`; peat-node `crypto.rs` |
+| MAC / formation auth | **HMAC-SHA-256** | FIPS 198-1 | `formation_handshake.rs:49`; `formation_key.rs`; peat-btle `genesis.rs:141-147` (mesh-id) |
+| Hash | **SHA-256** | FIPS 180-4 | `sha2 = 0.10` in peat-mesh; peat-btle now `aws_lc_rs::digest::SHA256` (`identity.rs:49`) |
 | TLS provider | **`aws-lc-rs`** (NOT `ring`) | `ring` is NOT FIPS-validated | peat-mesh `Cargo.toml:121,136-141`; peat-protocol dev-dep iroh pinned `tls-aws-lc-rs` |
 | Password hashing | Argon2 (Phase-3 user auth) | n/a (not a FIPS KDF) | `argon2 = 0.5` |
-| peat-btle NodeId hash | **BLAKE3** | **NOT FIPS** — but addressing-only, not a security boundary | `peat-btle/src/security/identity.rs:141` |
+| peat-btle NodeId hash | **SHA-256** (moved off BLAKE3, 2026-07-23) | **FIPS-approved** — addressing-only, not a security boundary | `peat-btle/src/security/identity.rs:314-315` |
 
 **Residual FIPS gaps (honest caveats):**
-- **Algorithm choice is FIPS-approved; the modules are NOT CMVP-validated.** The `aes-gcm`/`p256`
-  crates are pure-Rust RustCrypto implementations, not certified cryptographic modules. There is
-  **no `peat-btle#75` and no `aws-lc-rs` BLE-crypto migration** (grep over peat-btle = zero hits); the
-  `aws-lc-rs` elsewhere is the rustls/iroh TLS provider, unrelated to the BLE AEAD/key-agreement. For a
-  real FIPS 140 boundary the path is the KMS/Vault HSM backends (peat-gateway); the local-KEK path uses
-  non-validated (FIPS-approved-algorithm) software AES.
+- **Algorithm choice is FIPS-approved; module validation now depends on crate + build.** peat-mesh's
+  `aes-gcm`/`p256` are pure-Rust RustCrypto implementations (approved algorithms, not certified modules).
+  **peat-btle changed this on 2026-07-23 (#81, tracked by #75):** it routes all crypto through
+  `aws-lc-rs`, and its **`fips` feature links `aws-lc-fips-sys` — the CMVP-validated AWS-LC FIPS
+  module** (default builds use the non-FIPS AWS-LC provider). So a validated FIPS 140 boundary is now
+  reachable in the BLE crate itself (opt-in via `--features fips`); for peat-mesh/gateway the path to a
+  validated module is still the KMS/Vault HSM backends. The local-KEK software-AES path uses
+  non-validated (FIPS-approved-algorithm) crypto.
 - **The only ChaCha20 FIPS *conflict* in code-adjacent form is in PROPOSED ADRs**, not shipped code:
   **ADR-052 (peat-lora, Proposed)** references ChaCha20-Poly1305 — design-only, no crate. Pre-FIPS
   ADRs 006/044/048/049 and the **READMEs** (peat-mesh `:16,173`; peat-btle `:196,218,242,282`) still
@@ -354,8 +356,9 @@ working specs.
 - **#592** membership certificates/enrollment (+#588-#591); **#547** ADR-045 Zarf/UDS; **#950**
   ADR-064 ARM64 CI; **#695** triage 22 Proposed ADRs; **#941** authorization model deferred.
 - peat-mesh: **#106** turnkey DataSyncBackend; **#55** blob resume; **#126** ARM crypto bench.
-- peat-btle: **#26** chat-send originate; **#73** reconnect re-delivery; **#45** peer_link_info.
-  (No `#75` / `aws-lc-rs` issue exists; the source is already FIPS-clean RustCrypto `aes-gcm`/`p256`.)
+- peat-btle: **#26** chat-send originate; **#73** reconnect re-delivery; **#45** peer_link_info;
+  **#75** approved-primitive AWS-LC migration (landed as #81, `35cf716`, 2026-07-23 — the source now
+  routes all crypto through `aws-lc-rs`, with a `fips` feature for the CMVP-validated module).
 - peat-gateway: **#99** ingress AuthZ; **#97** broker ACLs; **#124/#125** NATS auth/TLS; **#55**
   zeroize genesis; **#53** Postgres CI; **#119** DLQ replay API.
 - peat-node: **#38** gRPC auth; **#53** targeted-delivery proto; **#100** ReconnectionManager;

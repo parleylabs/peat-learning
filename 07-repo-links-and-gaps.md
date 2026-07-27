@@ -16,8 +16,8 @@ download list; the capability map is what tells you whether the system does what
 - **Speculative** — design discussed for teaching, not even an ADR-complete proposal anywhere.
 
 Everything below was checked against the audited HEADs in
-[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `a1ce620` (rc.31), `peat-mesh`
-rc.49 (`fa5c403`), `peat-btle` 0.4.0, `peat-lite` 0.2.5, `peat-gateway` `1da5002` (0.1.0), `peat-node` 0.4.10. The operating
+[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `75029ee` (rc.31), `peat-mesh`
+rc.54 (`cecae9a`), `peat-btle` 0.4.0 (`654db7b`), `peat-lite` 0.2.5, `peat-gateway` `5035cba` (0.1.0), `peat-node` 0.4.15. The operating
 principle is **code over everything**: where a README, a spec, or a months-old guide disagrees with
 the source on the audited HEAD, the source wins.
 
@@ -42,8 +42,19 @@ each one's role in a sentence so you know why you'd open it.
 > **Note on registries.** Whether `peat-protocol`, `peat-schema`, `peat-btle`, and `peat-lite` are
 > *published* to crates.io, and `peat-ffi` to Maven Central, is **not verified in this audit**. The
 > crates exist and carry versions, but the peat-mesh README advertises stale versions (0.3.2 against
-> a shipped rc.49), so registry-version trust is shaky. Check the actual registry before relying on a
+> a shipped rc.54), so registry-version trust is shaky. Check the actual registry before relying on a
 > published version; do not assume the README is current.
+
+> **The empty `peat` crate has a proposed future — ADR-075 (`Proposed`, 2026-07-20, peat#1036).**
+> Today `peat` is the reserved-name placeholder above and the canonical Rust dependency is
+> `peat-protocol`. ADR-075 proposes making **`peat` the thin, safe Rust facade and compatibility
+> bill-of-materials** — re-exporting the component crates (`peat-schema`, `peat-protocol`,
+> `peat-mesh`, `peat-btle`, `peat-lite`, `peat-ffi`) behind cargo features, with no protocol,
+> transport, storage, or FFI logic of its own, and a firm boundary between the Rust facade and the
+> platform-specific FFI artifacts. It resolves the contradiction of the repo guidance asking `peat`
+> to be both a top-level facade *and* a foundational dependency anchor (a cycle). **[Proposed]** —
+> the crate is still empty; no facade code ships yet. Related: ADR-049 (mesh extraction), ADR-074
+> (peat-schema single source of truth).
 
 ---
 
@@ -70,7 +81,7 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 >
 > - **`peat-mesh-node`** (inside peat-mesh) is a small demo / reference binary for bringing up a mesh
 >   by hand.
-> - **`peat-node`** (its own repo, audited at v0.4.10) is the **production sidecar**: it embeds
+> - **`peat-node`** (its own repo, audited at v0.4.15) is the **production sidecar**: it embeds
 >   peat-mesh + peat-protocol and exposes them as a gRPC / Connect / gRPC-Web API on a single port. It
 >   is the Kubernetes sidecar pattern's node, it ships a Helm chart plus Zarf and UDS bundles, and it
 >   is the UDS Remote Agent integration target. The proto defines **27 RPCs** and `service.rs`
@@ -141,7 +152,7 @@ open.
 - **[`peat/docs/guides/developer/DEVELOPER_GUIDE.md`](../peat/docs/guides/developer/DEVELOPER_GUIDE.md)**
   — the onboarding guide: environment setup, runtime architecture, core concepts, crate reference,
   testing, mobile, edge AI, and "Extending Peat." This learning track is a guided path through it.
-  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.49, the
+  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.54, the
   rc.12 FIPS crypto swap dated 2026-05-18, the ADR-066 hierarchy rename still in flight). Where the
   guide and the code differ, **the code wins** — quoting the guide without checking the source is how
   the known stale-doc errors (wrong RBAC role names, ChaCha20 crypto, legacy hierarchy terms) get
@@ -241,13 +252,15 @@ suggest, and it is exactly what a defense-prime security auditor will probe:
   **HKDF-SHA-256** (KDF), **HMAC-SHA-256** (formation auth), and **SHA-256** (hashing). The TLS stack
   uses `aws-lc-rs`, not `ring`. This is a genuine improvement over the docs, which still describe
   ChaCha20-Poly1305 and X25519.
-- **But "FIPS-approved algorithm" is not "FIPS-validated module."** The `aes-gcm` and `p256` crates
-  are pure-Rust RustCrypto implementations, **not CMVP-validated cryptographic modules.** An auditor
-  will reject "FIPS 140-3" for software that isn't in a validated module. For a real FIPS 140 boundary
-  the path is the KMS/Vault HSM backends in peat-gateway. peat-btle's own crypto is already
-  FIPS-clean at the *algorithm* level (it uses RustCrypto `aes-gcm`/`p256`), so the open gap there
-  is not the algorithms but the absence of a CMVP-validated module — the same module-vs-algorithm
-  distinction, not a pending library swap.
+- **But "FIPS-approved algorithm" is not "FIPS-validated module" — and the two crates now differ on
+  this.** In peat-mesh/peat-protocol the `aes-gcm` and `p256` crates are pure-Rust RustCrypto
+  implementations, **not CMVP-validated cryptographic modules**; an auditor will reject "FIPS 140-3"
+  for software that isn't in a validated module, so for a real FIPS 140 boundary there the path is the
+  KMS/Vault HSM backends in peat-gateway. **peat-btle closed this on 2026-07-23** (peat-btle #81,
+  tracked by #75): it now routes all crypto through `aws-lc-rs`, and its `fips` feature links
+  `aws-lc-fips-sys` — the **CMVP-validated AWS-LC FIPS module** — so a validated-module path exists in
+  the BLE crate itself (the default build still uses the non-FIPS AWS-LC provider). The library swap
+  already happened; the residual gap for peat-btle is only that the migration is un-published (Module 4).
 - **The one real FIPS *conflict* is in a Proposed ADR, not shipped code.** **ADR-052 (peat-LoRa,
   Proposed) specifies ChaCha20-Poly1305.** Since LoRa is a constrained link, the right fix before any
   implementation is an object-security envelope (an OSCORE / AES-CCM profile) rather than propagating

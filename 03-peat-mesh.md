@@ -5,7 +5,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@fa5c403` (`0.9.0-rc.49`).
+`peat-mesh@cecae9a` (`0.9.0-rc.54`, plus one `[Unreleased]` sync-coalescing fix on top).
 
 > **iroh reached 1.0 (rc.46, peat-mesh#276) [Shipped].** The QUIC transport that underpins the whole
 > mesh left the release-candidate train: `iroh` is now pinned to the **stable `1.0.2`** line
@@ -311,7 +311,7 @@ results** — treat them as the motivation for the proposal. The durable lesson,
 lands: on a degraded, high-latency link, latency and write cadence — not just throughput — shape how
 fast a mesh converges.
 
-### Keeping the store small: write coalescing, adaptive compaction, bounded memory (rc.46–rc.49) **[Shipped]**
+### Keeping the store small: write coalescing, adaptive compaction, bounded memory (rc.46–rc.50) **[Shipped]**
 
 A run of `AutomergeStore` work landed to stop a long-lived node's redb file and RSS from growing
 without bound under high-frequency writes (the trigger was a field report of a 14.9 MB uncompacted
@@ -349,6 +349,14 @@ all in `storage/automerge_store.rs`:
   called; rc.49 now invokes it so the `automerge.redb` file itself can shrink. The trigger was a
   physical-device observation during peat-flutter#22: `automerge.redb` grew to **14.5 MB in ~90 min**
   of normal use while the separate `kv-*.automerge` docs stayed bytes-to-KB.
+- **Bounded LatestOnly history [Shipped as of rc.50, peat-mesh#314].** A collection registered as
+  `LatestOnly` (Module 2 §2.6 QoS) only ever needs its newest value, but its Automerge doc still
+  accumulated the full change history. rc.50 makes the store the invariant boundary: a `LatestOnly`
+  write is **rebased to a single-snapshot document** before it reaches the cache or redb, and a
+  persisted doc that predates the bound is migrated on read (`is_latest_only_key` / `is_latest_snapshot`,
+  `storage/automerge_store.rs:463-464,866-954`). Divergent bounded snapshots are preserved so a
+  coalescing flush in flight cannot resurrect an older version — closing a path where a read could fall
+  back to a stale persisted value under sustained load (the rc.53/rc.54 sync-recovery fixes below).
 
 > The RSS figures in the commit history (≈930 MB before → <60 MB steady-state, OpTree expansion
 > "250–300×") and the 14.5 MB redb high-water observation are field-profile numbers, **not
@@ -374,6 +382,30 @@ addresses, with a **ULA exemption** so unique-local (`fc00::/7`) addresses stay 
 use. (The `dialer_resolves_acceptor_by_id_via_mdns`
 P2P test is CI-verified only — local macOS firewall on unsigned test binaries makes it inconclusive
 off-runner; treat the on-wire behaviour as NEEDS_RUNTIME.)
+
+### Surviving reconnects and lossy tactical links (rc.51–rc.54) **[Shipped]**
+
+A run of sync-recovery fixes hardened Automerge convergence across the connection churn a tactical
+network actually produces — reconnects, truncated frames, and container-network quirks. None change
+the wire protocol; all are code-confirmed but runtime-unbenchmarked here (NEEDS_RUNTIME):
+
+- **Recovered connections are actually serviced (rc.51, peat-mesh#316).** Persistent-channel setup
+  and recovery now *activate* the authenticated QUIC connection so both endpoints service
+  peer-initiated streams after a reconnect, restoring bidirectional convergence instead of leaving one
+  side deaf (`storage/mesh_sync_transport.rs`).
+- **UDP segmentation offload disabled on tactical endpoints (rc.52, peat-mesh#320/#321).** Docker
+  veth/netem paths can advertise UDP GSO but then reject segmented `sendmsg` calls with `EIO`, which
+  iroh's transport treated as packet loss and escalated into false active-link QUIC timeouts. The
+  tactical transport config now sets `enable_segmentation_offload(false)`
+  (`network/iroh_transport.rs:~263`) — a small throughput trade for reliable delivery on
+  container/namespace links.
+- **Peer sync state survives local edits and lost frames (rc.53–rc.54, peat-mesh#323).** rc.53
+  preserves the negotiated per-peer Automerge sync state across local stable-key edits (no more
+  full-history frame regeneration, write timeouts, or pathological relay CPU); rc.54 commits outbound
+  sync state only *after* the peer confirms it applied, so a lost final frame stays replayable, and
+  origin-aware fanout forwards a remote change without echoing it back to the source peer. An
+  `[Unreleased]` follow-up (peat-mesh#329/#330) coalesces stable-key fanout while confirmation is
+  pending and keeps a cache-evicted deferred snapshot authoritative during a coalescing flush.
 
 ---
 
