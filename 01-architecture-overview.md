@@ -304,13 +304,13 @@ Concretely, verified from the manifests:
 - `peat-lite` → *(nothing Peat)* — `no_std`, standalone, only `heapless`.
 - `peat-gateway` → `peat-mesh` (an exact `=`-pin, with features `automerge-backend` + `broker`).
   The pin was frozen at `=0.9.0-rc.1` for months but a Dependabot bump (peat-gateway#144) moved it
-  to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (rc.54) by ~14 RCs (Module 5 §5.6).
+  to `=0.9.0-rc.40`, so the gateway now lags the ecosystem (rc.58) by ~18 RCs (Module 5 §5.6).
 
 Rendered as a diagram (solid = required dependency, dashed = optional feature):
 
 ```mermaid
 flowchart TD
-    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, rc.40 (~14 rc behind)| M
+    GW["peat-gateway<br/>(control plane)"] -->|exact =-pin, rc.40 (~18 rc behind)| M
     T["peat-transport<br/>(HTTP/REST)"] --> P
     FFI["peat-ffi<br/>(Kotlin / Swift)"] --> P
     PER["peat-persistence"] --> P
@@ -404,7 +404,7 @@ Concretely, from the manifests:
    only a tiny `no_std` CRDT library, or only a cross-platform BLE-mesh transport. The value of
    each edge crate is not locked behind adopting `peat-protocol`.
 2. **Independent versioning and publishing.** Each is its own crate, released on its own cadence
-   (peat-mesh at rc.54, peat-btle at 0.4.0, peat-lite at 0.2.5 — distinct version lines). The
+   (peat-mesh at rc.58, peat-btle at 0.4.0, peat-lite at 0.2.5 — distinct version lines). The
    embedded/mobile crates additionally publish Android artifacts to Maven Central (a
    `publish-maven` workflow exists in `peat-btle`).
 3. **Reaches targets the core cannot.** `peat-lite` compiles for bare-metal microcontrollers and

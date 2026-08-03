@@ -408,3 +408,21 @@ Five commits, all documentation/ADR/CI — no source or version change (`Cargo.t
   linked-issue coverage check.
 - **Stable anchors:** ADR count now **81** files (77 numbered incl. ADR-075); **11 Accepted** unchanged;
   `CellRole` still 7. peat-mesh floor unchanged `>=0.9.0-rc.45`. **FIPS source posture unchanged in this repo.**
+
+## Delta — 2026-08-03 (incremental; `75029ee` → `d11b166`, workspace rc.31, `[Unreleased]`)
+
+Two commits; workspace version unchanged at `0.9.0-rc.31`; `peat-mesh` floor still `>=0.9.0-rc.45`
+(`Cargo.toml:291`); no crypto change.
+- **`scan()` skips partially-synced documents [Shipped, `[Unreleased]`, peat#1049 / #1050]** (`d11b166`).
+  `peat-protocol/src/storage/automerge_backend.rs:565-582`: `scan()` used to propagate an
+  `automerge_to_message()` decode error via `?` and abort the whole read; it now `match`es and **skips** an
+  undeserializable document (logging at `debug`: "…failed to deserialize (likely partially synced)"),
+  returning the docs that decoded — matching `observe()`. "Partially synced" is *inferred* from a
+  deserialization failure, so a genuinely corrupt document is skipped by the same path; a reproducer test
+  was added (`~automerge_backend.rs:1622+`).
+- **Release-notes contract [Shipped, docs/process, peat#1048]** (`c5a4bb8`): a 45-line
+  "Changelog and GitHub Release notes contract" section added to
+  `.agents/skills/peat-ecosystem/SKILL.md` (version-scoped CHANGELOG vs operator-scoped Release notes; a
+  4-step publish/verify procedure; anti-pattern table; cites peat-node v0.4.18 as a corrective-train
+  example). Not a standalone doc; only `SKILL.md` touched. "Last updated" bumped 2026-05-05 → 2026-07-29.
+- **FIPS posture unchanged.**

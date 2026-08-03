@@ -163,3 +163,28 @@ Range = 13 commits. This supersedes the "single lib, depends on peat-schema ONLY
   — but runtime TLS is still opt-in (`config.*.tls` default false, `main.rs:132,164`) and needs cert paths.
   Operator guide added (`docs/operator-guide.md`). TAK Server 5.7 mTLS interop is **manually** validated (In-flight),
   distinct from the automated BSI job. All three crates still 0.1.0, path-linked, unpublished.
+
+## Delta — 2026-08-03 (incremental; `93d51ac` → `ee011f3`, 0.1.0)
+
+Five commits (2 merges), **docs + CI only** — no crate, crypto, or version change; workspace crates still
+`0.1.0` (peat-mesh dep `0.9.0-rc.41`, peat-tak `0.0.3`). `proto/VERSION` not resolvable in this checkout
+(**UNCONFIRMED** — BSI Flex 335 pin unverified this run).
+- **TAK-CoT-contact → SAPIENT contract [Proposed]** — new `docs/tak-cot-contact-to-sapient.md`
+  (**`Status: Proposed`**, `:3`; scope `:4`): TAK Server CoT contact/SA events enter SAPIENT as compliant
+  `DetectionReport`s, the bridge acting as a **virtual SAPIENT DLMM** to an HLDMM. It documents the CoT
+  `<contact>` → BSI Flex 335 v2.0 mapping, a Registration/RegistrationAck/StatusReport state machine,
+  identity rules (node_id UUID; report_id/object_id ULIDs), 3 delivery increments, 12 acceptance criteria.
+  **It NARROWS the prior "bridge ships" framing:** the *positional* path IS Shipped
+  (transport composition, CoT atom → track → `DetectionReport` encode, DLMM-mode TCP, reconnect survival,
+  `:35-49`) but "does not yet implement a compliant SAPIENT virtual node" — existing contract tests use
+  **permissive receivers** and do NOT validate BSI Flex 335 mandatory fields (`:48`), and
+  `SapientTranslator::encode_outbound` omits registration gating, populated `timestamp`/`report_id`/`node_id`,
+  and a real `object_id` (reuses raw CoT UID) (`:50-69`).
+- **`docs/PLAN.md` Phase 9 [Proposed]** — "Compliant TAK CoT contact reports to SAPIENT virtual DLMM";
+  Phases 1–8 marked Done, Phase 9 = Proposed; amends Phase 7 to say it proved *positional* transport
+  composition, not a compliant virtual-node lifecycle.
+- **`.github/workflows/qa-review.yml` [Shipped, CI only]** (#44) — adds `issues: read` + `gh issue view`,
+  a linked-issue coverage-verification step (detect closing keywords, evaluate acceptance criteria, emit
+  `[WARNING]` on gaps), a required "Linked Issues" review subsection, and restores the
+  peat-sapient-bridge architectural-reach carve-out; hardens the untrusted-input preamble. Model
+  `claude-opus-4-7`.

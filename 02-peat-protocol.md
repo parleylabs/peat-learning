@@ -18,7 +18,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `75029ee` (workspace `0.9.0-rc.31`), `peat-mesh` rc.54 (`cecae9a`).
+Audited at `peat` HEAD `d11b166` (workspace `0.9.0-rc.31`), `peat-mesh` rc.58 (`ca1d0ab`).
 Citations below point at the working-tree source.
 
 ---
@@ -385,6 +385,17 @@ worth being precise about, because the constrained-networking track (and the des
 difference-sketches — **none of those is implemented.** They are **Speculative** teaching designs
 for a future satellite/LoRa link. What ships is negentropy over QUIC, which assumes an interactive
 multi-round-trip channel.
+
+> **Reading a collection mid-sync now skips half-arrived documents (Shipped, `[Unreleased]`).** On a
+> degraded link a document can be *partially synced* — some CRDT changes have arrived but a required
+> field (say a track's `fuel_minutes`) has not — so decoding it into a typed message fails. `scan()`
+> used to propagate that decode error and abort the whole read; as of peat#1050 (peat#1049) it
+> **skips the undeserializable document** (logging at `debug`) and returns the ones that decoded,
+> matching the existing `observe()` behavior (`peat-protocol/src/storage/automerge_backend.rs:565-582`).
+> Be precise about the trade-off the code makes: "partially synced" is *inferred* from a
+> deserialization failure — a genuinely corrupt document is skipped by the same path — so a scan
+> reflects only the fully-arrived documents at that instant, and the missing ones reappear once their
+> changes finish syncing.
 
 ### Conceptual CRDT mapping (Speculative / teaching aid)
 

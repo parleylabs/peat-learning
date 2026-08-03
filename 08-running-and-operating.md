@@ -133,10 +133,11 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 > it takes `--bind` / `--name` CLI flags. When something does not pick up an env var, first confirm
 > which binary you are actually running.
 
-### What the production sidecar (`peat-node`) gained recently — through v0.4.15 **[Shipped]**
+### What the production sidecar (`peat-node`) gained recently — through v0.4.18 **[Shipped]**
 
 If you run `peat-node` (the sidecar most deployments use), a handful of operability changes in the
-`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `14d81e9` (v0.4.15). The
+`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `7c3da9d` (v0.4.18, plus
+one `[Unreleased]` tip). The
 v0.4.9 release itself added no new runtime surface — it eliminated a `grpc_test` port-collision flake
 (the test server now binds `127.0.0.1:0` and reads the OS-assigned port instead of a hardcoded one)
 and shipped a zero-friction two-node attachment quick-start under `examples/compose/attachments/`
@@ -175,9 +176,40 @@ and shipped a zero-friction two-node attachment quick-start under `examples/comp
 >   `src/main.rs:115,699`) helps diagnose RSS growth.
 > - **Mesh pin stepped to rc.52 — no longer lockstep with mesh HEAD.** v0.4.11 adopts the bounded
 >   `LatestOnly` mesh API and v0.4.12 pins `peat-mesh =0.9.0-rc.52` (disabling UDP segmentation offload
->   on tactical Iroh endpoints — Module 3). Mesh HEAD is now rc.54, so peat-node lags the mesh by **2
->   RCs** — the "back in lockstep" state after v0.4.10 was momentary; budget the usual integration lag.
->   No proto/RPC change — still 27/27.
+>   on tactical Iroh endpoints — Module 3). No proto/RPC change — still 27/27.
+
+> **v0.4.16–v0.4.18 (+ `[Unreleased]`): the fanout cutover, glibc-baselined packages, and a
+> write-admission surface [Shipped].**
+>
+> - **Fanout cutover to peat-mesh (v0.4.16, peat-node#209/#210/#212).** peat-node **removed its own
+>   automatic store-change relay**; peat-mesh's `AutomergeBackend` now owns automatic local and
+>   transitive-remote fanout, and peat-node's queue is **explicit-delivery only** (Module 6). A related
+>   efficiency fix skips the store-read + JSON-encode when a document has no change subscribers
+>   (`receiver_count() == 0`, #210). The mesh pin moved with it: at HEAD peat-node hard-pins
+>   **`peat-mesh =0.9.0-rc.58`** (`Cargo.toml:167`) — the same rc as mesh HEAD, so peat-node is **back
+>   in lockstep with the mesh** this run (the rc.55/rc.57 numbers in the commit/CHANGELOG prose lag the
+>   real pin — cite the manifest). Still 27/27 RPCs.
+> - **Distro packages are glibc-baselined (v0.4.17, #216; v0.4.18, #217).** The `.deb`/`.rpm` build now
+>   pins its runners to **Ubuntu 22.04** and a release step **fails the build unless the max required
+>   `GLIBC_` symbol is ≤ 2.35** (`.github/workflows/release.yml:332-357`), so a package can't silently
+>   require a newer glibc than a 22.04-class host provides. protoc is now installed from GitHub releases
+>   (`arduino/setup-protoc`) because the distro's protoc 3.12 can't compile the proto3 `optional` fields
+>   the new config surface uses (below).
+> - **A collection write-admission surface (`[Unreleased]`, peat-node#218 / ADR-003).** `CollectionConfig`
+>   gains four optional fields — `max_writes_per_second` + `burst_writes` (paired token bucket),
+>   `max_document_bytes`, `max_document_revisions` (`proto/sidecar.proto`, fields 5–8) — persisted
+>   atomically and reinstalled at startup. They bound **local producer writes only**; an over-budget
+>   write is rejected as Connect `RESOURCE_EXHAUSTED` with a stable reason string
+>   (`WRITE_RATE_EXCEEDED`, retryable; `WRITE_DOCUMENT_BYTES_EXCEEDED` / `WRITE_DOCUMENT_REVISIONS_EXCEEDED`,
+>   not retryable), while authenticated remote convergence bypasses the check (§8.3). This is the landed
+>   slice of **peat-node ADR-003 (`Proposed`)**, the operator-facing surface for peat-mesh's bounded-history
+>   policy (ADR-0014/0016); the rest of ADR-003 (sync-mode/QoS/segment/TTL config) is **not yet exposed**.
+> - **Deep-history reads stop stalling current state (`[Unreleased]`, #219).** Read and upsert paths now
+>   go through peat-mesh's shared current-state cache and bounded FullHistory worker pool, so a deeply
+>   retained audit document no longer allocates a fresh snapshot per poll or blocks unrelated traffic.
+> - **Caveat on "shipped where."** The write-admission surface and the #219 isolation are on HEAD under
+>   CHANGELOG `[Unreleased]` — they are **not** in the tagged v0.4.18 release yet. The packaging and
+>   fanout changes above *are* in tagged releases (v0.4.16–v0.4.18).
 
 The capability facts below are unchanged from v0.4.8:
 
@@ -270,6 +302,33 @@ A `peat.toml` mirrors these with `[node] [network] [discovery] [cell] [hierarchy
 non-mDNS environments, a `peers.toml` lists `[[peers]]` blocks with `id` / `address` / `port` /
 `role`.
 
+### Per-collection write admission (peat-node `CollectionConfig`) **[Shipped, `[Unreleased]`; wider surface Proposed]**
+
+Separate from the env-var surface above, `peat-node` lets an operator bound *how fast and how large*
+a **local producer** may write into a collection, via the durable `CollectionConfig` (set through the
+`SetCollectionConfig` RPC, `docs/CONFIGURATION.md`). Four optional fields:
+
+| Field (Connect JSON) | Persisted (on-disk) | Meaning |
+|---|---|---|
+| `maxWritesPerSecond` | `max_writes_per_second` | sustained accepted local writes/sec (pairs with burst) |
+| `burstWrites` | `burst_writes` | max immediately-available rate tokens (pairs with the rate) |
+| `maxDocumentBytes` | `max_document_bytes` | ceiling on the serialized Automerge document |
+| `maxDocumentRevisions` | `max_document_revisions` | ceiling on retained Automerge changes |
+
+The two rate fields must be set (or omitted) **together**; a present-but-zero value is rejected. An
+over-budget write returns Connect **`RESOURCE_EXHAUSTED`** with a stable reason: `WRITE_RATE_EXCEEDED`
+(retryable) or `WRITE_DOCUMENT_BYTES_EXCEEDED` / `WRITE_DOCUMENT_REVISIONS_EXCEEDED` (not retryable).
+Two operator cautions:
+
+- **It bounds your own producers, not the mesh.** Authenticated remote convergence bypasses admission
+  entirely — a bound never rejects a peer's already-committed state — so this is a local backpressure
+  contract, not a mesh-wide quota.
+- **It is a first slice of a larger, still-Proposed surface.** peat-node **ADR-003 (`Proposed`)**
+  envisions `CollectionConfig` also carrying sync mode, QoS/convergence priority, history
+  segmentation/TTL, and over-budget behavior; today only the four admission fields exist. Note too that
+  tombstone TTL, sync-batch TTL, and the current `WindowedHistory` mode are **not** history bounds — the
+  only bounded-history path today is `LatestOnly` (peat-mesh ADR-0014, Module 3 §3.4).
+
 ---
 
 ## 8.4 Deployment patterns **[Documented — `peat-sim` workflow]**
@@ -336,7 +395,8 @@ a validated SLA. Treat QoS today as ordering and budgeting, not a hard latency g
 
 ```mermaid
 flowchart LR
-  ch["outgoing change"] --> cls["QoSClass<br/>5 levels (P1–P5)"]
+  ch["local write"] --> wa["WriteAdmission<br/>rate / burst / bytes / revisions<br/>local only — remote bypasses"]
+  wa --> cls["QoSClass<br/>5 levels (P1–P5)"]
   cls --> sm["SyncMode<br/>LatestOnly / FullHistory / Windowed"]
   sm --> ba["BandwidthAllocation<br/>per bandwidth_limit_kbps profile"]
   ba --> ec["EvictionController<br/>drops lowest-priority when the budget is full"]
@@ -344,10 +404,13 @@ flowchart LR
   cls -. "cross-class preemption + <5s P1 — In-flight" .-> gap["not enforced in v1"]
 ```
 
-*The pipeline — classes, sync-mode override, bandwidth allocation, eviction/GC — is **[Shipped]**
-(`peat-protocol/src/qos/`, `peat-mesh/src/qos/`). Cross-class wire-level **preemption** (a Critical
-bundle pausing an in-flight Bulk transfer) and the "<5 s P1" latency target are **[In-flight]**: QoS
-today orders and budgets, it does not preempt.*
+*The pipeline — write admission, classes, sync-mode override, bandwidth allocation, eviction/GC — is
+**[Shipped]** (`peat-protocol/src/qos/`, `peat-mesh/src/qos/`). The front gate is the newest addition
+(rc.58, `qos/write_admission.rs`): it bounds a **local producer's** write rate/burst and document
+size/revisions, returning `RESOURCE_EXHAUSTED` when over budget, while **authenticated remote
+convergence bypasses it**. Cross-class wire-level **preemption** (a Critical bundle pausing an
+in-flight Bulk transfer) and the "<5 s P1" latency target remain **[In-flight]**: QoS today admits,
+orders, and budgets — it does not preempt.*
 
 Partitions are handled automatically: heartbeat-timeout detection → exponential-backoff reconnection
 → CRDT auto-merge on heal (`peat-mesh/src/topology/`; peat-node's reconnect watchdog runs a 5 s

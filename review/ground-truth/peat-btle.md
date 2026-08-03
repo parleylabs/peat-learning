@@ -183,3 +183,22 @@ see §0 headline corrections and §5 above, all rewritten this run. Summary:
   ChaCha20/X25519; source is now two migrations ahead, never re-published
   (`peat-flutter/rust/Cargo.lock:3498-3531`).
 - **NEEDS_RUNTIME:** BLE-rate/range constants unchanged (declared, not measured); no `cargo build/test` run.
+
+## Delta — 2026-08-03 (incremental; `654db7b` → `7ae0ecc`, 0.4.0 `[Unreleased]`)
+
+One commit (#89), **Android/Kotlin only** — no Rust source, no crypto primitive, no published artifact
+change; crate still `0.4.0` with the new API under `[Unreleased]`.
+- **Public `sendChat` API [Shipped + tested]** — `fun sendChat(chat: PeatChat): Boolean`
+  (`android/.../PeatBtle.kt:2399`) and a `fun sendChat(sender, message)` convenience overload (`:2437`,
+  fills `timestamp`/`originNode`). Returns `false` if the mesh isn't running; otherwise encodes the chat,
+  seeds the relay-dedup set (so the originator's own message doesn't bounce back), writes to every connected
+  peripheral, and notifies connected centrals. Unit-tested in `PeatBtleSendChatTest.kt` (both overloads,
+  mesh-not-running guards, wire-framing `0xAD` marker, convenience field-fill); multi-hop relay deferred to
+  on-device validation.
+- **Crypto boundary [flag, not a regression]:** `sendChat` uses the **unencrypted direct-GATT write path**
+  (raw `0xAD` chat document), explicitly contrasted in code with `broadcastBytes` (mesh-encrypted). So chat
+  sent this way crosses BLE **without application-layer mesh encryption** — documented intent, a plaintext
+  local-chat path. Distinct from the AES-256-GCM mesh crypto.
+- **Published-vs-source non-FIPS split UNCHANGED** — this commit alters neither the crates.io artifact nor
+  the source crypto (Cargo.toml still declares `aws-lc-rs` non-fips default + optional `aws-lc-rs-fips`).
+  FIPS source posture unchanged.

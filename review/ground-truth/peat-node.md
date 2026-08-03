@@ -246,3 +246,45 @@ A large release run — mostly deployment packaging plus one server-hardening fi
 - **Proto/RPC surface unchanged** — still 27/27. Helm chart still `0.4.10` (tracks behind the crate).
 - **FIPS posture unchanged.** **NEEDS_RUNTIME:** connection-reclaim under stalled clients; NATS bridge
   live throughput / multi-broker behaviour (in-repo proofs are isolated e2e harnesses).
+
+## Delta — 2026-08-03 (incremental; `14d81e9` → `7c3da9d`, v0.4.15 → **v0.4.18** + one `[Unreleased]` tip)
+
+Seven commits spanning tags **v0.4.16** (`80751ae`), **v0.4.17** (`0a62b07`), **v0.4.18** (`f797b0e`) plus
+untagged tip `7c3da9d` (#219). `Cargo.toml:7` version = `0.4.18`; **`peat-mesh` pin hard-set to
+`=0.9.0-rc.58`** (`Cargo.toml:167`) — the same rc as mesh HEAD, so peat-node is **back in lockstep**.
+(Note: the #212 commit title says "rc.55" and the CHANGELOG 0.4.16 entry says "rc.57"; the manifest pin
+`rc.58` is authoritative.)
+- **Fanout cutover [Shipped, v0.4.16, #209/#210/#212].** peat-node removed its own automatic store-change
+  relay; peat-mesh's `AutomergeBackend` now owns automatic local + transitive-remote fanout (origin-aware).
+  peat-node's queue is **explicit-delivery only** — `src/fanout.rs` dropped the `FanoutKind` enum, its
+  `merge()` coalescing, the `transport` param, and the per-source echo-suppression loop; `enqueue(&str)` is
+  single-arg. QoS-priority ordering + bounded shedding + `MAX_PRIORITY_BURST` retained. #210 adds a
+  `receiver_count() == 0` guard so store-read + JSON-encode is skipped when nothing subscribes; reads moved
+  to `store.get_json` / `store.get_shared` (no history-graph clone).
+- **Packaging glibc baseline [Shipped, v0.4.17/#216, v0.4.18/#217].** Package matrix pinned to
+  `ubuntu-22.04`; a "verify glibc baseline" release step fails unless the max required `GLIBC_` symbol
+  is ≤ 2.35 (`.github/workflows/release.yml:332-357`). protoc switched to `arduino/setup-protoc@v3` because
+  distro protoc 3.12 can't compile the proto3 `optional` fields below.
+- **CollectionConfig write-admission [Shipped, `[Unreleased]`, #218 / ADR-003].** `proto/sidecar.proto`
+  `CollectionConfig` gains proto3-optional fields 5–8: `max_writes_per_second`, `burst_writes`,
+  `max_document_bytes`, `max_document_revisions` (rate+burst must be set/omitted together; present-zero
+  invalid). `src/node.rs:279-296` adds four `#[serde(default)]` `Option`s; `write_admission_policy()` builds
+  a `peat_mesh::qos::WriteAdmissionPolicy`; `set_collection_config` validates → atomic temp-file rename →
+  installs on the store; invalid persisted config is a hard startup error. `src/service.rs:39-70` maps
+  `WriteAdmissionError` → Connect `RESOURCE_EXHAUSTED` with `WRITE_RATE_EXCEEDED` (retryable) /
+  `WRITE_DOCUMENT_BYTES_EXCEEDED` / `WRITE_DOCUMENT_REVISIONS_EXCEEDED`, wired into PutDocument + typed puts.
+  Admission applies to **local writes only**. `docs/CONFIGURATION.md` documents the camelCase Connect-JSON
+  form (on-disk is snake_case) and states the surface is incomplete vs the full ADR-003 decision
+  (sync-mode/QoS/segment/TTL not yet exposed). ADR path is `docs/peat-node-adr-003-collection-policy-surface.md`
+  (**Status: Proposed**), no `adr/` subdir.
+- **FullHistory deep-doc isolation [Shipped, `[Unreleased]`, #219].** Reads use peat-mesh's heads-keyed
+  current-state cache (`get_json`/`get_shared`); upserts enter peat-mesh's bounded worker pool
+  (`upsert_json`). Multi-thread tests assert isolated reads/upserts don't drop FullHistory changes or stall
+  the runtime. Depends on the rc.58 pin.
+- **`tests/profile_resource_test.rs`** (+763) is an **ignored profiling/leak-guard harness** (9 `#[ignore]`
+  tests, RSS-slope < 0.01 / 0.005 MB/iter), NOT a configurable "resource profile" feature — no profile
+  names exist in code.
+- **Proto/RPC still 27/27.** FIPS posture unchanged.
+- **CAVEAT:** the write-admission surface and #219 are `[Unreleased]` — **not** in tag v0.4.18. Do not say
+  "shipped in 0.4.18." **NEEDS_RUNTIME:** fanout-cutover + #219 throughput exercised only by the ignored
+  harness, not a fielded benchmark.

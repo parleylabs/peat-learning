@@ -88,7 +88,7 @@ baseline until the next Phase 6b. Update per-row as diagrams are re-derived.
 | M-040 | `02b-formation-and-leadership.md:345` | `check_formation_complete` — six gates | mermaid | `coordinator.rs:97-168,66-87,174-179` | Shipped | M-012 | 2026-07-20 |
 | M-041 | `03-peat-mesh.md:415` | Tombstone lifecycle: delete → retention → GC | mermaid | `storage/` TtlManager; peat-node#136; peat-btle#73 | Shipped; In-flight (BLE) | — | 2026-07-20 |
 | M-042 | `08-running-and-operating.md:184` | Deployment topologies (single/multi/Docker/k8s) | mermaid | 08 §8.4; EndpointSlice (feature `kubernetes`) | Documented; Shipped (EndpointSlice) | — | 2026-07-20 |
-| M-043 | `08-running-and-operating.md:207` | QoS pipeline (class → sync-mode → allocation → eviction) | mermaid | `peat-protocol/src/qos/`; `peat-mesh/src/qos/` | Shipped; In-flight (preemption) | — | 2026-07-20 |
+| M-043 | `08-running-and-operating.md:396` | QoS pipeline (write-admission → class → sync-mode → allocation → eviction) | mermaid | `peat-protocol/src/qos/`; `peat-mesh/src/qos/` (incl. `write_admission.rs`) | Shipped; In-flight (preemption) | — | 2026-08-03 |
 | M-044 | `00b-the-big-idea.md:152` | Up / down / lateral information flows | mermaid | 00b §3; `hierarchy/router.rs:19-20,90-91,140` | Shipped | M-031 | 2026-07-20 |
 
 ## HTML — `index.html` (hub; mirrors the modules)
@@ -100,7 +100,7 @@ baseline until the next Phase 6b. Update per-row as diagrams are re-derived.
 | H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-07-27 |
 | H-004 | `index.html:670` | peat-protocol surface / phases | svg | mirrors Module 2 | — | 2026-07-20 |
 | H-005 | `index.html:707` | (Module 2/2b deep-dive figure) | svg | mirrors Module 2b | — | 2026-07-20 |
-| H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-07-27 |
+| H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-08-03 |
 | H-007 | `index.html:854` | (Module 3 figure) | svg | mirrors Module 3 | — | 2026-07-20 |
 | H-008 | `index.html:936` | BLE / lite edge | svg | mirrors Module 4 | — | 2026-07-27 |
 | H-009 | `index.html:1054` | Gateway / formation security | svg | mirrors Module 2b/5 | M-014 | 2026-07-20 |
@@ -336,3 +336,31 @@ pattern, to preserve when editing or adding diagrams:
   No diagram fact was left unconfirmable → nothing added to `unverifiable_claims` from diagrams this run.
   **Backlog triage:** P-01 (crypto hierarchy) and P-02 (identity name-family) descriptions updated for the
   aws-lc-rs migration + BLAKE3→SHA-256 change; both still await a dedicated derivation pass. No entry dropped.
+
+- **2026-08-03 incremental verification (peat `d11b166` rc.31 / peat-mesh `ca1d0ab` rc.58 / peat-btle
+  `7ae0ecc` 0.4.0 / peat-node `7c3da9d` v0.4.18 / peat-sapient `ee011f3` 0.1.0).** Five repos moved.
+  Diagrams **re-derived** this run:
+  - **M-043 QoS pipeline (Module 8, `peat-protocol/src/qos/` + `peat-mesh/src/qos/`).** Added the new
+    front-gate node **WriteAdmission** (rate / burst / document-bytes / document-revisions), labeled
+    *local only — remote bypasses*, ahead of `QoSClass` (peat-mesh#353, `qos/write_admission.rs`; peat-node
+    `CollectionConfig` fields 5–8). Node count 7 → 8 (within the ≤12 budget); the In-flight preemption edge
+    is unchanged. Provenance line extended to name `write_admission.rs`. `Last verified` → 2026-08-03.
+  - **H-006 peat-mesh sync/discovery cards (Module 3 §3.4, twin M-038).** Re-derived: the sync-recovery card
+    header advanced **rc.51–rc.54 → rc.51–rc.58** (adds the rc.56 stalled-confirmation 60→120→240 s backoff
+    watchdog, peat-mesh#340, and the rc.58 per-peer pending-frame reconnect replay, peat-mesh#348), and a new
+    **deep-history isolation + write-admission card (rc.55–rc.58)** was added — FullHistory worker-pool
+    bounding (#350/#351/#352), revision-depth observability (#338/#343), and write admission (#353) framed as
+    the first Shipped slice of the Proposed bounded-history policy (peat-mesh ADR-0014 Accepted / ADR-0016
+    Proposed / peat-node ADR-003 Proposed). M-038 provider-gossip facts unchanged. `Last verified` → 2026-08-03.
+  Rows **spot-checked and confirmed UNCHANGED** (provenance repo moved but depicted facts hold), keeping their
+  prior `Last verified`: **M-019** SyncMessageType wire bytes — the enum at `automerge_sync.rs:99-115` is
+  byte-for-byte identical (rc.55–58 add no new sync message type: "no wire-protocol change"), even though
+  `automerge_sync.rs` grew ~1,570 lines; **M-020/M-021** negentropy sequence / transport trait (recovery fixes
+  add no wire step); **M-041** tombstone lifecycle (TtlManager untouched); **M-017/M-018** discovery flow;
+  **M-023/M-024** BLE GATT sync sequence (peat-btle#89 `sendChat` is a *new direct-write API*, not a change to
+  the chunked GATT-sync sequence — it deliberately skips mesh encryption, noted in Module 4 prose, not the
+  diagram); **M-033/M-042** peat-node deployment topology (v0.4.16–18 packaging/glibc/fanout-cutover changes
+  no depicted topology); **M-035** tasking (`sidecar.proto` still 27/27 RPCs; the new `CollectionConfig` fields
+  5–8 are config surface, not the tasking `commands` region the diagram depicts); **M-034/M-044** hierarchy
+  routing (`hierarchy/router.rs` unchanged; peat's move was the `scan()` skip fix, not routing). No diagram
+  fact was left unconfirmable → nothing added to `unverifiable_claims` from diagrams this run.

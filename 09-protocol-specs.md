@@ -313,7 +313,7 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
   > (`peat-btle/Cargo.toml:17,25,26`). So a validated FIPS 140 boundary is now reachable in the BLE
   > crate itself when built `--features fips`; the KMS / Vault HSM backends in peat-gateway remain the
   > path where a crate still uses non-validated software AES. **The published-vs-source split still
-  > stands, and is now wider:** peat-btle *source* (HEAD `654db7b`) is FIPS-approved through AWS-LC and
+  > stands, and is now wider:** peat-btle *source* (HEAD `7ae0ecc`) is FIPS-approved through AWS-LC and
   > has also dropped BLAKE3 for SHA-256 identity derivation, but it is still version **0.4.0 /
   > [Unreleased]**. The crates.io-published peat-btle 0.4.0 that downstream binaries like peat-flutter
   > build against still depends on `chacha20poly1305` + `x25519-dalek`
@@ -365,7 +365,7 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
    [Shipped]** — approved algorithms, and now with a route to the CMVP-validated module: peat-btle's
    2026-07-23 AWS-LC migration lets a build opt into the validated `aws-lc-fips-sys` module via the
    `fips` feature (default builds use the non-FIPS AWS-LC provider). Only P-256 ships (not P-384). One
-   published-vs-source split persists: peat-btle *source* (`654db7b`) routes all crypto through
+   published-vs-source split persists: peat-btle *source* (`7ae0ecc`) routes all crypto through
    `aws-lc-rs` and derives identity with SHA-256, but the crates.io-published peat-btle 0.4.0 still
    ships ChaCha20/X25519 — neither migration was ever re-published.
    The docs that *still* advertise ChaCha20-Poly1305 / X25519 are the **peat-mesh and peat-btle READMEs**
