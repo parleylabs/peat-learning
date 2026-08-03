@@ -5,7 +5,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@cecae9a` (`0.9.0-rc.54`, plus one `[Unreleased]` sync-coalescing fix on top).
+`peat-mesh@ca1d0ab` (`0.9.0-rc.58`).
 
 > **iroh reached 1.0 (rc.46, peat-mesh#276) [Shipped].** The QUIC transport that underpins the whole
 > mesh left the release-candidate train: `iroh` is now pinned to the **stable `1.0.2`** line
@@ -197,7 +197,7 @@ deltas, persisting as they go. The wire protocol is a one-byte-tagged message ty
 pub enum SyncMessageType {
     DeltaSync          = 0x00,  // standard Automerge sync protocol
     StateSnapshot      = 0x01,  // full doc.save() bytes (LatestOnly mode)
-    WindowedHistory    = 0x02,  // bounded history (Phase 2)
+    WindowedHistory    = 0x02,  // windowed-history sync (Phase 2)
     Tombstone          = 0x04,  // single deletion (ADR-034)
     TombstoneBatch     = 0x05,  // batched deletions (ADR-034)
     TombstoneAck       = 0x06,
@@ -383,7 +383,7 @@ use. (The `dialer_resolves_acceptor_by_id_via_mdns`
 P2P test is CI-verified only — local macOS firewall on unsigned test binaries makes it inconclusive
 off-runner; treat the on-wire behaviour as NEEDS_RUNTIME.)
 
-### Surviving reconnects and lossy tactical links (rc.51–rc.54) **[Shipped]**
+### Surviving reconnects and lossy tactical links (rc.51–rc.58) **[Shipped]**
 
 A run of sync-recovery fixes hardened Automerge convergence across the connection churn a tactical
 network actually produces — reconnects, truncated frames, and container-network quirks. None change
@@ -403,9 +403,66 @@ the wire protocol; all are code-confirmed but runtime-unbenchmarked here (NEEDS_
   preserves the negotiated per-peer Automerge sync state across local stable-key edits (no more
   full-history frame regeneration, write timeouts, or pathological relay CPU); rc.54 commits outbound
   sync state only *after* the peer confirms it applied, so a lost final frame stays replayable, and
-  origin-aware fanout forwards a remote change without echoing it back to the source peer. An
-  `[Unreleased]` follow-up (peat-mesh#329/#330) coalesces stable-key fanout while confirmation is
-  pending and keeps a cache-evicted deferred snapshot authoritative during a coalescing flush.
+  origin-aware fanout forwards a remote change without echoing it back to the source peer. rc.55–rc.56
+  (peat-mesh#340) bounds the *stall* case: a per-peer confirmation watchdog replaces a receive-stalled
+  persistent channel, re-driving the latest coalesced document under a **bounded 60 s → 120 s → 240 s
+  backoff** (`storage/sync_channel.rs:159-244`) instead of retrying forever.
+- **Stalled-confirmation replay is bounded (rc.56, peat-mesh#340).** See above — the watchdog caps the
+  backoff shift at 2 and resets on receive progress, so a peer that never confirms can't pin a channel
+  in perpetual retry.
+- **Frames authored during a backoff window are replayed on reconnect (rc.58, peat-mesh#348).** A new
+  `OutboundSink::peer_connected` hook flushes each sink's per-peer backlog when a peer reconnects, so a
+  change written while a peer was down is delivered on reconnection rather than dropped
+  (`transport/fanout.rs:146-149,313-325`; modeled on peat-btle `sync_requested` #73). The remaining
+  fanout Slice-2 items — delete-event propagation, `allowed_transports` enforcement, LoRa/SBD
+  coalescing, and a reaper for panicked drain tasks — are **[In-flight]** (`fanout.rs:14-30`), so don't
+  present the reconnect replay as covering deletions yet.
+
+### Keeping deep-history documents from starving current state (rc.55–rc.58) **[Shipped]**
+
+`LatestOnly` collections are cheap; a `FullHistory` collection (audit logs, commands, contact
+reports — `qos/sync_mode.rs:129-208`) retains its whole Automerge change graph, and a document that
+has accumulated thousands of revisions makes every read, merge, and fanout expensive. rc.55–rc.58
+stop one deep document from stalling the rest of the mesh:
+
+- **FullHistory work is isolated and bounded (peat-mesh#350/#351/#352).** CPU-heavy FullHistory
+  reads and read-modify-write mutations now run on `spawn_blocking` gated by a per-store semaphore
+  (`storage/automerge_store.rs:507,740,793`); `LatestOnly` keys skip the permit entirely. The pool
+  defaults to `available_parallelism() / 4` (min 1) so deep-history work can never claim more than a
+  quarter of the cores — override with `PEAT_FULL_HISTORY_WORKERS`.
+- **Depth-aware stream routing (peat-mesh#352).** Bounded current-state and FullHistory now use
+  **separate serial fanout lanes**, and a FullHistory frame whose serialized document or delta exceeds
+  a threshold is sent on its **own QUIC stream** — a small delta against a deeply-retained document was
+  otherwise able to block the persistent receive loop (`storage/automerge_sync.rs:302-311,556-570`).
+  Fanout also reuses an immutable `Arc` store snapshot instead of cloning the OpSet.
+- **Revision-depth observability (peat-mesh#338/#343) [Shipped].** A rate-limited `tracing::warn!`
+  fires when a document's `num_changes` crosses a threshold (default 256, override
+  `PEAT_REVISION_DEPTH_WARN`), reading `doc.stats()` rather than materializing the change list
+  (`storage/json_convert.rs:117-157`). This is the signal an operator uses to catch a collection that
+  was mislabeled `FullHistory` when it should have been `LatestOnly`.
+
+### Write admission: bounding a document before it is written (rc.58, peat-mesh#353) **[Shipped]**
+
+The isolation above keeps a deep document from starving others; **write admission** stops a document
+from getting pathologically deep in the first place. A new per-collection registry
+(`qos/write_admission.rs`) applies a token-bucket **sustained-rate + burst** limit and hard
+`max_document_bytes` / `max_document_revisions` ceilings to **local producer writes** — a three-phase
+`begin() → validate_document() → commit()` gate that returns a typed
+`WriteAdmissionError::{RateExceeded, DocumentBytesExceeded, DocumentRevisionsExceeded}`
+(`write_admission.rs:21-113`). Two properties matter for a mental model:
+
+- **Local writes only.** Authenticated remote convergence **bypasses** admission — a bound is a
+  contract on a producer, never a reason to reject a peer's already-committed state (which would break
+  CRDT convergence). Unregistered collections are admitted unchanged.
+- **It is one landed slice of a larger, still-Proposed policy.** Three peat-mesh ADRs frame this:
+  **peat-mesh ADR-0014 (Accepted, `docs/adr/0014-…md`)** rules that a `FullHistory` collection must
+  **never auto-convert** to `LatestOnly` to save space — silent semantic weakening is forbidden, so
+  `LatestOnly` remains the *only* bounded-history path today and **`WindowedHistory` does not yet bound
+  on-disk storage** (`docs/adr/0015-windowed-history-retention.md` is a **Proposed** stub, no code).
+  **peat-mesh ADR-0016 (Proposed, 2026-08-01)** is the umbrella "every writable collection needs an
+  explicit budget contract" design; the write-admission mechanism above is its first shipped slice,
+  while the finite-segment / epoch / producer-backpressure lifecycle it describes is **[Proposed]**.
+  The operator-facing surface for these budgets is named as peat-node's own **ADR-003** (Module 8 §8.3).
 
 ---
 

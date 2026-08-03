@@ -454,3 +454,41 @@ Fourteen commits, all sync-reliability / store-bounding — no wire-protocol cha
 - **FIPS posture unchanged** — no crypto in the `fa5c403..cecae9a` diff.
 - **NEEDS_RUNTIME:** all of the above are code-confirmed but not benchmarked here (on-wire recovery,
   GSO-off throughput trade, coalescing correctness under sustained load).
+
+## Delta — 2026-08-03 (incremental; `cecae9a` → `ca1d0ab`, rc.54 → **rc.58**)
+
+Fifteen commits, all storage/sync — **no wire-protocol change** (`SyncMessageType` enum byte-identical,
+`automerge_sync.rs:99-115`) and **no crypto change** (`fa5c403..HEAD` touches no key-exchange/AEAD).
+- **Write admission [Shipped, rc.58, #353].** New `src/qos/write_admission.rs` (490 lines): per-collection
+  `WriteAdmissionPolicy` — token-bucket sustained-rate + burst, `max_document_bytes`,
+  `max_document_revisions` (`:21-30`), three-phase `begin() → validate_document() → commit()` gate
+  (`:255,309-380`), typed `WriteAdmissionError::{RateExceeded,DocumentBytesExceeded,DocumentRevisionsExceeded}`
+  (`:88-113`). Wired into `automerge_store.rs:497-499,605,872,889,906,1088-1128`. **Local writes only** —
+  unregistered collections and authenticated remote convergence pass unbounded. Unit-tested (`:395-489`).
+- **FullHistory work isolation [Shipped, #350/#351/#352].** CPU-heavy FullHistory reads/mutations run on
+  `spawn_blocking` gated by a per-store `Arc<Semaphore>` (`automerge_store.rs:507,740,793`); default
+  concurrency `available_parallelism()/4` (min 1), override `PEAT_FULL_HISTORY_WORKERS` (`:99-112`).
+  Depth-aware routing: separate serial fanout lanes for bounded current-state vs FullHistory, and a
+  large FullHistory frame gets its own QUIC stream (`automerge_sync.rs:302-311,556-570`); fanout reuses an
+  immutable `Arc` snapshot instead of cloning the OpSet.
+- **Revision-depth observability [Shipped, #338/#343].** Rate-limited `tracing::warn!` when `num_changes`
+  crosses a threshold (default 256, `PEAT_REVISION_DEPTH_WARN`), via `doc.stats()` not a materialized list
+  (`json_convert.rs:117-157`).
+- **Stalled-confirmation recovery [Shipped, rc.56, #340].** Per-peer confirmation watchdog re-drives the
+  latest coalesced document under a bounded **60 → 120 → 240 s** backoff (shift capped at 2, reset on
+  progress; `sync_channel.rs:159-244`; `FRAME_WRITE_TIMEOUT = 60s :523`).
+- **Per-peer pending-frame replay on reconnect [Shipped, rc.58, #348].** `OutboundSink::peer_connected`
+  hook flushes each sink's per-peer backlog on reconnect (`transport/fanout.rs:146-149,313-325`; modeled on
+  peat-btle `sync_requested` #73). Slice-2 items — delete-event propagation, `allowed_transports`
+  enforcement, LoRa/SBD coalescing, drain-task reaper — remain **In-flight** (`fanout.rs:14-30`).
+- **ADRs (repo-local `docs/adr/`).** **ADR-0014 Accepted** (`0014-…md:3`): FullHistory MUST NOT auto-convert
+  to LatestOnly; LatestOnly is the only bounded-history path; `WindowedHistory` does NOT bound on-disk
+  storage. **ADR-0015 Proposed** (`0015-…md:3`): windowed-retention stub, no code. **ADR-0016 Proposed**
+  (`0016-…md:3`, 2026-08-01, #349): bounded-history/write-admission/convergence policy — write-admission
+  slice shipped; segment/epoch/backpressure lifecycle not landed; names peat-node ADR-003 as the operator
+  surface. README index lists 0014 Accepted / 0015 Proposed / 0016 Proposed.
+- **SyncMode enum (`qos/sync_mode.rs:52-75`):** `FullHistory` (`#[default]`), `LatestOnly`,
+  `WindowedHistory { window_seconds: u64 }` — confirmed verbatim.
+- **FIPS posture unchanged.**
+- **NEEDS_RUNTIME:** worker-pool throughput trade, recovery latency on lossy links, admission-under-load —
+  code-confirmed, not benchmarked here.

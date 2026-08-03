@@ -200,9 +200,9 @@
       or a whitepaper concept that exists in no repo. Do not assume it ships.</p>
     </div>
     <div class="warn"><b>Audited against (the source of truth for every badge below).</b> peat
-    <code>75029ee</code> (workspace 0.9.0-rc.31) · peat-mesh <code>cecae9a</code> (rc.54) · peat-btle
-    <code>654db7b</code> (0.4.0) · peat-lite <code>7a8a8fb</code> (0.2.5) · peat-gateway
-    <code>5035cba</code> (0.1.0) · peat-node <code>14d81e9</code> (0.4.15) · peat-flutter <code>411c87a</code> (0.1.0) · peat-sapient <code>93d51ac</code> (0.1.0). The single recurring pattern:
+    <code>d11b166</code> (workspace 0.9.0-rc.31) · peat-mesh <code>ca1d0ab</code> (rc.58) · peat-btle
+    <code>7ae0ecc</code> (0.4.0) · peat-lite <code>7a8a8fb</code> (0.2.5) · peat-gateway
+    <code>5035cba</code> (0.1.0) · peat-node <code>7c3da9d</code> (0.4.18) · peat-flutter <code>411c87a</code> (0.1.0) · peat-sapient <code>ee011f3</code> (0.1.0). The single recurring pattern:
     <b>code &gt; current ADRs &gt; specs/guide/README</b>. READMEs and the developer guide are months
     older than the code and are wrong in several places this track flags.</div>
 
@@ -470,7 +470,7 @@ NETWORK              P2P Mesh (Iroh QUIC)</code></pre></div>
         enrollment, CDC, identity federation, envelope encryption. <b>Never in the data path.</b></div>
       <div class="card"><h4>peat-node/</h4><span class="muted">Deployable node.</span> A real, separate
         gRPC/Connect sidecar that embeds peat-mesh + peat-protocol. Iroh QUIC only (no BLE).
-        <span class="st ship">Shipped</span> at 0.4.15.</div>
+        <span class="st ship">Shipped</span> at 0.4.18.</div>
       <div class="card"><h4>peat-flutter/</h4><span class="muted">Client bindings.</span> Flutter/Dart
         client binding over <code>peat-ffi</code> (now owns its Dart <code>FFIBuffer</code> adapter,
         peat-ffi <code>=0.2.12</code>). <span class="st ship">Shipped</span> at 0.1.0 (first real release).</div>
@@ -944,12 +944,26 @@ ties → lexicographic node id</code></pre>
     shrinks — it was observed growing to 14.5&nbsp;MB in ~90&nbsp;min without it; <b>rc.50 bounds
     <code>LatestOnly</code> history</b> (peat-mesh#314) by rebasing each such doc to a single snapshot before
     cache/persistence. See Module 3 §3.4.</div>
-    <div class="note"><b>Sync recovery on lossy tactical links <span class="st ship">Shipped</span> (rc.51–rc.54).</b>
+    <div class="note"><b>Sync recovery on lossy tactical links <span class="st ship">Shipped</span> (rc.51–rc.58).</b>
     Recovered QUIC connections are now serviced after a reconnect (peat-mesh#316); UDP segmentation offload is
     disabled on tactical endpoints where Docker veth/netem paths reject GSO sends with <code>EIO</code>
-    (peat-mesh#320/#321); and per-peer sync state survives local edits and lost final frames — outbound state
-    commits only after the peer confirms it applied (peat-mesh#323, rc.53–rc.54). No wire-protocol change;
-    on-wire behaviour is NEEDS_RUNTIME. See Module 3 §3.4.</div>
+    (peat-mesh#320/#321); per-peer sync state survives local edits and lost final frames — outbound state
+    commits only after the peer confirms it applied (peat-mesh#323, rc.53–rc.54); a stalled peer is bounded by
+    a <b>60→120→240&nbsp;s backoff watchdog</b> (peat-mesh#340, rc.56); and frames authored while a peer was
+    down are <b>replayed on reconnect</b> (peat-mesh#348, rc.58). No wire-protocol change; on-wire behaviour is
+    NEEDS_RUNTIME. See Module 3 §3.4.</div>
+    <div class="note"><b>Deep-history isolation + write admission <span class="st ship">Shipped</span> (rc.55–rc.58).</b>
+    FullHistory reads/mutations run on a semaphore-bounded worker pool (default ¼ of cores,
+    <code>PEAT_FULL_HISTORY_WORKERS</code>) on separate fanout lanes, so one deeply-retained audit document can't
+    stall current-state traffic (peat-mesh#350/#351/#352); a rate-limited revision-depth warning
+    (<code>PEAT_REVISION_DEPTH_WARN</code>, default 256) flags a mislabeled collection (peat-mesh#338/#343). New
+    <b>write admission</b> (peat-mesh#353, <code>qos/write_admission.rs</code>) bounds a local producer's rate,
+    burst, document bytes, and revisions — <span class="st ship">Shipped</span> — but authenticated remote
+    convergence bypasses it. It is the first landed slice of the still-<span class="st prop">Proposed</span>
+    bounded-history policy: peat-mesh <b>ADR-0014</b> (<span class="st ship">Accepted</span> — FullHistory must
+    never auto-convert to LatestOnly; LatestOnly is the only bounded path today) and <b>ADR-0016</b>
+    (<span class="st prop">Proposed</span>), surfaced to operators via peat-node <b>ADR-003</b>
+    (<span class="st prop">Proposed</span>). See Module 3 §3.4 and Module 8 §8.3.</div>
     <div class="note"><b>IPv6 reachability probe <span class="st ship">Shipped</span> (rc.48, peat-mesh#304/#305).</b>
     The dual-stack bind fix re-enabled IPv6, which then exposed nodes advertising IPv6 addresses with no
     functional route; the interface filter now runs a per-candidate reachability probe and drops unreachable
@@ -1215,7 +1229,7 @@ ties → lexicographic node id</code></pre>
     <code>Strict</code> enrollment policy is unimplemented (always 403s). All <span class="st flight">In flight</span>.</div>
     <p class="muted">Depends on <code>peat-mesh = "=0.9.0-rc.40"</code> purely as a library — frozen for months
     at <code>rc.1</code>, then Dependabot-bumped (peat-gateway#144) to <code>rc.40</code>, so it now lags the mesh
-    ecosystem (rc.54) by ~14 RCs. The bump also adapted the CDC watcher to the new <code>ChangeEvent</code>
+    ecosystem (rc.58) by ~18 RCs. The bump also adapted the CDC watcher to the new <code>ChangeEvent</code>
     surface (an <code>origin</code> field) and a <code>redb</code> 2→4 major — tracking the mesh is real integration
     work, not a one-line bump. This cycle (<code>4d82282→5035cba</code>) was CI/toolchain-only — QA-review
     workflow tweaks, a <code>rust-analyzer</code> toolchain component, and an ignore for the quick-xml
@@ -1467,7 +1481,7 @@ DOWN  CommandCoordinator.issue_command() → CommandRouter resolves targets
       <tr><td>peat-sapient/</td><td>SAPIENT (BSI Flex 335 v2.0) bridge (ADR-070, Accepted) — 3-crate workspace, opt-in TLS</td><td>github.com/defenseunicorns/peat-sapient</td></tr>
     </table></div>
     <div class="note"><b>peat-node, not "peat-mesh-node."</b> The deployable node is the standalone
-    <code>peat-node</code> repo (0.4.15), exposing a gRPC/Connect API (27 RPCs, all 27 implemented
+    <code>peat-node</code> repo (0.4.18), exposing a gRPC/Connect API (27 RPCs, all 27 implemented
     — the README's "25" is outdated). Whether a <code>peat-mesh-node</code> binary also exists is
     <span class="st spec">unverified</span> at the audited HEAD. v1 honesty caveats in peat-node: the gRPC
     surface is <b>unauthenticated</b> (#38, <span class="st flight">In flight</span>); attachment priority
@@ -1481,7 +1495,7 @@ DOWN  CommandCoordinator.issue_command() → CommandRouter resolves targets
     <h3>Where a new contributor gets the most leverage</h3>
     <div class="tbl-wrap"><table>
       <tr><th>Contribution</th><th>What &amp; why</th><th>Status / size</th></tr>
-      <tr><td><b>Doc-fixes</b></td><td>Make stale docs match shipped code: README RBAC names (drop Operator/Supervisor → Leader/Member/Observer/Commander/Admin); README crypto (ChaCha20/X25519 → AES-256-GCM/ECDH-P256); peat-mesh version (0.3.2 → rc.54); peat-node RPC count (25 → 27); GATT UUID (→ 0xA1B2); peat-lite README missing <code>Document</code> 0x07. Highest-ROI first PR.</td><td><span class="st flight">Doc-fix</span> · trivial–small</td></tr>
+      <tr><td><b>Doc-fixes</b></td><td>Make stale docs match shipped code: README RBAC names (drop Operator/Supervisor → Leader/Member/Observer/Commander/Admin); README crypto (ChaCha20/X25519 → AES-256-GCM/ECDH-P256); peat-mesh version (0.3.2 → rc.58); peat-node RPC count (25 → 27); GATT UUID (→ 0xA1B2); peat-lite README missing <code>Document</code> 0x07. Highest-ROI first PR.</td><td><span class="st flight">Doc-fix</span> · trivial–small</td></tr>
       <tr><td><b>FIPS module validation</b></td><td>Swap RustCrypto (<code>aes-gcm</code>/<code>p256</code>) for a CMVP-validated module behind the existing security trait. The single most important enterprise-readiness item.</td><td><span class="st flight">In flight</span> · medium</td></tr>
       <tr><td><b>QoS enforcement</b></td><td>Wire-level cross-class preemption so a Critical bundle can pause an in-flight Bulk transfer; make "&lt;5 s P1" real.</td><td><span class="st flight">In flight</span> · medium</td></tr>
       <tr><td><b>Control-plane auth</b></td><td>peat-node gRPC auth (#38); gateway ingress AuthZ (#99), NATS ACLs/auth/TLS (#97/#124/#125), enrollment proof-of-possession.</td><td><span class="st flight">In flight</span> · medium</td></tr>
@@ -1561,14 +1575,18 @@ cargo build -p peat-quickstart --release   <span class="cm"># binary/crate name 
     <code>PEAT_CONNECTION_RECYCLE_SECS</code> do <b>not exist</b> in peat-node; 8080 appears only as an example
     <code>PEAT_NODE_AGENT_ADDR</code>. <b>peat-lite's own UDP default is 5555</b> (multicast
     <code>239.255.72.76</code>).</p>
-    <div class="note"><b>New install path <span class="st ship">Shipped</span> (v0.4.13–v0.4.15).</b> Beyond the Helm
+    <div class="note"><b>New install path <span class="st ship">Shipped</span> (v0.4.13–v0.4.18).</b> Beyond the Helm
     chart and Compose examples, tagged releases now ship native <b>Debian &amp; RPM systemd packages</b> for
     x86_64 and ARM64 (dedicated <code>peat</code> user, state in <code>/var/lib/peat-node</code>, env at
-    <code>/etc/peat-node/peat-node.env</code>) plus signed <b>APT/DNF repositories</b> on GitHub Pages. Also new:
-    bounded client-connection lifetimes (RPC-deadline caps, HTTP/2 keepalives, idle retirement, v0.4.12) and an
-    opt-in <b>Core NATS bridge</b> mapping NATS subjects ↔ Peat collections (disabled unless a
-    <code>subject=collection</code> mapping is set — Module 6 §6.4, Module 8). Mesh pin stepped to
-    <code>rc.52</code>, so the node now trails mesh HEAD (<code>rc.54</code>) by ~2 RCs.</div>
+    <code>/etc/peat-node/peat-node.env</code>) plus signed <b>APT/DNF repositories</b> on GitHub Pages — and as of
+    v0.4.17/v0.4.18 those packages are <b>glibc-baselined</b> (built on Ubuntu 22.04; the release fails unless the
+    max required <code>GLIBC_</code> symbol is ≤&nbsp;2.35). Also new: bounded client-connection lifetimes
+    (RPC-deadline caps, HTTP/2 keepalives, idle retirement, v0.4.12); an opt-in <b>Core NATS bridge</b> mapping NATS
+    subjects ↔ Peat collections (disabled unless a <code>subject=collection</code> mapping is set — Module 6 §6.4,
+    Module 8); the <b>fanout cutover</b> that hands automatic relay to peat-mesh, leaving peat-node's queue
+    explicit-delivery only (v0.4.16); and an <code>[Unreleased]</code> <b>collection write-admission</b> surface
+    (Module 8 §8.3). The mesh pin moved to <code>rc.58</code>, so the node is <b>back in lockstep with mesh
+    HEAD</b> this run.</div>
 
     <h3>Binaries — don't mix them up</h3>
     <div class="tbl-wrap"><table>
@@ -1671,7 +1689,7 @@ cargo build -p peat-quickstart --release   <span class="cm"># binary/crate name 
       <span class="fw">PARLEY<b>LABS</b></span> &nbsp; <span class="beep">beep · boop · beep</span>
       <svg class="squig" width="54" height="9" viewBox="0 0 54 9" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5 q4.5 -4 9 0 t9 0 t9 0 t9 0 t9 0 t9 0"/></svg>
       <br><span class="ft">Peat onboarding curriculum · styled per the Parley Labs Brand Guide · © Parley Labs</span>
-      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-07-27</b> · incremental · peat <code>75029ee</code> (rc.31) · mesh <code>cecae9a</code> (rc.54) · btle <code>654db7b</code> (0.4.0) · lite <code>7a8a8fb</code> (0.2.5) · gw <code>5035cba</code> · node <code>14d81e9</code> (0.4.15) · flutter <code>411c87a</code> (0.1.0) · sapient <code>93d51ac</code> (0.1.0)<!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
+      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-08-03</b> · incremental · peat <code>d11b166</code> (rc.31) · mesh <code>ca1d0ab</code> (rc.58) · btle <code>7ae0ecc</code> (0.4.0) · lite <code>7a8a8fb</code> (0.2.5) · gw <code>5035cba</code> · node <code>7c3da9d</code> (0.4.18) · flutter <code>411c87a</code> (0.1.0) · sapient <code>ee011f3</code> (0.1.0)<!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
     </span>
       <div class="fb" id="fb">
         <b>Was this helpful?</b>

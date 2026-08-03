@@ -840,3 +840,72 @@ cross-refs), published-artifact/reference (peat-flutter lock re-checked; peat-bt
 and fact-wide-occurrence (BLAKE3→SHA-256 and rc.49→rc.54 grepped across all `0*.md` + both HTML tracks +
 registry + ground-truth). `peat-tak` remains unreachable (403 via the scoped proxy) — still an open todo,
 not folded into the tracked-clone set.
+
+## 2026-08-03 — incremental refresh (CI mode)
+
+Delta-driven refresh against the 2026-07-27 audited baseline (7 days; no full sweep due — last full
+2026-07-20, 14 days). Five repos moved — substantive drift in **peat-mesh** (rc.54→rc.58),
+**peat-node** (v0.4.15→v0.4.18), plus focused changes in **peat** (`75029ee→d11b166`, `[Unreleased]`),
+**peat-btle** (`654db7b→7ae0ecc`, Android `sendChat`), and **peat-sapient** (`93d51ac→ee011f3`,
+docs/CI); no drift in peat-lite/peat-gateway/peat-flutter. No open `curriculum-feedback` issues (checked
+GitHub, label `curriculum-feedback`, state OPEN = 0), so no feedback work this run.
+
+**Headline — peat-mesh's bounded-history story (rc.55–rc.58).**
+- **Write admission [Shipped, rc.58, peat-mesh#353]** (`qos/write_admission.rs:21-113`): a per-collection
+  token-bucket rate/burst plus `max_document_bytes` / `max_document_revisions` gate on **local producer
+  writes**; authenticated remote convergence bypasses it. Typed
+  `WriteAdmissionError::{RateExceeded,DocumentBytesExceeded,DocumentRevisionsExceeded}`. Module 3 §3.4,
+  Module 6, Module 8 §8.3; M-043 diagram re-derived to add the front gate.
+- **FullHistory work isolation [Shipped, #350/#351/#352]**: semaphore-bounded `spawn_blocking` pool
+  (default cores/4, `PEAT_FULL_HISTORY_WORKERS`), depth-aware independent-QUIC-stream routing, serial
+  fanout lanes — a deeply-retained audit document no longer stalls current-state traffic. Plus
+  revision-depth observability (`PEAT_REVISION_DEPTH_WARN`, default 256; #338/#343).
+- **Sync recovery [Shipped]**: stalled-confirmation watchdog with a bounded 60→120→240 s backoff (rc.56,
+  #340) and per-peer pending-frame replay on reconnect (rc.58, #348; Slice-2 delete/allowed_transports/
+  LoRa-SBD-coalescing/reaper still In-flight).
+- **ADRs (peat-mesh repo-local `docs/adr/`)**: ADR-0014 **Accepted** (FullHistory must never auto-convert
+  to LatestOnly; LatestOnly is the only bounded-history path; `WindowedHistory` does *not* bound on-disk
+  storage), ADR-0015 **Proposed** (windowed-retention stub), ADR-0016 **Proposed** (bounded-history +
+  write-admission + convergence policy; only the write-admission slice has landed).
+
+**peat-node v0.4.16–v0.4.18 (+ `[Unreleased]`).** Fanout cutover — peat-mesh's `AutomergeBackend` now owns
+automatic local+transitive fanout; peat-node's queue is explicit-delivery only; no-subscriber skip guard
+(#209/#210/#212, v0.4.16). Packages are **glibc-baselined** (Ubuntu 22.04, release fails unless max
+`GLIBC_` ≤ 2.35; #216 v0.4.17) with protoc from GitHub releases for proto3 `optional` (#217 v0.4.18).
+`[Unreleased]`: a `CollectionConfig` write-admission surface (fields 5–8; Connect `RESOURCE_EXHAUSTED`
+reason codes) as the landed slice of **peat-node ADR-003 (Proposed)**, plus #219 FullHistory read/upsert
+isolation. Mesh pin stepped `rc.52→rc.58` — **peat-node is back in lockstep with mesh HEAD**; the gateway
+now lags mesh by **~18 RCs** (rc.40 vs rc.58). Proto/RPC still 27/27. Corrected the task framing: the range
+is v0.4.16/17/18 (not "v0.4.16 the release commit"), and the admission surface + #219 are `[Unreleased]`,
+not in tag v0.4.18.
+
+**peat.** `scan()` now **skips partially-synced (undeserializable) documents** on a degraded link instead
+of aborting the whole read (peat#1049/#1050, `automerge_backend.rs:565-582`) — Module 2. A Changelog/Release
+-notes contract was added to `.agents/skills/peat-ecosystem/SKILL.md` (#1048, process/docs only). Both
+`[Unreleased]`; workspace version unchanged at rc.31.
+
+**peat-btle.** Public Android **`sendChat`** API (#89, `PeatBtle.kt:2399,2437`), unit-tested — but it takes
+a **plaintext direct-GATT path** (raw `0xAD` chat document), *not* mesh encryption; flagged in Module 4.
+No crypto/Rust-source change; the published-vs-source non-FIPS split is unchanged (crate still 0.4.0).
+
+**peat-sapient.** A new **Proposed** contract (`docs/tak-cot-contact-to-sapient.md`, peat-sapient#45) plus
+`PLAN.md` Phase 9 narrow the "SAPIENT bridge ships" framing: the **positional** CoT→track→`DetectionReport`
+path is **Shipped**, but the **compliant virtual-DLMM / BSI Flex 335 v2.0 mandatory-field** lifecycle is
+**Proposed** (existing contract tests use permissive receivers; `encode_outbound` omits registration gating,
+populated `timestamp`/`report_id`/`node_id`, and a real `object_id`). Module 7. Docs/CI only; crate still
+0.1.0; `proto/VERSION` unreadable in this checkout (logged UNCONFIRMED).
+
+**New unverifiable claims (NEEDS_RUNTIME, 2026-08-03):** two consolidated entries — the peat-mesh rc.55–58
+bounded-history bundle (worker-pool throughput, recovery latency, admission-under-load) and the peat-node
+v0.4.16–18 fanout-cutover + #219 isolation (live throughput only exercised by the in-repo *ignored*
+profiling harness). Both code-confirmed, neither benchmarked in the cloud env.
+
+**Gates:** all §0b validation gates run and passed — independent fact-check (every changed claim re-verified
+to `path:line`/ADR/PR#), house-rules (Shipped/In-flight/Proposed/Accepted labels, FIPS-only, no vendor names,
+autonomy framing preserved), cohesion, diagram re-derivation (M-043 + H-006 advanced; registry note added),
+regression/blast-radius (hub↔module mirroring, SYNC stamps, cross-refs, self-contained HTML + feedback beacon
+preserved), published-artifact/reference (peat-node `Cargo.toml:167` = `=0.9.0-rc.58` cited over the lagging
+rc.55/57 prose; RPC 27/27 re-counted; ADR statuses re-derived from the `Status:` lines), and
+fact-wide-occurrence (rc.54→rc.58, `0.4.15`→`0.4.18`, and the old per-repo HEAD commits grepped across all
+`0*.md` + both HTML tracks + registry + ground-truth). `peat-tak` remains unreachable (401/403 via the
+scoped proxy) — still an open todo, not folded into the tracked-clone set.

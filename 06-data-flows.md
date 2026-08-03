@@ -112,13 +112,30 @@ sequenceDiagram
 
 **QoS along the way (ordering Shipped, enforcement In-flight).** A contact report is classified P1
 Critical, so at every bandwidth-constrained hop (`peat-protocol/src/qos/`, `peat-mesh/src/qos/`) it
-is ordered ahead of P3 health-status and P4 telemetry traffic — peat-node, for instance, drains
-Critical first in its relay fanout. What is **not** yet enforced in v1 is *cross-class wire-level
-preemption*: a Critical bundle does not yet pause an in-flight Bulk transfer, and the "<5 s P1"
-latency is a **configured target, not a validated SLA** (enforcement is In-flight; see
-`peat-node/proto/sidecar.proto` v1 caveats). The five classes and their policy targets are P1
+is ordered ahead of P3 health-status and P4 telemetry traffic. What is **not** yet enforced in v1 is
+*cross-class wire-level preemption*: a Critical bundle does not yet pause an in-flight Bulk transfer,
+and the "<5 s P1" latency is a **configured target, not a validated SLA** (enforcement is In-flight;
+see `peat-node/proto/sidecar.proto` v1 caveats). The five classes and their policy targets are P1
 ~500 ms/40% bandwidth, P2 ~5 s/30%, P3 ~60 s/20%, P4 ~300 s/8%, P5 none/2%
 (`peat-protocol/src/qos/mod.rs:41-45`).
+
+> **Where the fanout now happens changed (Shipped, peat-node 0.4.16).** peat-node used to run its own
+> automatic store-change relay *and* drain a QoS-priority queue. As of the peat-mesh rc.55+ fanout
+> cutover (peat-node#209/#210/#212), **peat-mesh's `AutomergeBackend` owns automatic local and
+> transitive-remote fanout**, including origin-aware echo suppression; peat-node's own queue is now
+> **explicit-delivery only** (it still keeps the P1-first ordering, bounded shedding, and an
+> anti-starvation burst cap for the deliveries it does drive). A second, cheaper win in the same line:
+> when a document has no change subscribers, peat-node now **skips the store-read + JSON-encode work
+> entirely** (`receiver_count() == 0` guard, #210). So the QoS *ordering* you reason about above is
+> real, but the crate that performs the automatic broadcast is peat-mesh, not peat-node.
+
+> **A producer's write can now be admission-bounded before it enters the store (Shipped, rc.58).** A
+> collection can carry a token-bucket rate/burst limit plus `max_document_bytes` / `max_document_revisions`
+> ceilings (peat-mesh `qos/write_admission.rs`; configured via peat-node's `CollectionConfig`, Module 8
+> §8.3). This gates **local producer writes only** — an over-budget local write is rejected with a typed
+> `RESOURCE_EXHAUSTED`, but **authenticated remote convergence bypasses admission**, because rejecting a
+> peer's already-committed CRDT state would break convergence. It is the first shipped slice of the
+> still-Proposed bounded-history policy (peat-mesh ADR-0016 / peat-node ADR-003).
 
 **If the network partitions** between steps 4 and 5, the core mesh path does not break: the
 Automerge change is already committed locally, and it syncs whenever the link returns — that is the

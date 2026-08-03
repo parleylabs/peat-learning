@@ -20,8 +20,8 @@ crates: [`peat-btle/`](../peat-btle/) (Bluetooth LE mesh transport) and
 > **standalone leaf crates**: they depend on nothing else in Peat (beyond `peat-btle`'s one optional
 > link to `peat-lite`), and `peat-mesh` pulls them in only through opt-in Cargo features.
 
-**Audited against:** peat-btle `654db7b` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `cecae9a` /
-0.9.0-rc.54.
+**Audited against:** peat-btle `7ae0ecc` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `ca1d0ab` /
+0.9.0-rc.58.
 
 ---
 
@@ -145,6 +145,24 @@ a GATT *Indicate* (Peripheral→Central). `Note` = local processing, not a messa
 exchange order is the `SyncMessageType` sequence: `SyncVector` → `Document` chunks → `Ack` →
 `EndSync` (`gatt/protocol.rs:68-77`).
 
+### A direct chat send — and the plaintext path it takes **[Shipped, `[Unreleased]`]**
+
+The Android surface gained a public **`sendChat`** API (peat-btle#89, `[Unreleased]` on top of 0.4.0):
+`fun sendChat(chat: PeatChat)` and a `fun sendChat(sender, message)` convenience overload that fills
+in the timestamp and origin node (`android/.../PeatBtle.kt:2399,2437`). It encodes the chat document,
+seeds the relay-dedup set so the sender's own message doesn't bounce back, then writes to every
+connected peripheral and notifies connected centrals; it returns `false` if the mesh isn't running.
+Both overloads and the wire framing are unit-tested (`PeatBtleSendChatTest.kt`), so the API is
+**[Shipped]** — but note it is not published (the crate is still `0.4.0` with the API under
+`[Unreleased]`), and multi-hop relay is deferred to on-device validation.
+
+> **Read the crypto boundary carefully.** `sendChat` deliberately uses the **direct GATT-write path
+> with a raw chat document** (the `0xAD` chat section marker) — it does **not** wrap the payload in
+> mesh encryption the way `broadcastBytes` does. So a chat sent this way crosses the BLE link
+> **without application-layer mesh encryption**. That is documented intent (a lightweight local-chat
+> path), not a crypto regression — but treat it as plaintext-over-air, distinct from the AES-256-GCM
+> mesh crypto described below, and don't route sensitive content through it.
+
 ### Discovery beacons
 
 Discovery uses a compact **16-byte `PeatBeacon` body** (`discovery/beacon.rs`, `BEACON_SIZE = 16`)
@@ -190,7 +208,7 @@ old 32-byte X25519 key (`peer_key.rs:42,251`). Three honest caveats for a defens
   the KMS/Vault HSM backends in peat-gateway (Module 5). A binary may claim the validated module only
   when built with `--features fips`.
 - **Published-vs-source split — the shipped crate is not yet FIPS-clean, and the source is now two
-  migrations ahead of it.** The FIPS-approved code above is the *source* at HEAD `654db7b`, still
+  migrations ahead of it.** The FIPS-approved code above is the *source* at HEAD `7ae0ecc`, still
   version **0.4.0 / [Unreleased]**. The peat-btle 0.4.0 **published to crates.io** — the one a
   downstream consumer like peat-flutter actually builds — still depends on `chacha20poly1305` +
   `x25519-dalek` (`peat-flutter/rust/Cargo.lock:3498-3531,631,6402`). Same version string, same

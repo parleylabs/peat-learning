@@ -16,8 +16,8 @@ download list; the capability map is what tells you whether the system does what
 - **Speculative** — design discussed for teaching, not even an ADR-complete proposal anywhere.
 
 Everything below was checked against the audited HEADs in
-[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `75029ee` (rc.31), `peat-mesh`
-rc.54 (`cecae9a`), `peat-btle` 0.4.0 (`654db7b`), `peat-lite` 0.2.5, `peat-gateway` `5035cba` (0.1.0), `peat-node` 0.4.15. The operating
+[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `d11b166` (rc.31), `peat-mesh`
+rc.58 (`ca1d0ab`), `peat-btle` 0.4.0 (`7ae0ecc`), `peat-lite` 0.2.5, `peat-gateway` `5035cba` (0.1.0), `peat-node` 0.4.18. The operating
 principle is **code over everything**: where a README, a spec, or a months-old guide disagrees with
 the source on the audited HEAD, the source wins.
 
@@ -42,7 +42,7 @@ each one's role in a sentence so you know why you'd open it.
 > **Note on registries.** Whether `peat-protocol`, `peat-schema`, `peat-btle`, and `peat-lite` are
 > *published* to crates.io, and `peat-ffi` to Maven Central, is **not verified in this audit**. The
 > crates exist and carry versions, but the peat-mesh README advertises stale versions (0.3.2 against
-> a shipped rc.54), so registry-version trust is shaky. Check the actual registry before relying on a
+> a shipped rc.58), so registry-version trust is shaky. Check the actual registry before relying on a
 > published version; do not assume the README is current.
 
 > **The empty `peat` crate has a proposed future — ADR-075 (`Proposed`, 2026-07-20, peat#1036).**
@@ -81,7 +81,7 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 >
 > - **`peat-mesh-node`** (inside peat-mesh) is a small demo / reference binary for bringing up a mesh
 >   by hand.
-> - **`peat-node`** (its own repo, audited at v0.4.15) is the **production sidecar**: it embeds
+> - **`peat-node`** (its own repo, audited at v0.4.18) is the **production sidecar**: it embeds
 >   peat-mesh + peat-protocol and exposes them as a gRPC / Connect / gRPC-Web API on a single port. It
 >   is the Kubernetes sidecar pattern's node, it ships a Helm chart plus Zarf and UDS bundles, and it
 >   is the UDS Remote Agent integration target. The proto defines **27 RPCs** and `service.rs`
@@ -152,7 +152,7 @@ open.
 - **[`peat/docs/guides/developer/DEVELOPER_GUIDE.md`](../peat/docs/guides/developer/DEVELOPER_GUIDE.md)**
   — the onboarding guide: environment setup, runtime architecture, core concepts, crate reference,
   testing, mobile, edge AI, and "Extending Peat." This learning track is a guided path through it.
-  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.54, the
+  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.58, the
   rc.12 FIPS crypto swap dated 2026-05-18, the ADR-066 hierarchy rename still in flight). Where the
   guide and the code differ, **the code wins** — quoting the guide without checking the source is how
   the known stale-doc errors (wrong RBAC role names, ChaCha20 crypto, legacy hierarchy terms) get
@@ -297,6 +297,18 @@ suggest, and it is exactly what a defense-prime security auditor will probe:
   `--tak-tls` transport toggle; an operator guide (`docs/operator-guide.md`) also landed. One TLS claim
   to keep honest: the README's TAK Server 5.7 mTLS interop is **manually** validated (label In-flight),
   distinct from the automated BSI compliance job above.
+- **The "SAPIENT bridge ships" claim just got a sharper boundary — the *compliant virtual-DLMM* path
+  is Proposed (new 2026-08, peat-sapient#45).** A new design contract
+  (`peat-sapient/docs/tak-cot-contact-to-sapient.md`, **`Status: Proposed`**) and a `PLAN.md` **Phase 9
+  (Proposed)** narrow what "TAK contact → SAPIENT" actually delivers today. What is **Shipped**: the
+  *positional* path — a CoT atom becomes a `peat-schema` track and is encoded to a SAPIENT
+  `DetectionReport` and delivered over the DLMM-mode TCP link, surviving reconnect. What is **Proposed**:
+  behaving as a **standards-compliant SAPIENT virtual node** — the doc states plainly that the existing
+  contract tests use *permissive* receivers and do **not** validate BSI Flex 335 v2.0 **mandatory
+  fields**, and that `SapientTranslator::encode_outbound` still omits registration gating, populated
+  `timestamp`/`report_id`/`node_id`, and a real `object_id` (it reuses the raw CoT UID). So treat the
+  DLMM contact bridge as *functionally proven for position, not yet BSI-compliant* — the compliant
+  registration/mandatory-field lifecycle is a Proposed increment, not a shipped guarantee.
 
 ---
 
