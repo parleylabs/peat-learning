@@ -426,3 +426,31 @@ Two commits; workspace version unchanged at `0.9.0-rc.31`; `peat-mesh` floor sti
   4-step publish/verify procedure; anti-pattern table; cites peat-node v0.4.18 as a corrective-train
   example). Not a standalone doc; only `SKILL.md` touched. "Last updated" bumped 2026-05-05 → 2026-07-29.
 - **FIPS posture unchanged.**
+
+## Delta — 2026-08-10 (incremental; `d11b166` → `5629fee`, workspace rc.31 → rc.33)
+
+Twelve commits; workspace `0.9.0-rc.33`; `peat-ffi` crate `0.2.12` → **`0.2.15`**; Android AAR
+`0.1.4` → **`0.1.7`**; `peat-mesh` floor raised `>=0.9.0-rc.45` → **`>=0.9.0-rc.61, <0.9.1`**
+(`peat-protocol/Cargo.toml`). No crypto change; no wire change.
+- **Formation authentication unified and moved out of peat-protocol [Shipped, rc.33, peat#1045].**
+  `peat-protocol/src/network/formation_handshake.rs` (400 lines) was **deleted**; the removed public API
+  `perform_initiator_handshake` / `perform_responder_handshake` is gone. FFI dial *and* accept paths now
+  use peat-mesh's canonical versioned handshake `peat_mesh::storage::{accept_formation_auth,
+  respond_to_formation_auth}`, so two nodes created through the exported FFI API authenticate on both
+  sides. `docs/adr/062-iroh-transport-consolidation.md` (still **Proposed**) carries a 2026-08-03
+  amendment recording that formation auth is transport-owned. Developer guide
+  `docs/guides/developer/FORMATION_AND_LEADERSHIP.md` rewritten to the new flow.
+- **Re-export peat-mesh rc.61 grouped durable commits [Shipped, rc.33].** CHANGELOG `[0.9.0-rc.33]`:
+  opt-in grouped durable commits across document keys with delay/entry-count/byte bounds; immediate
+  durability remains the default.
+- **peat-ffi mobile hardening (crate 0.2.15 / AAR 0.1.5–0.1.7) [Shipped].** `notify_network_change()`
+  (`peat-ffi/src/lib.rs:2487`, AAR 0.1.6, peat#1058) re-probes paths after an OS connectivity change;
+  Android discovery JNI contract realigned (peat#1064); FFI reads route through the canonical mesh sync
+  backend (peat#1065); the Track decoder accepts canonical nested **and** sidecar-compatible Track shapes
+  (`lib.rs:3678`, AAR 0.1.7, peat#1068).
+- **Stable anchors re-derived (direct `ls`+`grep`):** `peat/docs/adr/` = **81 files** (77 numbered incl.
+  ADR-075 "top-level Rust facade boundary", Proposed; + 4 reference docs) — the prior curriculum count of
+  80/76 was stale (ADR-075 landed 2026-07-20, missed by the 07-27/08-03 CI passes). **11 Accepted**
+  unchanged (002/009/015/016/023/024/030/041/047/057/070). `CellRole` still 7. **FIPS source posture
+  unchanged** — AES-256-GCM / ECDH-P256 / Ed25519 / HKDF-SHA-256 / HMAC-SHA-256; no ChaCha20/X25519 in
+  source.

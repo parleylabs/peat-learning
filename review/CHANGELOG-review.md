@@ -909,3 +909,54 @@ rc.55/57 prose; RPC 27/27 re-counted; ADR statuses re-derived from the `Status:`
 fact-wide-occurrence (rc.54→rc.58, `0.4.15`→`0.4.18`, and the old per-repo HEAD commits grepped across all
 `0*.md` + both HTML tracks + registry + ground-truth). `peat-tak` remains unreachable (401/403 via the
 scoped proxy) — still an open todo, not folded into the tracked-clone set.
+
+---
+
+## 2026-08-10 — incremental refresh (CI mode)
+
+**Drift:** three repos moved with real source changes — `peat` `d11b166 → 5629fee` (workspace rc.31 → rc.33;
+peat-ffi crate 0.2.12 → 0.2.15, Android AAR 0.1.4 → 0.1.7), `peat-mesh` `ca1d0ab → f3ba37a` (rc.58 → rc.64),
+`peat-node` `7c3da9d → 27e5c6c` (v0.4.18 → v0.4.22). `peat-btle` `7ae0ecc → 2946c62`, `peat-gateway`
+`5035cba → a7527c7`, `peat-flutter` `411c87a → dd3f268`, and `peat-sapient` `ee011f3 → e311e82` advanced on
+**CI-only** commits (Codex-QA-on-runner, `.github/workflows/qa-review.yml`); `peat-lite` unchanged. No open
+curriculum-feedback issues. Not a full sweep (last full run 2026-07-20, 21 days < 30).
+
+**Headline — formation authentication is transport-owned (peat#1045 / peat-mesh#358).** peat-protocol's ALPN
+handshake `network/formation_handshake.rs` (and the `perform_initiator_handshake` / `perform_responder_handshake`
+API) was **removed**; both dial and accept paths now use peat-mesh's one canonical versioned handshake,
+`peat_mesh::storage::{accept_formation_auth, respond_to_formation_auth}` (`mesh_sync_transport.rs:857,942`;
+wire byte `FORMATION_AUTH_VERSION = 1` at `:65`). ADR-062 carries a 2026-08-03 amendment recording the move;
+it remains **Proposed**. This propagated to Module 2 §identity, Module 2·5 §2·5.4 (steps + mermaid M-014
+re-derived to Connector/Acceptor flow), the hub SVG twin H-009 (re-derived), the developer guide reference
+table, and the try-it steps.
+
+**Other Shipped this run:**
+- peat-mesh rc.59–64: opt-in **grouped durable commits** (`GroupedDurability{max_delay,max_entries,max_bytes}`;
+  immediate durability still default; #366), **persistence attribution counters** (#373), **stale-path
+  reconnect replacement** (#361), **one canonical iroh endpoint** reused across transport + store (#375).
+  Module 3 §3.4 gained a "Durability, attribution, and one canonical endpoint (rc.59–rc.64)" subsection + hub card.
+- peat-node v0.4.19–22: the collection **write-admission** surface (fields 5–8) **shipped** in v0.4.19 (was
+  `[Unreleased]`); **grouped durability** (field 9) in v0.4.20; **GetSyncStats attribution counters** (fields
+  5–8) in v0.4.21; **one canonical document store** + deterministic single mDNS dial initiator in v0.4.22 (#231).
+  Mesh pin `=rc.63` (one behind mesh HEAD rc.64). RPC count re-counted **27/27** (all additive fields).
+- peat-ffi crate 0.2.15 / AAR 0.1.7: unified FFI formation auth, `notify_network_change()` (`lib.rs:2487`),
+  canonical-mesh-sync-backend reads, and canonical + sidecar Track decode (`lib.rs:3678`). Module 6.
+
+**Count correction (misses_found = 1).** Re-derived `peat/docs/adr/` by direct `ls`: **81 files (77 numbered +
+4 reference), 11 Accepted** — the curriculum's "80 files / 76 numbered" was stale (ADR-075 landed 2026-07-20,
+missed by the 07-27 and 08-03 CI passes). peat-mesh `docs/adr/` re-counted 14 → **17**. Corrected in Modules 1
+and 7 and the hub. Gateway lag recomputed **~18 → ~24 RCs** (rc.40 vs rc.64) across Modules 1/5 + hub + M-006.
+
+**New unverifiable claims:** one consolidated NEEDS_RUNTIME entry (peat-mesh grouped-durability / attribution
+efficacy + peat-node v0.4.19–22 admission/grouping throughput — all code-confirmed, none benchmarked in the
+cloud env). No prior verified claim regressed beyond the ADR-count miss above. `peat-tak` still unreachable
+(terminal-prompt/403 via the scoped proxy) — stays an open todo, not folded into the tracked-clone set.
+
+**Gates:** all passed — independent fact-check (every changed claim re-verified with `path:line`), house-rules
+(labels + FIPS-only + no vendor names + autonomy framing), cohesion/flow, visual/diagram (M-006/M-013/M-014/
+M-019 + H-003/H-006/H-009 re-derived or confirmed), regression/blast-radius (hub↔module mirroring, SYNC stamps,
+cross-refs, self-contained HTML + feedback beacon preserved), published-artifact/reference (peat-node
+`Cargo.toml:173 = =0.9.0-rc.63`; peat-flutter still bundles published peat-btle 0.4.0 non-FIPS; RPC 27/27
+re-counted; ADR statuses/counts re-derived), and fact-wide-occurrence (rc.58→rc.64, v0.4.18→v0.4.22,
+0.9.0-rc.31→rc.33, and the old per-repo HEADs grepped across all `0*.md` + both HTML tracks + registry +
+ground-truth).

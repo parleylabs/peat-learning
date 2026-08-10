@@ -16,8 +16,8 @@ download list; the capability map is what tells you whether the system does what
 - **Speculative** — design discussed for teaching, not even an ADR-complete proposal anywhere.
 
 Everything below was checked against the audited HEADs in
-[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `d11b166` (rc.31), `peat-mesh`
-rc.58 (`ca1d0ab`), `peat-btle` 0.4.0 (`7ae0ecc`), `peat-lite` 0.2.5, `peat-gateway` `5035cba` (0.1.0), `peat-node` 0.4.18. The operating
+[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `5629fee` (rc.33), `peat-mesh`
+rc.64 (`f3ba37a`), `peat-btle` 0.4.0 (`2946c62`), `peat-lite` 0.2.5, `peat-gateway` `a7527c7` (0.1.0), `peat-node` 0.4.22. The operating
 principle is **code over everything**: where a README, a spec, or a months-old guide disagrees with
 the source on the audited HEAD, the source wins.
 
@@ -42,7 +42,7 @@ each one's role in a sentence so you know why you'd open it.
 > **Note on registries.** Whether `peat-protocol`, `peat-schema`, `peat-btle`, and `peat-lite` are
 > *published* to crates.io, and `peat-ffi` to Maven Central, is **not verified in this audit**. The
 > crates exist and carry versions, but the peat-mesh README advertises stale versions (0.3.2 against
-> a shipped rc.58), so registry-version trust is shaky. Check the actual registry before relying on a
+> a shipped rc.64), so registry-version trust is shaky. Check the actual registry before relying on a
 > published version; do not assume the README is current.
 
 > **The empty `peat` crate has a proposed future — ADR-075 (`Proposed`, 2026-07-20, peat#1036).**
@@ -81,7 +81,7 @@ checked out here. Listed roughly by how useful they'd be to someone onboarding.
 >
 > - **`peat-mesh-node`** (inside peat-mesh) is a small demo / reference binary for bringing up a mesh
 >   by hand.
-> - **`peat-node`** (its own repo, audited at v0.4.18) is the **production sidecar**: it embeds
+> - **`peat-node`** (its own repo, audited at v0.4.22) is the **production sidecar**: it embeds
 >   peat-mesh + peat-protocol and exposes them as a gRPC / Connect / gRPC-Web API on a single port. It
 >   is the Kubernetes sidecar pattern's node, it ships a Helm chart plus Zarf and UDS bundles, and it
 >   is the UDS Remote Agent integration target. The proto defines **27 RPCs** and `service.rs`
@@ -152,7 +152,7 @@ open.
 - **[`peat/docs/guides/developer/DEVELOPER_GUIDE.md`](../peat/docs/guides/developer/DEVELOPER_GUIDE.md)**
   — the onboarding guide: environment setup, runtime architecture, core concepts, crate reference,
   testing, mobile, edge AI, and "Extending Peat." This learning track is a guided path through it.
-  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.58, the
+  **Caveat:** it is a **2025-12-08 snapshot that predates every audited HEAD** (peat-mesh rc.64, the
   rc.12 FIPS crypto swap dated 2026-05-18, the ADR-066 hierarchy rename still in flight). Where the
   guide and the code differ, **the code wins** — quoting the guide without checking the source is how
   the known stale-doc errors (wrong RBAC role names, ChaCha20 crypto, legacy hierarchy terms) get
@@ -185,9 +185,9 @@ open.
 
 ## 7.6 The ADR archive — your deepest primary source
 
-`peat/docs/adr/` holds **80 files (76 numbered ADRs + 4 reference docs), and growing** — confirmed by a file count,
+`peat/docs/adr/` holds **81 files (77 numbered ADRs + 4 reference docs), and growing** — confirmed by a file count,
 not the "~60" an earlier draft estimated; open issue #695 ("triage 22 Proposed ADRs before public
-release") shows the count trending up. `peat-mesh/docs/adr/` (14) and `peat-btle/docs/adr/` (6) hold
+release") shows the count trending up. `peat-mesh/docs/adr/` (17) and `peat-btle/docs/adr/` (6) hold
 more. When you want to know *why* something is the way it is, these beat any summary — including this
 one.
 

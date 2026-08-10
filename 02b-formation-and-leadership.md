@@ -155,47 +155,59 @@ let key = FormationKey::from_base64(formation_id, base64_shared_key)?;  // from 
 > **ADR-060, which is `Status: Proposed`** even though its §5 cryptographic choices are already
 > implemented in code (`peat/docs/adr/060-encryption-tiers.md:3`).
 
-The handshake runs over a dedicated ALPN **before any state is exchanged**
-(`peat-protocol/src/network/formation_handshake.rs`, ALPN `b"peat/formation-auth/1"` at `:49`,
-30-second timeout at `:58` — raised from 5 s under issue #373 for large hierarchical formations):
+As of `peat` rc.33 (peat#1045, peat-mesh#358; ADR-062 amended 2026-08-03, `Status: Proposed`) the
+handshake is **owned by peat-mesh** and runs as a **versioned** challenge/response on the accepted
+sync connection, **before any state is exchanged**. The older peat-protocol ALPN handshake
+(`peat-protocol/src/network/formation_handshake.rs`) duplicated peat-mesh's wire protocol and became
+incompatible with its acceptor, so it was **removed**; the logic now lives in peat-mesh's
+sync-protocol handler (`peat-mesh/src/storage/mesh_sync_transport.rs`, wire-version byte
+`FORMATION_AUTH_VERSION = 1` at `:65`):
 
-1. Initiator opens a stream on the handshake ALPN and sends its `formation_id`.
-2. Responder replies with a fresh random **32-byte nonce** (the challenge).
-3. Initiator returns `HMAC-SHA-256(key, nonce ‖ formation_id)`
-   (`formation_key.rs:147,163` — `respond_to_challenge` → `compute_response`).
-4. Responder recomputes the same MAC and compares in **constant time** (`subtle::ConstantTimeEq`,
-   `formation_key.rs:152-157`). Match ⇒ admitted; mismatch ⇒ rejected.
+1. The connector opens a bidirectional authentication stream and sends the one-byte **wire version**
+   (`respond_to_formation_auth`, `mesh_sync_transport.rs:942,955`).
+2. The acceptor validates the version, then sends its `formation_id` plus a fresh random **32-byte
+   nonce** (`accept_formation_auth` → `FormationKey::create_challenge`, `mesh_sync_transport.rs:873,878`;
+   `peat-mesh/src/security/formation_key.rs:133`).
+3. The connector verifies the acceptor's `formation_id` matches its own, then returns
+   `HMAC-SHA-256(key, nonce ‖ formation_id)` (`respond_to_challenge`,
+   `security/formation_key.rs:147`; `mesh_sync_transport.rs:978,987`).
+4. The acceptor recomputes the same MAC and compares in **constant time** (`verify_response` →
+   `subtle::ConstantTimeEq`, `security/formation_key.rs:152,156`), then sends the accept/reject
+   verdict (`mesh_sync_transport.rs:911`). Match ⇒ admitted; mismatch ⇒ rejected.
 
 As a sequence diagram:
 
 ```mermaid
 sequenceDiagram
-    participant I as Initiator (dialing node)
-    participant R as Responder (formation member)
-    Note over I,R: QUIC stream on ALPN "peat/formation-auth/1"
-    I->>R: formation_id
-    R->>I: fresh random 32-byte nonce (the challenge)
-    I->>R: HMAC-SHA-256(key, nonce ‖ formation_id)
-    Note over R: recompute MAC, compare in constant time
+    participant C as Connector (dialing node)
+    participant A as Acceptor (formation member)
+    Note over C,A: authentication stream on the accepted sync connection
+    C->>A: wire-version byte (FORMATION_AUTH_VERSION = 1)
+    A->>C: formation_id + fresh random 32-byte nonce (the challenge)
+    Note over C: verify acceptor's formation_id matches
+    C->>A: HMAC-SHA-256(key, nonce ‖ formation_id)
+    Note over A: recompute MAC, compare in constant time
     alt MAC valid
-        R->>I: admitted — added to formation peer set
-        Note over I,R: CRDT sync may begin
+        A->>C: accepted — added to formation peer set
+        Note over C,A: CRDT sync may begin
     else MAC invalid
-        R--xI: rejected (wrong formation id or secret)
+        A--xC: rejected (wrong formation id or secret)
     end
 ```
 
 > **Legend.** Solid arrows are messages sent; the dashed arrow (`--x`) is a rejection. The `alt`
 > block shows the two outcomes of the constant-time verify. The formation key itself **never crosses
-> the wire** — only the per-handshake MAC does.
+> the wire** — only the per-handshake MAC does. Note the flow is now **mutual on the id**: the
+> acceptor names its `formation_id` and the connector checks it before answering the challenge.
 
 Because the nonce is fresh per handshake and the `formation_id` is mixed into the MAC, the exchange
 is **non-replayable**, and a node in a different formation (different id or secret) is rejected. Only
 after success is the peer added to the formation's peer set and allowed to sync.
 
-> Most applications get this for free: standing up `peat_mesh::AutomergeBackend` with a `FormationKey`
-> performs the handshake on each connection. Call `perform_initiator_handshake` /
-> `perform_responder_handshake` directly only when building a custom transport (`formation_handshake.rs:74,186`).
+> Most applications get this for free from peat-mesh's sync-protocol handler: standing up
+> `peat_mesh::AutomergeBackend` with a `FormationKey` authenticates every connection. Call
+> `peat_mesh::storage::{respond_to_formation_auth, accept_formation_auth}` directly only when a host
+> owns the Iroh connection lifecycle outside that handler (`mesh_sync_transport.rs:942,857`).
 
 Once authenticated, a node is recorded in the cell document. `CellState` is the cell's data model;
 its constructor takes a `CellConfig` (which carries `max_size` / `min_size`), and `add_member` is the
@@ -479,7 +491,7 @@ All paths verified at the audited commits. Status: **Shipped** unless noted.
 | Concern | Type / fn | File · evidence |
 |---------|-----------|-----------------|
 | Formation key | `peat_mesh::security::FormationKey` (`new`, `from_base64`, `respond_to_challenge`, `verify_response`) | `peat-mesh/src/security/formation_key.rs:69,91,147,152` |
-| Handshake | `network::formation_handshake::{FORMATION_HANDSHAKE_ALPN, perform_initiator_handshake, perform_responder_handshake}` | `peat-protocol/src/network/formation_handshake.rs:49,74,186` |
+| Handshake | `peat_mesh::storage::{accept_formation_auth, respond_to_formation_auth}` (versioned C/R on the sync connection; `FORMATION_AUTH_VERSION = 1`) | `peat-mesh/src/storage/mesh_sync_transport.rs:65,857,942` |
 | Leadership score | `cell::LeadershipScore::{from_capabilities, compare}` (weights 0.30/0.25/0.20/0.15/0.10) | `peat-protocol/src/cell/leader_election.rs:80,119` |
 | Election state machine | `cell::LeaderElectionManager` (`Candidate→Leader\|Follower`, rounds, heartbeats) | `peat-protocol/src/cell/leader_election.rs:192` |
 | Election policy (human-in-loop) | `cell::election_policy::{LeadershipPolicy, ElectionPolicyConfig, ElectionContext}` | `peat-protocol/src/cell/election_policy.rs:134,13,177` |
@@ -498,9 +510,9 @@ All paths verified at the audited commits. Status: **Shipped** unless noted.
    `:100-106`) and the `compare` tie-break by node id (`:118-129`). Notice the documented
    simplification in `handle_leader_announce` (`:340-345`) — score-over-message convergence is
    In-flight.
-3. In `peat-protocol/src/network/formation_handshake.rs`, find `FORMATION_HANDSHAKE_ALPN` (`:49`) and
-   trace the 4-step challenge/response; confirm the MAC input `nonce ‖ formation_id` in
-   `formation_key.rs:163`.
+3. In `peat-mesh/src/storage/mesh_sync_transport.rs`, find `accept_formation_auth` (`:857`) and
+   `respond_to_formation_auth` (`:942`) and trace the 4-step versioned challenge/response; confirm the
+   MAC input `nonce ‖ formation_id` in `peat-mesh/src/security/formation_key.rs:147`.
 4. In `peat-mesh/src/beacon/types.rs`, confirm the leaf enum value is `Node = 0` — then grep
    `peat-btle/src/lib.rs` to see the legacy `Platform/Squad/Platoon/Company` enum still in flight.
 
