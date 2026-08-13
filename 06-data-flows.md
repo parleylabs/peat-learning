@@ -135,7 +135,10 @@ see `peat-node/proto/sidecar.proto` v1 caveats). The five classes and their poli
 > §8.3). This gates **local producer writes only** — an over-budget local write is rejected with a typed
 > `RESOURCE_EXHAUSTED`, but **authenticated remote convergence bypasses admission**, because rejecting a
 > peer's already-committed CRDT state would break convergence. It is the first shipped slice of the
-> still-Proposed bounded-history policy (peat-mesh ADR-0016 / peat-node ADR-003).
+> still-Proposed bounded-history policy (peat-mesh ADR-0016 / peat-node ADR-003). peat-node **shipped**
+> the operator surface for these limits in `v0.4.19` (rate/burst + byte/revision ceilings) and added an
+> **opt-in grouped-durability** knob in `v0.4.20` that batches many writes into one storage transaction
+> while keeping immediate durability the default (Module 8 §8.3); neither changes the wire format.
 
 **If the network partitions** between steps 4 and 5, the core mesh path does not break: the
 Automerge change is already committed locally, and it syncs whenever the link returns — that is the
@@ -211,6 +214,17 @@ rather than FFI records. Because the marker types no longer cross the FFI bounda
 can't break the re-pin. Two more mobile-hardening fixes rode the same release: native calls now run on a
 **background isolate** (peat-flutter#25) so the UI thread never blocks, and a BLE peer's **GATT service and
 characteristic are validated before it is announced** (peat-flutter#27).
+
+**The FFI binding hardened again at `peat` rc.32–rc.33 (peat-ffi crate `0.2.15`, Android AAR `0.1.7`) [Shipped].**
+Four mobile-facing fixes landed: two nodes created **through** the exported FFI API now authenticate on
+both sides because peat-ffi dial *and* accept paths use peat-mesh's one canonical formation handshake
+(peat#1045, AAR 0.1.5) — the same unification that removed peat-protocol's old handshake (Module 2·5); a
+`notify_network_change()` call lets a client re-probe paths and re-dial members after the OS reports a
+connectivity change (`peat-ffi/src/lib.rs:2487`, AAR 0.1.6, peat#1058); the Android discovery JNI contract
+was realigned (peat#1064) and FFI reads route through the **canonical mesh sync backend** (peat#1065); and
+the Track decoder now accepts **canonical nested *and* sidecar-compatible** Track document shapes
+(`peat-ffi/src/lib.rs:3678`, AAR 0.1.7, peat#1068), so a Track written by the peat-node sidecar deserializes
+on a mobile client. No wire format or crypto changed.
 
 One honest caveat still stands for a mobile integrator: the Dart client transitively bundles the
 *published* `peat-btle 0.4.0` (`peat-flutter/rust/Cargo.lock`, checksum `a57dd351…`), which still ships

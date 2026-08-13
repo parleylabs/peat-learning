@@ -288,3 +288,27 @@ untagged tip `7c3da9d` (#219). `Cargo.toml:7` version = `0.4.18`; **`peat-mesh` 
 - **CAVEAT:** the write-admission surface and #219 are `[Unreleased]` — **not** in tag v0.4.18. Do not say
   "shipped in 0.4.18." **NEEDS_RUNTIME:** fanout-cutover + #219 throughput exercised only by the ignored
   harness, not a fielded benchmark.
+
+## Delta — 2026-08-10 (incremental; `7c3da9d` → `27e5c6c`, v0.4.18 → v0.4.22)
+
+Sidecar protobuf still defines **27/27 RPCs** — every change is an additive message field
+(wire-backward-compatible). `peat-mesh` pin `=0.9.0-rc.58` → **`=0.9.0-rc.63`** (`Cargo.toml:173`), one RC
+behind mesh HEAD (rc.64). No crypto change. Helm chart still **0.4.10** (`chart/peat-node/Chart.yaml`).
+- **Collection write-admission released [Shipped, v0.4.19, peat-node#218 / ADR-003 Proposed].**
+  `CollectionConfig` fields 5–8 — `max_writes_per_second`, `burst_writes`, `max_document_bytes`,
+  `max_document_revisions` (`proto/sidecar.proto:733-742`), all optional/opt-in; over-budget local write →
+  Connect `RESOURCE_EXHAUSTED` (`WRITE_RATE_EXCEEDED` retryable; `WRITE_DOCUMENT_BYTES_EXCEEDED` /
+  `WRITE_DOCUMENT_REVISIONS_EXCEEDED` not). Authenticated remote convergence bypasses admission. Same
+  release lands the #219 deep-history read/upsert isolation. (These were `[Unreleased]` at v0.4.18.)
+- **Opt-in grouped durability [Shipped, v0.4.20, peat-node#226/#227].**
+  `CollectionConfig.grouped_durability` field 9 + `message GroupedDurability { max_delay_millis,
+  max_entries, max_bytes }` (`proto/sidecar.proto:745-759`); absence preserves the immediate-durability
+  default; a present zero bound is rejected. Surface over peat-mesh rc.61 grouped commits.
+- **Persistence attribution counters [Shipped, v0.4.21, peat-node#229].** `GetSyncStats` response fields
+  5–8 — `durable_commits`, `durable_document_writes`, `durable_document_bytes`, `pending_grouped_writes`
+  (`proto/sidecar.proto:471-477`; `src/service.rs:503-506`). Lab efficacy figures NEEDS_RUNTIME. Mesh pin
+  stepped to rc.63 this release.
+- **One canonical document store + deterministic mDNS dial [Shipped, v0.4.22, peat-node#231].** Sidecar
+  CRUD, sync writes, at-rest persistence, and subscriptions share one peat-mesh `DocumentStore` lifecycle
+  (`src/node.rs`); mDNS elects exactly one dial initiator by stable endpoint ID
+  (`should_initiate_mdns_connection(local, remote) = local < remote`, `src/node.rs:52-55,1409`).

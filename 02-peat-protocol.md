@@ -18,7 +18,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `d11b166` (workspace `0.9.0-rc.31`), `peat-mesh` rc.58 (`ca1d0ab`).
+Audited at `peat` HEAD `5629fee` (workspace `0.9.0-rc.33`), `peat-mesh` rc.64 (`f3ba37a`).
 Citations below point at the working-tree source.
 
 ---
@@ -492,10 +492,11 @@ Layered, and partly delegated to `peat-mesh` for the low-level primitives. All o
   specs claim, and it is one of *several* identity schemes across the stack (the embedded tiers use
   shorter `u32` ids). Do not assume "one identity derivation everywhere."
 - **Formation keys** — a pre-shared secret that gates which nodes may even connect
-  (`formation_key.rs`). Admission is an HKDF-derived `FormationKey` plus an **HMAC-SHA-256**
-  challenge/response handshake over a dedicated ALPN (`peat/formation-auth/1`, 30 s timeout,
-  constant-time compare via `subtle`). The key never crosses the wire. Walked through step-by-step
-  in **Module 2·5 §2·5.4**.
+  (`peat-mesh/src/security/formation_key.rs`). Admission is an HKDF-derived `FormationKey` plus an
+  **HMAC-SHA-256** challenge/response handshake — **owned by peat-mesh as of `peat` rc.33** (peat#1045;
+  the old peat-protocol ALPN handshake was removed), now a versioned exchange on the accepted sync
+  connection with a constant-time compare via `subtle`. The key never crosses the wire. Walked
+  through step-by-step in **Module 2·5 §2·5.4**.
 - **Membership certificates** — tactical trust with hierarchy levels (`membership.rs`, ADR-048,
   **Proposed**).
 - **User auth & RBAC** — `user_auth.rs`, `authorization.rs`. The RBAC `Role` enum is

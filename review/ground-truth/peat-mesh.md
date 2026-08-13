@@ -492,3 +492,33 @@ Fifteen commits, all storage/sync — **no wire-protocol change** (`SyncMessageT
 - **FIPS posture unchanged.**
 - **NEEDS_RUNTIME:** worker-pool throughput trade, recovery latency on lossy links, admission-under-load —
   code-confirmed, not benchmarked here.
+
+## Delta — 2026-08-10 (incremental; `ca1d0ab` → `f3ba37a`, rc.58 → rc.64)
+
+No wire-protocol change (`SyncMessageType` bytes byte-identical to rc.58; `FORMATION_AUTH_VERSION = 1`
+unchanged) and no crypto change (AES-256-GCM + ECDH-P256 in `src/security/encryption.rs:40,43`;
+Ed25519 identity in `src/security/keypair.rs`/`certificate.rs`; no active ChaCha20/X25519 dependency —
+`Cargo.toml:46,51` comment them out). All efficacy/throughput figures NEEDS_RUNTIME.
+- **Accept-side formation authentication is public [Shipped, rc.59, peat-mesh#358].**
+  `accept_formation_auth` (`src/storage/mesh_sync_transport.rs:857`) and `respond_to_formation_auth`
+  (`:942`) are now `pub async fn`, re-exported from `storage/mod.rs:149`. `FormationKey`
+  (`create_challenge`/`respond_to_challenge`/`verify_response`) lives at
+  `src/security/formation_key.rs:133,147,152`. Pairs with peat#1045 removing the peat-protocol handshake.
+- **Stale path replaced on authenticated reconnect [Shipped, rc.60, peat-mesh#361].** A reconnect is
+  distinguished from a startup dial race; the aged connection is closed (reason `b"stale_path_replaced"`)
+  and its replacement inserted; a removed fanout translator also drops its reconnect sink
+  (`src/network/iroh_transport.rs`, `src/transport/fanout.rs`).
+- **Grouped durable commits — opt-in, immediate is default [Shipped, rc.61, peat-mesh#363/#364/#365/#366].**
+  New `src/storage/grouped_commit.rs`: `GroupedDurability { max_delay, max_entries, max_bytes }`
+  (`:51-77`); `DurabilityPolicy::Immediate` carries `#[default]` (`:80-89`); an oversized document is
+  rejected, not silently violating a bound (`:184-190`); one batch = one redb transaction. Same-collection
+  write-coalescing deadlines honored (`src/storage/automerge_store.rs`).
+- **Persistence attribution counters [Shipped, rc.63, peat-mesh#372/#373].** `durable_commit_count`,
+  `durable_document_write_count`, `durable_document_bytes`, `pending_grouped_writes`
+  (`src/storage/automerge_store.rs:549-572`) — monotonic, incremented only on successful commit.
+- **One canonical iroh endpoint [Shipped, rc.64, peat-mesh#375].** `track_authenticated_connection`
+  (`src/network/iroh_transport.rs:1406+`) mirrors a `MeshSyncTransport`-authenticated connection into
+  `IrohTransport` observability without a second QUIC connection; `src/sync/automerge_backend.rs` +
+  `tests/shared_endpoint_backend_e2e.rs` let a consumer build the backend around an already-bound endpoint.
+- **ADRs:** `docs/adr/` = **17** files; `0016-bounded-history-write-and-convergence-policy.md` still
+  **Proposed** (+25 lines documenting the Immediate/Grouped durable-persistence policy).

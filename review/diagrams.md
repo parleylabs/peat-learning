@@ -51,20 +51,20 @@ baseline until the next Phase 6b. Update per-row as diagrams are re-derived.
 | M-003 | `01-architecture-overview.md:106` | Lens A — crate/packaging 5-layer model | ascii | `ARCHITECTURE.md` (verified vs code) | — | H-002 | 2026-07-20 |
 | M-004 | `01-architecture-overview.md:174` | Lens B — local change → peer state | mermaid | `DEVELOPER_GUIDE.md §3.2` | — | H-001 | 2026-07-20 |
 | M-005 | `01-architecture-overview.md:181` | Lens B legend | ascii | teaching | — | — | 2026-07-20 |
-| M-006 | `01-architecture-overview.md:297` | Cargo dependency graph (facade points down) | mermaid | `Cargo.toml` (verified) | optional edges | H-003 | 2026-07-27 |
+| M-006 | `01-architecture-overview.md:297` | Cargo dependency graph (facade points down) | mermaid | `Cargo.toml` (verified) | optional edges | H-003 | 2026-08-10 |
 | M-007 | `02-peat-protocol.md:108` | Three phases as a flow | mermaid | `peat-protocol/src/lib.rs`; `hierarchy/maintenance.rs:227,252,312` | — | — | 2026-07-20 |
 | M-008 | `02-peat-protocol.md:267` | Routing rule `is_route_valid` | ascii | `router.rs:101+` | — | — | 2026-07-20 |
 | M-009 | `02-peat-protocol.md:496` | HierarchyLevel enum tiers | ascii | `peat-mesh/src/beacon/types.rs:56-67`; ADR-066 | — | — | 2026-07-20 |
 | M-010 | `02-peat-protocol.md:532` | Phases ↔ src/ module layout | ascii | `peat-protocol/src/` | — | — | 2026-07-20 |
 | M-011 | `02b-formation-and-leadership.md:72` | Hierarchy enum + sizing table | ascii | `beacon/types.rs:50-54` doc comments | — | M-009 | 2026-07-20 |
 | M-012 | `02b-formation-and-leadership.md:97` | Formation lifecycle state machine | mermaid | `coordinator.rs` | Ready/AwaitingApproval/Failed | — | 2026-07-20 |
-| M-013 | `02b-formation-and-leadership.md:145` | Formation handshake (ALPN `peat/formation-auth/1`) | ascii | `FORMATION_AND_LEADERSHIP.md` | — | — | 2026-07-20 |
-| M-014 | `02b-formation-and-leadership.md:170` | Handshake HMAC challenge-response sequence | mermaid | `formation_handshake.rs` | — | H-009 | 2026-07-20 |
+| M-013 | `02b-formation-and-leadership.md:145` | Formation handshake (versioned, peat-mesh-owned; `FORMATION_AUTH_VERSION = 1`) | ascii | `mesh_sync_transport.rs:65,857,942`; `FORMATION_AND_LEADERSHIP.md` | — | — | 2026-08-10 |
+| M-014 | `02b-formation-and-leadership.md:170` | Handshake HMAC challenge-response sequence | mermaid | `peat-mesh/src/storage/mesh_sync_transport.rs:857,942`; `security/formation_key.rs:133,147,152` | — | H-009 | 2026-08-10 |
 | M-015 | `02b-formation-and-leadership.md:238` | Leader election state machine (2s hb, ~6s timeout) | ascii | `leader_election.rs:192-242` | — | M-016 | 2026-07-20 |
 | M-016 | `02b-formation-and-leadership.md:265` | Election state diagram | mermaid | `leader_election.rs:238-240`; ADR-068 | — | M-015 | 2026-07-20 |
 | M-017 | `03-peat-mesh.md:110` | Discovery → connection | ascii | `discovery/*`; `peer_connector.rs` | — | M-018 | 2026-07-20 |
 | M-018 | `03-peat-mesh.md:129` | Discovery flowchart (mDNS/K8s/static) | mermaid | `discovery/*`; `peer_connector.rs` | — | M-017 | 2026-07-20 |
-| M-019 | `03-peat-mesh.md:187` | Sync message type wire bytes | ascii | `automerge_sync.rs:92-110`; ADR-034/040 | — | — | 2026-07-20 |
+| M-019 | `03-peat-mesh.md:187` | Sync message type wire bytes | ascii | `automerge_sync.rs:92-110`; ADR-034/040 | — | — | 2026-08-10 |
 | M-020 | `03-peat-mesh.md:206` | CRDT/negentropy sync sequence | mermaid | `negentropy_sync.rs`; ADR-040 (#435) | — | — | 2026-07-20 |
 | M-021 | `03-peat-mesh.md:290` | Transport trait + ConnectionState | ascii | `peat-mesh/src/transport/mod.rs` | — | — | 2026-07-20 |
 | M-022 | `04-peat-btle-and-lite.md:85` | BleAdapter trait + platform matrix | ascii | `peat-btle/src/platform/mod.rs` | iOS Beta | — | 2026-07-20 |
@@ -97,13 +97,13 @@ baseline until the next Phase 6b. Update per-row as diagrams are re-derived.
 |---|---|---|---|---|---|---|
 | H-001 | `index.html:385` | Lens B in motion — local change → peer state | svg | mirrors M-004 | M-004 | 2026-07-20 |
 | H-002 | `index.html:437` | Repo constellation / layer model (incl. peat-node) | svg | mirrors M-003/M-032 | M-003 | 2026-07-20 |
-| H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-07-27 |
+| H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-08-10 |
 | H-004 | `index.html:670` | peat-protocol surface / phases | svg | mirrors Module 2 | — | 2026-07-20 |
 | H-005 | `index.html:707` | (Module 2/2b deep-dive figure) | svg | mirrors Module 2b | — | 2026-07-20 |
-| H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-08-03 |
+| H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-08-10 |
 | H-007 | `index.html:854` | (Module 3 figure) | svg | mirrors Module 3 | — | 2026-07-20 |
 | H-008 | `index.html:936` | BLE / lite edge | svg | mirrors Module 4 | — | 2026-07-27 |
-| H-009 | `index.html:1054` | Gateway / formation security | svg | mirrors Module 2b/5 | M-014 | 2026-07-20 |
+| H-009 | `index.html:1054` | Gateway / formation security (versioned peat-mesh handshake; Connector/Acceptor) | svg | mirrors Module 2b/5 | M-014 | 2026-08-10 |
 | H-010 | `index.html:1113` | Gateway CDC / control plane | svg | mirrors M-027 | M-027 | 2026-07-20 |
 | H-011 | `index.html:1393` | Repo map / what to clone next | svg | mirrors Module 7 | — | 2026-07-20 |
 
@@ -364,3 +364,29 @@ pattern, to preserve when editing or adding diagrams:
   5–8 are config surface, not the tasking `commands` region the diagram depicts); **M-034/M-044** hierarchy
   routing (`hierarchy/router.rs` unchanged; peat's move was the `scan()` skip fix, not routing). No diagram
   fact was left unconfirmable → nothing added to `unverifiable_claims` from diagrams this run.
+
+- **2026-08-10 incremental verification (peat rc.33 / peat-mesh rc.64 / peat-node v0.4.22).**
+  Re-derived and advanced the directly-relevant rows to 2026-08-10:
+  - **M-013 / M-014 (+ H-009 twin) — formation handshake.** RE-DERIVED (a fact change, not a version bump):
+    peat#1045 / peat-mesh#358 removed peat-protocol's ALPN handshake (`network/formation_handshake.rs`
+    deleted) and made formation authentication **transport-owned** — a versioned challenge/response on the
+    accepted sync connection via `peat_mesh::storage::{accept_formation_auth, respond_to_formation_auth}`
+    (`mesh_sync_transport.rs:857,942`; wire byte `FORMATION_AUTH_VERSION = 1` at `:65`). The mermaid twin
+    (M-014) and the hub SVG (H-009) were both regenerated to the new flow: participants **Connector /
+    Acceptor**; message order is now (1) wire-version byte → (2) acceptor sends `formation_id` + nonce →
+    (connector verifies the `formation_id`) → (3) HMAC response → (4) constant-time verify + accept/reject
+    verdict. M-013's provenance repointed from the guide to `mesh_sync_transport.rs`. The MAC still uses
+    HKDF-SHA-256 `FormationKey` at `peat-mesh/src/security/formation_key.rs:133,147,152`.
+  - **M-006 (+ H-003 twin) — Cargo dependency graph.** Only the gateway edge label moved: `rc.40 (~18 rc
+    behind)` → `rc.40 (~24 rc behind)` as the mesh ecosystem advanced rc.58 → rc.64 while the gateway pin
+    held at rc.40. Node/edge set version-independent and unchanged; the H-003 SVG carries no rc label
+    (prose only), so no twin drift.
+  Rows **spot-checked and confirmed UNCHANGED** (provenance repo moved but depicted facts hold): **M-019**
+  SyncMessageType wire bytes — byte-for-byte identical at rc.64 (rc.59–64 add no new sync message type; the
+  grouped-durability/attribution/endpoint-reuse work is persistence/transport-internal, no wire byte);
+  **M-035** tasking (`sidecar.proto` still 27/27 RPCs; new `CollectionConfig.grouped_durability` field 9 +
+  `GetSyncStats` response fields 5–8 are additive config/telemetry, not the tasking `commands` region);
+  **M-017/M-018 + H-006** discovery (peat-node#231 single mDNS dial-initiator election refines the existing
+  path, adds no strategy/node/wire tag); **M-033/M-042** deployment topology (v0.4.19–22 add no depicted
+  topology). No diagram fact was left unconfirmable → nothing added to `unverifiable_claims` from diagrams
+  this run.

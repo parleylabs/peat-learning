@@ -5,7 +5,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@ca1d0ab` (`0.9.0-rc.58`).
+`peat-mesh@f3ba37a` (`0.9.0-rc.64`).
 
 > **iroh reached 1.0 (rc.46, peat-mesh#276) [Shipped].** The QUIC transport that underpins the whole
 > mesh left the release-candidate train: `iroh` is now pinned to the **stable `1.0.2`** line
@@ -463,6 +463,44 @@ from getting pathologically deep in the first place. A new per-collection regist
   explicit budget contract" design; the write-admission mechanism above is its first shipped slice,
   while the finite-segment / epoch / producer-backpressure lifecycle it describes is **[Proposed]**.
   The operator-facing surface for these budgets is named as peat-node's own **ADR-003** (Module 8 §8.3).
+
+### Durability, attribution, and one canonical endpoint (rc.59–rc.64) **[Shipped]**
+
+rc.59–rc.64 continue the storage/transport hardening. None change the wire protocol
+(`SyncMessageType` bytes are byte-identical to rc.58) or the crypto posture; all are code-confirmed
+but runtime-unbenchmarked here (NEEDS_RUNTIME):
+
+- **Formation authentication is now transport-owned (rc.59, peat-mesh#358) [Shipped].** The accept and
+  respond halves of the formation handshake are exported as
+  `peat_mesh::storage::{accept_formation_auth, respond_to_formation_auth}`
+  (`storage/mesh_sync_transport.rs:857,942`), and peat-protocol's older protocol-owned handshake was
+  removed (peat#1045) so both sides speak one versioned wire protocol (`FORMATION_AUTH_VERSION = 1`,
+  `:65`). Walked through in Module 2·5 §2·5.4.
+- **Stale paths are replaced on authenticated reconnect (rc.60, peat-mesh#361).** A reconnect is now
+  distinguished from a startup dial race; the aged connection is closed with a dedicated reason
+  (`b"stale_path_replaced"`) and its replacement inserted, and removing a fanout translator also
+  removes its reconnect sink so retained frames can't replay onto a dead path
+  (`network/iroh_transport.rs`, `transport/fanout.rs`).
+- **Grouped durable commits — opt-in, immediate stays the default (rc.61, peat-mesh#363/#364/#365/#366)
+  [Shipped].** A new `GroupedDurability { max_delay, max_entries, max_bytes }` batches many document
+  writes across keys into **one** redb transaction, bounded by a queue-delay, an entry count, and a
+  serialized-byte ceiling; the caller still blocks until the batch's `commit()` returns, so durability
+  semantics are unchanged. `DurabilityPolicy::Immediate` carries `#[default]`, so grouping is strictly
+  **opt-in per collection** and an oversized document is rejected rather than silently violating a bound
+  (`storage/grouped_commit.rs:51-89,184-190`). Same-collection write-coalescing deadlines are now
+  honored (`storage/automerge_store.rs`).
+- **Persistence attribution counters (rc.63, peat-mesh#372/#373).** The store exposes four monotonic
+  counters — `durable_commit_count` (redb transactions; a grouped batch counts once),
+  `durable_document_write_count` (document versions written), `durable_document_bytes`
+  (storage-envelope bytes), and `pending_grouped_writes` (grouped writes queued or in flight) —
+  incremented only on a successful commit (`storage/automerge_store.rs:549-572`). These separate logical
+  document traffic from physical storage amplification; peat-node re-exports them through `GetSyncStats`
+  (Module 8 §8.3).
+- **One canonical iroh endpoint (rc.64, peat-mesh#375).** `IrohTransport::track_authenticated_connection`
+  mirrors a connection already authenticated by `MeshSyncTransport` into `IrohTransport`'s observability
+  (peer count, link state, peer events) **without opening a second QUIC connection**
+  (`network/iroh_transport.rs:1406+`), and a consumer can build the canonical Automerge backend around an
+  already-bound endpoint and open store (`sync/automerge_backend.rs`, `tests/shared_endpoint_backend_e2e.rs`).
 
 ---
 
