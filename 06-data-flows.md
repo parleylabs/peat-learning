@@ -199,7 +199,10 @@ real client facades over the published `peat-ffi`: `PeatFlutterNode.blobDownload
 mesh-sync candidate selection; pass it → direct P2P pull), and a `MarkerInfo` map-marker facade with
 `putMarker` / `deleteDocument` and delete-event visibility. The marker delete uses an **OR-Set soft-delete
 tombstone** (`deleted:true`), not a hard remove — mesh-wide hard-delete propagation (`ChangeEvent::Removed`)
-is still **In-flight**, so the tombstone sentinel is the shipped cross-mesh mechanism.
+is still **In-flight**, so the tombstone sentinel is the shipped cross-mesh mechanism. (That is the *FFI
+marker* path; the distinct server-side one behaves differently — peat-node's sidecar `delete_document` now
+mints a `peat-mesh` `Tombstone` and pushes a `TombstoneBatch` to peers, so a sidecar delete *does*
+propagate, Module 8 §8.2. Different layer, different mechanism.)
 
 **The forward-incompat is resolved: the client now owns the adapter (peat-flutter#29) [Shipped].** The
 last sweep flagged a break: peat-flutter's hand-maintained `MarkerInfo`/`CommandInfo` bindings were pinned
@@ -233,6 +236,22 @@ artifact — the RustCrypto AES/P-256 swap (2026-05-18) and then the AWS-LC migr
 that routes all crypto through `aws-lc-rs` — but neither was ever re-published, so the registry crate a
 Flutter build pulls is unchanged (see Module 4 and Module 7 §7.8). (A full `04c` client-bindings module is
 tracked for the next full sweep.)
+
+**The client now speaks addressed application delivery, and dials one-way-discovered peers (post-rc.33 `[Unreleased]`) [Shipped].**
+Two more FFI additions landed on top of rc.33. First, `peat-ffi` grew a UniFFI surface for the peat-mesh
+application-delivery primitive (Module 3 §3.4): `application_delivery_submit / _get / _list / _cancel /
+_retry` on `PeatNode` (`peat-ffi/src/application_delivery.rs`, exported at `lib.rs:233-235`), a
+body-free status projection whose owner `Acknowledged` state surfaces to clients as **`Delivered`**, a
+`application_delivery_subscribe(cursor, limit)` that deliberately delegates to `_list` (callers rescan
+from `cursor=None` — notifications are never the source of truth), and received-document reads
+(`application_delivery_get_received_document`, `application_delivery_list_received_documents`). A
+`BuiltinDeliveryValidator` backed by the peat-schema builtin registry is installed at node bring-up
+(`install_builtin_validator`, `lib.rs:2238`), satisfying the fail-closed validator slot. Second, an
+**mDNS auto-dial** handler (peat#1081, `run_peat_mdns_auto_dial`, `lib.rs:1181`, spawned at `:2244`)
+consumes the FFI-owned peat mDNS browse stream after canonical-backend setup and treats **every**
+discovery event as actionable, so **asymmetric one-way discovery** — a common Android-to-observer case
+where only one side sees the other — still results in an authenticated connection, with bounded 10-second
+per-peer retry and privacy-safe logging (no peer identity or address). No wire or crypto change.
 
 **Identity does not travel intact across the bridge.** Trace A reads as one continuous climb, but
 the identity attached to the report is *re-derived* at step 2, because the stack uses four different
@@ -354,7 +373,7 @@ leader-mediated forwarding invariant (`hierarchy/router.rs`), and `FlowControlle
 `RoutingLevel` (`hierarchy/flow_control.rs`).
 
 **Tasking honesty (autonomy under human authority).** A command today is an **ordinary JSON document**
-in a `commands` collection (`peat-node/proto/sidecar.proto:342-373`) — there is **no `command_log`
+in a `commands` collection (`peat-node/proto/sidecar.proto:359-389`) — there is **no `command_log`
 CRDT** anywhere in the stack (**Speculative**: the append-only, causally-ordered, authority-gated
 tasking primitive still has to be designed). *Targeted* delivery — sending a command only to a
 specific node or role rather than to the whole cell — is **ADR-046 (Proposed)**, with epic #853
@@ -362,6 +381,15 @@ specific node or role rather than to the whole cell — is **ADR-046 (Proposed)*
 machinery above ships, but "tell only `role:strike`" does not yet: today a command propagates to the
 cell and the receiver filters. Human authority remains in the loop at formation (the mission-critical
 approval gate in Trace B) regardless of how tasking evolves.
+
+**Don't confuse this with application delivery [Shipped].** peat-mesh *does* now ship a general
+**addressed application-document** delivery primitive (Module 3 §3.4, peat-mesh#383/#389): durable,
+authenticated, and delivered only to an explicit `Direct` / `Group` / `Broadcast` recipient set. It is a
+**different mechanism** from command tasking — it carries application content (operator chat, overlay
+revisions, attachment offers; Module 9 §9.3), it is **not** the missing `command_log` CRDT, and it does
+**not** implement ADR-046 role-scoped command routing or any authority gate. So both statements hold at
+once: *addressed* delivery exists at the storage layer today, while *authority-gated targeted tasking*
+(the `role:strike` command) still has to be designed. Keep the two separate.
 
 ```mermaid
 graph TB
@@ -380,7 +408,7 @@ graph TB
   end
 ```
 
-*Today's path is **Shipped** (`peat-node/proto/sidecar.proto:342-373`): a command is an ordinary
+*Today's path is **Shipped** (`peat-node/proto/sidecar.proto:359-389`): a command is an ordinary
 JSON document, merged last-writer-wins, delivered cell-wide and filtered at the receiver. The safer
 path needs two things that do not ship: a **`command_log` CRDT** (append-only, causally ordered,
 authority-gated — **Speculative**, has to be designed) and **targeted delivery** to a specific role

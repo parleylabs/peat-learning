@@ -78,7 +78,7 @@ peat-mesh dependency**. Amendment 4 cycle-break tracked by peat#828 (open).
 | **peat-lite `PnCounter`** | two G-Counters | **Firmware-only** (workspace-excluded `firmware/`), NOT in the published library | `peat-lite/firmware/src/crdt/pn_counter.rs:14` |
 | **peat-lite `OrSet`** | — | **No struct anywhere** — reserved wire byte only | `peat-lite` grep clean |
 | **peat-btle CRDTs** | `LwwRegister<T>`, `GCounter`, `EmergencyEvent` (OR-set ACK map), `Peripheral`, `Position`, `HealthStatus`, `VectorClock`; `ChatCRDT` (deprecated, `legacy-chat`) | **Shipped** | `peat-btle/src/sync/crdt.rs`. Hand-rolled byte-packed `no_std` CRDTs — sibling set, **distinct from peat-lite's** |
-| **`command_log` CRDT** | — | **Speculative — DOES NOT EXIST** in any repo | grep clean in peat-protocol, peat-mesh, peat-lite, peat-btle, peat-node. Commands are ordinary JSON docs in a `commands` collection (`peat-node/proto/sidecar.proto:342-373`) |
+| **`command_log` CRDT** | — | **Speculative — DOES NOT EXIST** in any repo | grep clean in peat-protocol, peat-mesh, peat-lite, peat-btle, peat-node. Commands are ordinary JSON docs in a `commands` collection (`peat-node/proto/sidecar.proto:359-389`) |
 
 **Anti-entropy / reconciliation:** the shipped mechanism is **`negentropy` set reconciliation**
 (claims O(log n) rounds, stateless sessions, 32-byte SHA-256 doc IDs — *algorithmic claim, not

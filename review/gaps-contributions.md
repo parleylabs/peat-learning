@@ -14,7 +14,7 @@ Size: **trivial** (<1 day) · **small** (days) · **medium** (1–3 wks) · **la
 
 - **Gap.** There is no `command_log` / `CommandLog` CRDT anywhere (peat-protocol, peat-mesh,
   peat-lite, peat-btle, peat-node all grep clean). Commands today are ordinary JSON documents in a
-  `commands` collection (`peat-node/proto/sidecar.proto:342-373`).
+  `commands` collection (`peat-node/proto/sidecar.proto:359-389`).
 - **Why it matters.** peat-lite's data types are safe for *facts and counts* (LwwRegister, GCounter)
   but **none is safe for orders** — a tasking collection needs an append-only, causally-ordered,
   authority-gated CRDT so a command can't be silently lost, reordered, or merged into ambiguity.

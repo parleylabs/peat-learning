@@ -67,7 +67,7 @@ and receives a task.
   granted, role determined by deterministic capability scoring → the UGV starts Automerge sync of the
   cell's collections.
 - **Data flow (tasking — In-flight/Proposed).** A command is published to the `commands` collection
-  (Critical QoS). Today it is an **ordinary JSON document** (`PutCommand`, `sidecar.proto:342-373`) —
+  (Critical QoS). Today it is an **ordinary JSON document** (`PutCommand`, `sidecar.proto:359-389`) —
   **there is no `command_log` CRDT** (Speculative). Targeted delivery to a specific node/role is
   **ADR-046 (Proposed), epic #853 (In-flight)**; `CapableScope` distribution is reserved-but-rejected
   in peat-node v1. The command's conflict policy (if two issuers collide) uses the real

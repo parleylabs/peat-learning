@@ -1,7 +1,7 @@
 {
   "review": "Peat learning-curriculum hardening to enterprise-onboarding grade",
   "prompt": "learning/PROMPT-peat-training-doc-improvement.md",
-  "date": "2026-08-10",
+  "date": "2026-08-17",
   "last_full_run": "2026-07-20",
   "status": "complete",
   "phases_completed": [
@@ -60,22 +60,22 @@
   },
   "audited_commits": {
     "peat": {
-      "head": "5629fee",
-      "subject": "chore(release): prepare peat-ffi 0.1.7 (#1070)",
+      "head": "7f89476",
+      "subject": "fix(peat-ffi): auto-dial asymmetrically discovered peers (#1081)",
       "version": "0.9.0-rc.33 (peat-ffi crate 0.2.15 / Android AAR 0.1.7; peat-mesh floor >=0.9.0-rc.61)",
-      "origin_status": "advanced d11b166->5629fee this run (12 commits, rc.31->rc.33). HEADLINE: formation authentication unified + moved out of peat-protocol (peat#1045): network/formation_handshake.rs (400 lines, perform_initiator_handshake/perform_responder_handshake) DELETED; FFI dial+accept now use peat-mesh's canonical versioned handshake peat_mesh::storage::{accept_formation_auth,respond_to_formation_auth}. docs/adr/062 (Proposed) amended 2026-08-03 (formation auth transport-owned). Re-export peat-mesh rc.61 opt-in grouped durable commits (immediate default). peat-ffi crate 0.2.12->0.2.15, AAR 0.1.4->0.1.7: notify_network_change() (lib.rs:2487, #1058), Android discovery JNI realign (#1064), canonical mesh sync backend reads (#1065), canonical+sidecar Track decode (lib.rs:3678, #1068). ADR count re-derived by direct ls: 81 files (77 numbered incl ADR-075 Proposed + 4 reference), 11 Accepted UNCHANGED (curriculum's 80/76 was STALE - misses_found). CellRole still 7. FIPS source posture unchanged (AES-256-GCM/ECDH-P256/Ed25519; no ChaCha20/X25519 in source). No wire change."
+      "origin_status": "advanced 5629fee->7f89476 this run (2 commits, workspace rc.33 [Unreleased]). HEADLINE: authenticated durable application-delivery CLIENT surface + collaboration schemas (peat#1078, consuming peat-mesh #383/#389): peat-ffi application_delivery_* UniFFI ops (Acknowledged->Delivered; subscribe delegates to list), peat-schema 3 collaboration descriptors (geochat/overlay_revision/attachment_offer -> 11 builtin, type_registry.rs:1642). Plus mDNS auto-dial for asymmetric one-way discovery (#1081, run_peat_mdns_auto_dial lib.rs:1181, spawned :2244; 10s bounded retry). No wire/crypto change; FIPS-clean. peat-ffi crate 0.2.15 / AAR 0.1.7 unchanged."
     },
     "peat-mesh": {
-      "head": "f3ba37a",
-      "subject": "chore(release): prepare v0.9.0-rc.64 (#376)",
+      "head": "3d2985e",
+      "subject": "feat(storage): expose received application document queries (#389)",
       "version": "0.9.0-rc.64",
-      "origin_status": "advanced ca1d0ab->f3ba37a this run (rc.58->rc.64). NO wire-protocol change (SyncMessageType bytes byte-identical; FORMATION_AUTH_VERSION=1 unchanged) and NO crypto change. rc.59 accept-side formation auth PUBLIC (#358): accept_formation_auth/respond_to_formation_auth pub (mesh_sync_transport.rs:857,942), pairs with peat#1045; FormationKey at security/formation_key.rs:133,147,152. rc.60 stale-path replacement on authenticated reconnect (#361; close reason stale_path_replaced). rc.61 grouped durable commits + write-coalescing deadlines (#363/#364/#365/#366): grouped_commit.rs NEW, GroupedDurability{max_delay,max_entries,max_bytes}, DurabilityPolicy::Immediate #[default] (opt-in per collection; oversize doc rejected). rc.62 concurrent grouped receive dispatch (#368/#369; 7a974b8 parallelize-fanout was REVERTED bf4688a). rc.63 persistence attribution counters (#372/#373): durable_commit_count/durable_document_write_count/durable_document_bytes/pending_grouped_writes (automerge_store.rs:549-572). rc.64 canonical iroh endpoint reuse (#375): track_authenticated_connection (iroh_transport.rs:1406+) + shared_endpoint_backend_e2e.rs. docs/adr/ now 17 files; ADR-0016 still Proposed (+25 lines durable-persistence policy). FIPS unchanged."
+      "origin_status": "advanced f3ba37a->3d2985e this run (2 commits, rc.64 [Unreleased]). HEADLINE: authenticated durable application delivery (#383) + received-document queries (#389) in src/storage/application_delivery.rs. Separate ALPN b\"peat/application-delivery/1\" (:23) on the canonical router (sync/automerge_backend.rs:784-787) - NO new SyncMessageType byte, wire bytes byte-identical to rc.63. Explicit Direct/Group/Broadcast audiences; confidentiality-by-addressing (bodies plaintext :294, pending_for_peer :748); formation-auth spoof rejection (:840-842) + optional Ed25519 membership-cert gate 403/401 (:569-575); fail-closed RegistryValidatorSlot (:176-199); durable retry/restart/expiry/cancel; bounds 10k/256/1MiB; bounded collection-bound query (:318-407). 7 e2e tests. FIPS-clean. No crypto change."
     },
     "peat-btle": {
-      "head": "2946c62",
-      "subject": "ci(qa-review): run Codex on runner (#90)",
+      "head": "8d9d247",
+      "subject": "Merge pull request #91 (fix: stamp peripheral_id on the anonymous tracks receive path)",
       "version": "0.4.0 ([Unreleased] on top)",
-      "origin_status": "advanced 7ae0ecc->2946c62 this run (1 commit, CI-only: .github/workflows/qa-review.yml Codex-on-runner). No source/crypto/version change. Published-vs-source non-FIPS split (C1) unchanged."
+      "origin_status": "advanced 2946c62->8d9d247 this run (2 commits, 0.4.0 [Unreleased]). FIX #91 (cfe464d): on_ble_data_received_anonymous (src/peat_mesh.rs:2879) now resolves the sender via PeerManager.get_node_id (:2950) and stamps peripheral_id onto the decode ctx (:778) - previously passed None, so every inbound tracks frame Err'd and BLE-only PLI was unreceivable (broke BLE->QUIC position bridge). Fail-loud unknown-identifier contract preserved (:2944-2948, translator Errs vs defaulting to ble-00000000). No UniFFI surface change. Source crypto still aws-lc-rs FIPS; published crates.io 0.4.0 still non-FIPS (unchanged split)."
     },
     "peat-lite": {
       "head": "7a8a8fb",
@@ -90,10 +90,10 @@
       "origin_status": "advanced 5035cba->a7527c7 this run (1 commit, CI-only: Codex QA on runner). No source change. peat-mesh pin still =0.9.0-rc.40 -> now lags mesh (rc.64) by ~24 RCs."
     },
     "peat-node": {
-      "head": "27e5c6c",
-      "subject": "docs(release): complete v0.4.22 notes (#235)",
+      "head": "b4b6ed3",
+      "subject": "Merge pull request #236 (track proto parity + tombstone propagation)",
       "version": "0.4.22 (mesh pin =0.9.0-rc.63; Helm chart 0.4.10)",
-      "origin_status": "advanced 7c3da9d->27e5c6c this run (v0.4.18->v0.4.22; tags v0.4.19/0.4.20/0.4.21/0.4.22). RPC 27/27 UNCHANGED (all additive message fields). v0.4.19: collection write-admission SHIPPED (CollectionConfig fields 5-8 max_writes_per_second/burst_writes/max_document_bytes/max_document_revisions, sidecar.proto:733-742; RESOURCE_EXHAUSTED reason codes) - was [Unreleased] at rc.58; + #219 deep-history read/upsert isolation. v0.4.20: opt-in grouped durability (CollectionConfig.grouped_durability field 9 + GroupedDurability{max_delay_millis,max_entries,max_bytes}, sidecar.proto:745-759; absence=immediate default). v0.4.21: GetSyncStats response fields 5-8 durable_commits/durable_document_writes/durable_document_bytes/pending_grouped_writes (sidecar.proto:471-477; service.rs:503-506); mesh pin ->rc.63. v0.4.22 (#231): canonical mesh DocumentStore lifecycle for all sidecar CRUD (node.rs) + single mDNS dial-initiator election local<remote (node.rs:52-55,1409). Mesh pin =rc.63 (Cargo.toml:173) = one RC behind mesh HEAD rc.64. Helm chart STILL 0.4.10 (12 releases behind). FIPS unchanged."
+      "origin_status": "advanced 27e5c6c->b4b6ed3 this run (4 post-release commits; crate NOT bumped, still 0.4.22). HEADLINE #236: (1) sidecar tracks RPCs adopt canonical peat.track.v1.Track - BREAKING wire change: PutTrackRequest reserved 1 + canonical_track=2, GetTracksResponse reserved 1 + canonical_tracks=2 (proto/sidecar.proto:340-355); (2) delete_document (src/node.rs:2459) now mints a peat-mesh Tombstone BEFORE local remove and pushes TombstoneBatch to peers (:2485-2500) - previously local-only (docs accumulated undeletable). KNOWN LIMITATION [In-flight, blocked upstream]: delete-then-recreate doesn't propagate (peat-mesh rc.63 has no tombstone-removal wire message; ignored test sync_test.rs:491). RPC 27/27 unchanged; mesh pin =0.9.0-rc.63; Helm chart 0.4.10. NOTE: sidecar.proto commands block shifted to lines 359-389 (was 342-373)."
     },
     "peat-flutter": {
       "head": "dd3f268",
@@ -135,7 +135,8 @@
     "NEEDS_RUNTIME (2026-07-20 full sweep): peat-mesh rc.49 redb::Database::compact() file-vacuum shrink efficacy (the 14.5MB/90min automerge.redb high-water is a device-profile observation from the #300/#301 commit message, not benchmarked here); rc.48 per-candidate IPv6 reachability probe + ULA exemption behaviour (#304/#305); rc.49 retry of partially synced distributions under a lossy link (#307); peat-node v0.4.10 relay-fanout starvation fix under load (#189, covered by tests/attachments_e2e_test.rs); peat-flutter 0.1.0 live-device blob transfer/BLE announce behaviour. All code-confirmed from source, none exercised live in the cloud env. RESOLVED this sweep: the 2026-07-13 peat-flutter marker-binding FORWARD-INCOMPAT (peat-flutter#29 owns the FFIBuffer adapter + Flutter-owned marker DTOs; the 0.2.11 removal no longer breaks the =0.2.12 re-pin).",
     "NEEDS_RUNTIME (2026-08-03): peat-mesh rc.55-58 bounded-history bundle — FullHistory worker-pool isolation (default cores/4, PEAT_FULL_HISTORY_WORKERS), depth-aware independent-QUIC-stream routing, the 60/120/240s stalled-confirmation watchdog (#340), per-peer frame-replay on reconnect (#348), and write-admission enforcement (#353) — are CONFIRMED from source (write_admission.rs:21-113; automerge_store.rs:507,740,793; sync_channel.rs:159-244; transport/fanout.rs:146-149) but NONE is benchmarked here: worker-pool throughput trade, recovery latency on lossy links, and admission rejection under sustained load are not measured in the cloud env.",
     "NEEDS_RUNTIME (2026-08-03): peat-node v0.4.16-18 + [Unreleased] — the fanout cutover (peat-mesh-owned automatic relay vs peat-node explicit-only queue, #209/#210/#212), the no-subscriber skip guard (#210), and the #219 FullHistory read/upsert isolation are CONFIRMED from source (node.rs get_json/get_shared/upsert_json; service.rs:39-70 RESOURCE_EXHAUSTED mapper) but live throughput/regression is only exercised by the in-repo IGNORED profiling harness (tests/profile_resource_test.rs, RSS-slope guards), not a fielded benchmark.",
-    "NEEDS_RUNTIME (2026-08-10): peat-mesh rc.59-64 (grouped durable commits batch-to-one-redb-txn throughput/latency trade; the four persistence attribution counter VALUES; stale-path reconnect recovery latency; canonical-endpoint reuse) and peat-node v0.4.19-22 (write-admission rejection under sustained load; grouped-durability physical-write reduction - changelog cites ~47-48% fewer durable transactions and ~35-39% fewer physical writes; single-mDNS-dial-initiator election) are CONFIRMED from source (peat-mesh grouped_commit.rs:51-190, automerge_store.rs:549-572, mesh_sync_transport.rs:857,942, iroh_transport.rs:1406+; peat-node proto/sidecar.proto:471-477/733-759 + src/node.rs + src/service.rs:503-506) but NONE is benchmarked in the cloud env."
+    "NEEDS_RUNTIME (2026-08-10): peat-mesh rc.59-64 (grouped durable commits batch-to-one-redb-txn throughput/latency trade; the four persistence attribution counter VALUES; stale-path reconnect recovery latency; canonical-endpoint reuse) and peat-node v0.4.19-22 (write-admission rejection under sustained load; grouped-durability physical-write reduction - changelog cites ~47-48% fewer durable transactions and ~35-39% fewer physical writes; single-mDNS-dial-initiator election) are CONFIRMED from source (peat-mesh grouped_commit.rs:51-190, automerge_store.rs:549-572, mesh_sync_transport.rs:857,942, iroh_transport.rs:1406+; peat-node proto/sidecar.proto:471-477/733-759 + src/node.rs + src/service.rs:503-506) but NONE is benchmarked in the cloud env.",
+    "NEEDS_RUNTIME (2026-08-17): the peat-mesh authenticated durable application-delivery capability (#383/#389), its peat-ffi UniFFI facade, and the three peat-schema collaboration schemas (peat#1078) are CONFIRMED from source (peat-mesh/src/storage/application_delivery.rs - ALPN :23, DeliveryAudience :44-51, cert gate :569-575, RegistryValidatorSlot :176-199, query :318-407; peat-schema/src/type_registry.rs 11-descriptor assert :1642; peat-ffi/src/application_delivery.rs) and exercised by 7 e2e integration tests, but the delivery-layer RUNTIME behavior - delivery/materialize latency, the 1-s retry-drive cadence and restart-resume timing under load, and received-query pagination throughput - is NOT benchmarked in the cloud env (source-read only, no live build/bench)."
   ],
   "run_log": [
     {
@@ -534,6 +535,41 @@
         "claims_demoted": 1,
         "feedback_addressed": 0,
         "misses_found": 1
+      }
+    },
+    {
+      "when": "2026-08-17",
+      "mode": "ci",
+      "repos_changed": {
+        "peat": "5629fee -> 7f89476 (rc.33 [Unreleased]; peat-ffi application_delivery_* facade + peat-schema 3 collaboration schemas -> 11 builtin (peat#1078); mDNS auto-dial for asymmetric discovery (#1081))",
+        "peat-mesh": "f3ba37a -> 3d2985e (rc.64 [Unreleased]; authenticated durable application delivery #383 + received-document queries #389 - separate ALPN peat/application-delivery/1, no new SyncMessageType byte)",
+        "peat-btle": "2946c62 -> 8d9d247 (0.4.0 [Unreleased]; #91 stamp peripheral_id on anonymous-tracks receive path, repairs BLE->QUIC position bridge)",
+        "peat-node": "27e5c6c -> b4b6ed3 (crate still 0.4.22; #236 canonical peat.track.v1.Track on sidecar RPCs (breaking wire) + delete_document now propagates via Tombstone/TombstoneBatch; delete-then-recreate limitation In-flight)",
+        "peat-lite": "no drift (7a8a8fb)",
+        "peat-gateway": "no drift (a7527c7)",
+        "peat-flutter": "no drift (dd3f268)",
+        "peat-sapient": "no drift (e311e82)"
+      },
+      "docs_touched": [
+        "03-peat-mesh.md (NEW subsection 'Authenticated durable application delivery (rc.64, peat-mesh#383/#389)' + new mermaid M-045; addressed-delivery vs command_log distinction)",
+        "09-protocol-specs.md (NEW blockquote: 3 collaboration content schemas geochat/overlay_revision/attachment_offer + 11-descriptor registry count)",
+        "08-running-and-operating.md (NEW post-0.4.22 callout: canonical peat.track.v1.Track sidecar RPCs breaking wire change + tombstone-propagating delete + delete-then-recreate In-flight limitation)",
+        "06-data-flows.md (targeted-delivery clarification: addressed application delivery Shipped vs command tasking Speculative/Proposed; NEW paragraph on peat-ffi application_delivery_* surface + mDNS auto-dial; FFI-marker-vs-sidecar delete pointer; sidecar.proto line-range fix)",
+        "00b-the-big-idea.md (nuance: addressed application delivery Shipped, distinct from authority-gated command tasking; sidecar.proto line-range fix)",
+        "04-peat-btle-and-lite.md (NEW note: anonymous-tracks peripheral_id receive-path fix repairs BLE->QUIC position bridge)",
+        "index.html (hub mirror: UGV-tasking example clarifies addressed application delivery Shipped vs command_log; SYNC stamp)",
+        "peat-constrained-networking.html (SYNC stamp; scoped 'targeted delivery' -> 'targeted command delivery' x2 for cross-page consistency)",
+        "changelog.html (Current-sync card commits + SYNC block + prepended 2026-08-17 row)",
+        "07/gaps-contributions/ground-truth/use-cases (fact-wide sidecar.proto:342-373 -> 359-389 line-range fix, 8 occurrences total)"
+      ],
+      "diagrams_touched": "NEW M-045 (application-delivery flow mermaid, 03 §3.4). Re-derived+confirmed-unchanged and Last-verified advanced to 2026-08-17: M-017/M-018 (discovery; mDNS auto-dial is FFI plumbing atop existing browse stream), M-019 (SyncMessageType bytes; delivery uses separate ALPN, enum untouched), M-035 (tasking today-vs-wanted; commands block byte-identical, only line numbers drifted 342-373->359-389), M-038+H-006 (blob-announce/provider gossip; new delivery ALPN is a sibling), M-041 (tombstone lifecycle; peat-node delete now exercises it, lifecycle facts unchanged).",
+      "notes": "Incremental. 4 repos drifted; headline is peat-mesh's authenticated durable application delivery (#383/#389) + peat-ffi facade + peat-schema collaboration schemas (peat#1078), peat-node canonical Track + tombstone-propagating delete (#236), peat-btle peripheral_id receive fix (#91), peat-ffi mDNS auto-dial (#1081). No open curriculum-feedback issues (checked). No full sweep due (last_full_run 2026-07-20, +28d). ALL 5 gates + the published-artifact & fact-wide-occurrence gates passed. The independent fact-check gate caught one stale citation: peat-node/proto/sidecar.proto:342-373 drifted to 359-389 when #236 inserted the canonical-Track lines; fixed fact-wide across 8 occurrences (00b/06/07/diagrams/gaps-contributions/ground-truth/use-cases). peat-tak still unreachable via the scoped proxy (terminal-prompt/403) - remains an open todo, not folded into tracked clones.",
+      "meta": {
+        "drift_found": 4,
+        "claims_resolved": 0,
+        "claims_demoted": 1,
+        "feedback_addressed": 0,
+        "misses_found": 0
       }
     }
   ],
@@ -949,6 +985,13 @@
       "unresolved_drift_count": 3,
       "open_feedback_issues": 0,
       "note": "Incremental. needs_runtime_count 15->16 (+1: consolidated peat-mesh rc.59-64 grouped-durability/attribution/endpoint-reuse + peat-node v0.4.19-22 admission/grouping/mDNS efficacy - expected climb, cloud reads source but never benchmarks; NOT a health signal). unresolved_drift_count held at 3 (external/registry/standalone-repo unknowns unchanged: published peat-btle 0.4.0 non-FIPS, peat-tak unreachable, peat-sapient proto/VERSION). misses_found=1 but CAUGHT+FIXED before shipping (ADR count 80/76->81/77; ADR-075 landed 2026-07-20 and was missed by the 07-27/08-03 CI passes) - no wrong count reached the docs, so it does not raise unresolved_drift. open_feedback_issues still 0."
+    },
+    {
+      "when": "2026-08-17",
+      "needs_runtime_count": 17,
+      "unresolved_drift_count": 3,
+      "open_feedback_issues": 0,
+      "note": "Incremental. needs_runtime_count 16->17 (+1: consolidated application-delivery/collaboration-schema runtime efficacy - delivery/materialize latency, retry-drive cadence, received-query throughput - CONFIRMED from source + 7 e2e tests but never benchmarked in the cloud env; expected climb as new Shipped capabilities land, NOT a health signal). unresolved_drift_count held at 3 (external/registry/standalone-repo unknowns unchanged: published peat-btle 0.4.0 non-FIPS, peat-tak unreachable, peat-sapient proto/VERSION). misses_found=0: the fact-check gate caught the sidecar.proto:342-373 line-drift (normal code-move drift, exactly what the staleness safety-net is for) and it was fixed fact-wide before shipping - no wrong fact reached the docs. open_feedback_issues still 0."
     }
   ]
 }

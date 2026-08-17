@@ -194,6 +194,33 @@ Highlights, verified against `003-schema.md`:
 > version** is a separate track from the crate version: every `.proto` header now reads `Version: 0.5.0`
 > (pre-1.0, signalling the wire schema is not yet frozen) while the `peat-schema` *crate* is `0.9.0-rc.33`.
 
+> **New: three collaboration content schemas for addressed delivery [Shipped].** Alongside the
+> peat-mesh application-delivery primitive (Module 3 §3.4), `peat-schema/src/type_registry.rs` registers
+> three new builtin descriptors, each carrying an **explicit `audience`** validated the same way as the
+> delivery layer (direct = one recipient, group = ≥1 recipient plus a `group_id`, broadcast = an explicit
+> snapshot; ≤ 64 recipients, `type_registry.rs:534-585`):
+>
+> - **GeoChat** (`peat.collaboration.geochat.v1`, collection `collaboration-geochat`, `:772-821`) —
+>   bounded operator-to-operator chat: `body` ≤ 8192 B, a retention window ≤ 30 days
+>   (`MAX_RETENTION_MS`, `:449`), optional `thread_id`/`reply_to_id`, and a
+>   `delivery_state ∈ {queued, sent, delivered, failed, expired}`.
+> - **Overlay Revision** (`peat.collaboration.overlay.revision.v1`, `collaboration-overlay-revisions`,
+>   `:824-887`) — a collaborative geospatial revision **or a tombstone**: a live revision
+>   (`deleted=false`) must carry complete `geometry` (point / line / polygon / circle / route, with
+>   coordinate, point-count, and radius bounds) and `visual` (`#RRGGBB`/`#AARRGGBB` colour, stroke 0–100,
+>   bounded title/icon/remarks); a tombstone (`deleted=true`) must omit both (`:853-862`).
+> - **Attachment Offer** (`peat.collaboration.attachment.offer.v1`, `collaboration-attachment-offers`,
+>   `:891-973`) — a **metadata-first** offer for content that transfers separately as a blob:
+>   `content_kind ∈ {photo, file}`, file metadata only (media type, size ≤ 256 MiB, 64-hex SHA-256,
+>   `BlobRef` — no bytes inline), and a rule that a **photo must carry a `thumbnail` strictly smaller than
+>   the full image** while a plain file must not (`:932-948`).
+>
+> With these three, the builtin registry `with_peat_schema_types()` now holds **11** descriptors
+> (capability, node_config, node_state, cell_config, cell_state, track, hierarchical_command, marker,
+> geochat, overlay_revision, attachment_offer) — a count pinned by the test
+> `iter_lists_all_registered_types` → `assert_eq!(ids.len(), 11)` (`:1642`). These are the first shipped
+> schemas designed for the *addressed*-delivery model rather than whole-formation CRDT sync.
+
 ## 9.4 `004-coordination` — cells, election, hierarchy [spec is normative; mesh runtime differs]
 
 `004-coordination` is the normative version of Module 2·5. It defines the cell state machine

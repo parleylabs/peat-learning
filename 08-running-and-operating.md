@@ -225,6 +225,43 @@ and shipped a zero-friction two-node attachment quick-start under `examples/comp
 >   `0.4.10`** (`chart/peat-node/Chart.yaml`) — it tracks well behind the crate; deploy an explicit
 >   `image.tag` rather than trusting the chart's `appVersion`.
 
+> **Canonical Track on the sidecar RPCs + mesh-propagated deletes (post-0.4.22, peat-node#236) [Shipped].**
+> Four commits landed on top of the 0.4.22 tag (the crate version was **not** bumped — `Cargo.toml:7`
+> still reads `0.4.22`), touching the wire in two ways. RPC count is still **27/27**.
+>
+> - **The tracks collection now uses the canonical `peat.track.v1.Track` (BREAKING wire change).**
+>   `proto/sidecar.proto` imports the vendored `peat.track.v1.Track` (`proto/track.proto`, vendored from
+>   peat-schema 0.9.0-rc.33) and **versions the payload by field number**: `PutTrackRequest` reserves
+>   field 1 (`reserved 1; reserved "track";`) and carries the canonical message on `canonical_track = 2`;
+>   `GetTracksResponse` does the same with `repeated … canonical_tracks = 2` (`sidecar.proto:340-355`).
+>   Reserving field 1 rather than reusing it means an **old client's field 1 becomes an unknown field, not
+>   a silent mis-decode** (`:335-339`). The retired flat sidecar-local shape
+>   (`id`/`source_node`/`latitude`/`longitude`/`category`/…) maps onto the nested canonical fields
+>   (`id→track_id`, `source_node→source.node_id`, lat/lon→`position.*`, `cep_m→position_error.circular_error`,
+>   `heading_deg→kinematics.heading`, `speed_mps→kinematics.velocity`; `category`/`cell_id`/`formation_id`
+>   ride in `attributes_json`, `:316-332`). This is the sidecar/gRPC counterpart to the mobile-side
+>   canonical-Track decode noted in Module 6 (peat#1068); a Track written by the sidecar now deserializes
+>   the same way on a mobile client. Covered by `connect_protocol_track_rpcs_use_canonical_track`
+>   (`tests/grpc_test.rs:740`).
+> - **`delete_document` now propagates the deletion across the mesh.** Previously the sidecar's delete was
+>   **local-only** — it erased the row but minted no tombstone, so the next sync round pulled the document
+>   straight back from any peer still holding it, and nodes accumulated undeletable documents.
+>   `SidecarNode::delete_document` (`src/node.rs:2459`) now mints a `Tombstone` **before** the local
+>   `backend.remove` (`:2470-2477`) — so a failed `put_tombstone` leaves the document intact rather than
+>   deleting it locally with no way to propagate — then pushes a `TombstoneBatch` to every connected peer
+>   (`send_tombstones_to_peer`, best-effort, `:2485-2500`). The three anti-resurrection guards
+>   (`prepare_doc_for_sync`, `apply_sync_message`, `apply_state_snapshot`) all key on `has_tombstone`.
+>   `delete_propagates_to_peer_and_does_not_resurrect` (`tests/sync_test.rs:347`) proves the document
+>   leaves the peer *and stays gone* after further sync traffic.
+> - **One honest limitation, recorded not hidden [In-flight, blocked upstream].** Re-creating a *deleted*
+>   id does not yet propagate: the peer's own receive-side `has_tombstone` guard rejects the re-write, and
+>   peat-mesh rc.63 ships **no tombstone-removal wire message** (`SyncMessageType` covers
+>   Tombstone/TombstoneBatch/TombstoneAck only; `remove_tombstone` is local/GC-only). It is captured as the
+>   ignored test `recreating_a_deleted_document_id_still_syncs` (`tests/sync_test.rs:491`) that will
+>   auto-pass once upstream lands the fix. Operationally: a deleted id is unusable mesh-wide until its
+>   tombstone is GC'd (default 168 h), so a caller reusing stable ids (`tracks:<callsign>`) must treat
+>   delete-then-recreate as unsupported for now.
+
 The capability facts below are unchanged from v0.4.8:
 
 - **Received files now keep their name and folder layout (v0.4.8, #173).** Earlier builds wrote each
