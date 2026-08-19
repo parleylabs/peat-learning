@@ -62,9 +62,9 @@ baseline until the next Phase 6b. Update per-row as diagrams are re-derived.
 | M-014 | `02b-formation-and-leadership.md:170` | Handshake HMAC challenge-response sequence | mermaid | `peat-mesh/src/storage/mesh_sync_transport.rs:857,942`; `security/formation_key.rs:133,147,152` | — | H-009 | 2026-08-10 |
 | M-015 | `02b-formation-and-leadership.md:238` | Leader election state machine (2s hb, ~6s timeout) | ascii | `leader_election.rs:192-242` | — | M-016 | 2026-07-20 |
 | M-016 | `02b-formation-and-leadership.md:265` | Election state diagram | mermaid | `leader_election.rs:238-240`; ADR-068 | — | M-015 | 2026-07-20 |
-| M-017 | `03-peat-mesh.md:110` | Discovery → connection | ascii | `discovery/*`; `peer_connector.rs` | — | M-018 | 2026-07-20 |
-| M-018 | `03-peat-mesh.md:129` | Discovery flowchart (mDNS/K8s/static) | mermaid | `discovery/*`; `peer_connector.rs` | — | M-017 | 2026-07-20 |
-| M-019 | `03-peat-mesh.md:187` | Sync message type wire bytes | ascii | `automerge_sync.rs:92-110`; ADR-034/040 | — | — | 2026-08-10 |
+| M-017 | `03-peat-mesh.md:110` | Discovery → connection | ascii | `discovery/*`; `peer_connector.rs` | — | M-018 | 2026-08-17 |
+| M-018 | `03-peat-mesh.md:129` | Discovery flowchart (mDNS/K8s/static) | mermaid | `discovery/*`; `peer_connector.rs` | — | M-017 | 2026-08-17 |
+| M-019 | `03-peat-mesh.md:187` | Sync message type wire bytes | ascii | `automerge_sync.rs:92-110`; ADR-034/040 | — | — | 2026-08-17 |
 | M-020 | `03-peat-mesh.md:206` | CRDT/negentropy sync sequence | mermaid | `negentropy_sync.rs`; ADR-040 (#435) | — | — | 2026-07-20 |
 | M-021 | `03-peat-mesh.md:290` | Transport trait + ConnectionState | ascii | `peat-mesh/src/transport/mod.rs` | — | — | 2026-07-20 |
 | M-022 | `04-peat-btle-and-lite.md:85` | BleAdapter trait + platform matrix | ascii | `peat-btle/src/platform/mod.rs` | iOS Beta | — | 2026-07-20 |
@@ -80,16 +80,17 @@ baseline until the next Phase 6b. Update per-row as diagrams are re-derived.
 | M-032 | `06-data-flows.md:272` | System architecture (gateway off the data path) | ascii | Module 6 §6.4 | peat-sbd/peat-lora Proposed | H-002 | 2026-07-20 |
 | M-033 | `08-running-and-operating.md:34` | Quickstart 3-node topology | ascii | Module 3 §3.4 | — | — | 2026-07-20 |
 | M-034 | `00b-the-big-idea.md:117` | Mesh O(n²) vs hierarchy O(n log n) topology | mermaid | 00b §3 (analytical); `hierarchy/router.rs:19-20,90-91,140` | Analytical; Shipped (routing) | — | 2026-07-20 |
-| M-035 | `06-data-flows.md:253` | Tasking today vs wanted (`command_log`) | mermaid | `peat-node/proto/sidecar.proto:342-373`; ADR-046 #853 | Shipped / In-flight / Speculative | — | 2026-07-20 |
+| M-035 | `06-data-flows.md:253` | Tasking today vs wanted (`command_log`) | mermaid | `peat-node/proto/sidecar.proto:359-389`; ADR-046 #853 | Shipped / In-flight / Speculative | — | 2026-08-17 |
 | M-036 | `09-protocol-specs.md:25` | Five specs — reading order & freshness | mermaid | spec README; `005` amended 2026-05-18 | Draft / current | — | 2026-07-20 |
 | M-037 | `09-protocol-specs.md:40` | Spec vs shipped-code divergences | table | `001-transport.md:95-101`; `device_id.rs:39-47` | mixed (code is the contract) | — | 2026-07-20 |
-| M-038 | `03-peat-mesh.md:§3.4b` | Provider gossip: locating a blob beyond direct peers (`peat/blob-announce/1`) | mermaid | `peat-mesh/src/storage/blob_announce.rs` (ALPN, `DEFAULT_ANNOUNCE_TTL=3`, `classify_announce`); peat-mesh#262 | Shipped | H-006 | 2026-07-27 |
+| M-038 | `03-peat-mesh.md:§3.4b` | Provider gossip: locating a blob beyond direct peers (`peat/blob-announce/1`) | mermaid | `peat-mesh/src/storage/blob_announce.rs` (ALPN, `DEFAULT_ANNOUNCE_TTL=3`, `classify_announce`); peat-mesh#262 | Shipped | H-006 | 2026-08-17 |
 | M-039 | `02-peat-protocol.md:210` | Capability composition (four rules → Emergent) | mermaid | `src/composition/`; `composition/engine.rs:151` | Shipped | — | 2026-07-20 |
 | M-040 | `02b-formation-and-leadership.md:345` | `check_formation_complete` — six gates | mermaid | `coordinator.rs:97-168,66-87,174-179` | Shipped | M-012 | 2026-07-20 |
-| M-041 | `03-peat-mesh.md:415` | Tombstone lifecycle: delete → retention → GC | mermaid | `storage/` TtlManager; peat-node#136; peat-btle#73 | Shipped; In-flight (BLE) | — | 2026-07-20 |
+| M-041 | `03-peat-mesh.md:415` | Tombstone lifecycle: delete → retention → GC | mermaid | `storage/` TtlManager; peat-node#136; peat-btle#73 | Shipped; In-flight (BLE) | — | 2026-08-17 |
 | M-042 | `08-running-and-operating.md:184` | Deployment topologies (single/multi/Docker/k8s) | mermaid | 08 §8.4; EndpointSlice (feature `kubernetes`) | Documented; Shipped (EndpointSlice) | — | 2026-07-20 |
 | M-043 | `08-running-and-operating.md:396` | QoS pipeline (write-admission → class → sync-mode → allocation → eviction) | mermaid | `peat-protocol/src/qos/`; `peat-mesh/src/qos/` (incl. `write_admission.rs`) | Shipped; In-flight (preemption) | — | 2026-08-03 |
 | M-044 | `00b-the-big-idea.md:152` | Up / down / lateral information flows | mermaid | 00b §3; `hierarchy/router.rs:19-20,90-91,140` | Shipped | M-031 | 2026-07-20 |
+| M-045 | `03-peat-mesh.md:§3.4` | Authenticated durable application delivery (audience → durable redb → formation-auth + cert gate → validate → materialize → query) | mermaid | `peat-mesh/src/storage/application_delivery.rs` (ALPN `peat/application-delivery/1` `:23`; `DeliveryAudience` `:44-51`; `RegistryValidatorSlot` `:176-199`; `pending_for_peer` `:748`); `sync/automerge_backend.rs:784-787`; peat-mesh#383/#389 | Shipped | — | 2026-08-17 |
 
 ## HTML — `index.html` (hub; mirrors the modules)
 
@@ -100,7 +101,7 @@ baseline until the next Phase 6b. Update per-row as diagrams are re-derived.
 | H-003 | `index.html:548` | Dependency graph (facade points down) | svg | mirrors M-006 | M-006 | 2026-08-10 |
 | H-004 | `index.html:670` | peat-protocol surface / phases | svg | mirrors Module 2 | — | 2026-07-20 |
 | H-005 | `index.html:707` | (Module 2/2b deep-dive figure) | svg | mirrors Module 2b | — | 2026-07-20 |
-| H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-08-10 |
+| H-006 | `index.html:827` | peat-mesh sync / discovery (+ blob distribution & provider gossip cards, M-038 twin) | svg/prose | mirrors Module 3 §3.4b | M-038 | 2026-08-17 |
 | H-007 | `index.html:854` | (Module 3 figure) | svg | mirrors Module 3 | — | 2026-07-20 |
 | H-008 | `index.html:936` | BLE / lite edge | svg | mirrors Module 4 | — | 2026-07-27 |
 | H-009 | `index.html:1054` | Gateway / formation security (versioned peat-mesh handshake; Connector/Acceptor) | svg | mirrors Module 2b/5 | M-014 | 2026-08-10 |
@@ -390,3 +391,34 @@ pattern, to preserve when editing or adding diagrams:
   path, adds no strategy/node/wire tag); **M-033/M-042** deployment topology (v0.4.19–22 add no depicted
   topology). No diagram fact was left unconfirmable → nothing added to `unverifiable_claims` from diagrams
   this run.
+
+- **2026-08-17 incremental verification (peat `5629fee→7f89476` rc.33 `[Unreleased]` / peat-mesh
+  `f3ba37a→3d2985e` rc.64 `[Unreleased]` / peat-btle `2946c62→8d9d247` 0.4.0 `[Unreleased]` / peat-node
+  `27e5c6c→b4b6ed3` crate 0.4.22).** Four repos moved; the headline change is peat-mesh's **authenticated
+  durable application delivery** (#383/#389) plus its peat-ffi facade + peat-schema collaboration schemas
+  (#1078), peat-node's **canonical `peat.track.v1.Track`** adoption + **tombstone-propagating delete**
+  (#236), the peat-btle **anonymous-tracks `peripheral_id`** receive fix (#91), and the peat-ffi **mDNS
+  auto-dial** for asymmetric discovery (#1081).
+  - **New row M-045 — Authenticated durable application delivery (mermaid, `03-peat-mesh.md:§3.4`).**
+    Authored this run from `peat-mesh/src/storage/application_delivery.rs`: ALPN
+    `peat/application-delivery/1` (`:23`) registered on the canonical router beside Automerge + blob-announce
+    (`sync/automerge_backend.rs:784-787`); `DeliveryAudience` Direct/Group/Broadcast (`:44-51`); two
+    fail-closed auth gates (formation-auth spoof rejection `:840-842`; optional Ed25519 membership cert
+    `:569-575`); fail-closed `RegistryValidatorSlot` (`:176-199`); bounded `query()` (`:318-407`). Status:
+    all nodes Shipped. ≤12 nodes, legend present, no CDN — compliant.
+  - Rows **re-derived and confirmed UNCHANGED** (provenance repo moved but depicted facts hold):
+    **M-019** SyncMessageType wire bytes — byte-for-byte identical; application delivery rides a *separate
+    ALPN*, not a new sync tag, so the enum is untouched. **M-038 (+ H-006 twin)** provider gossip /
+    blob-announce ALPN — the new delivery ALPN is a *sibling* on the same router; blob-announce depiction
+    unchanged. **M-035** tasking today-vs-wanted — the `commands` region of `sidecar.proto` is untouched by
+    #236 (which reserves track field 1 → `canonical_track = 2`); ADR-046/`command_log` framing holds, and
+    the diagram is explicitly *not* the new addressed-delivery primitive (Module 3 §3.4 / Module 6 §6.3
+    now spell out the distinction in prose). **M-017/M-018** discovery — the peat-ffi mDNS auto-dial is FFI
+    plumbing that drains the *existing* browse stream; it adds no discovery strategy, node, or wire tag.
+    **M-041** tombstone lifecycle (delete → retention → GC) — peat-node's delete now mints a tombstone +
+    pushes `TombstoneBatch` before local removal, which *exercises* the depicted lifecycle rather than
+    changing it; the delete-then-recreate limitation is new prose (Module 8), not a lifecycle-diagram fact.
+  - No diagram fact was left unconfirmable → nothing added to `unverifiable_claims` from diagrams this run.
+    Rows whose provenance repos moved but which this incremental did not re-derive (e.g. M-020–M-025,
+    M-042/M-043, H-002/H-008) hold at their prior `Last verified` until the next Phase 6b full sweep, per
+    the established incremental convention.

@@ -1391,7 +1391,11 @@ DOWN  CommandCoordinator.issue_command() → CommandRouter resolves targets
       formation</b> (readiness ≥ 0.7) — autonomy under human authority.</li>
       <li><b>Worked.</b> a command JSON doc is a few hundred bytes and syncs as one Automerge change; the
       <em>targeted</em> send that would reach only <code>role:strike</code> is <b>not shipped</b> — today it
-      propagates to the cell and the receiver filters.</li>
+      propagates to the cell and the receiver filters. Don't conflate this with peat-mesh's
+      <em>addressed application-document</em> delivery (durable, authenticated, Direct/Group/Broadcast
+      recipient sets — <span class="st ship">Shipped</span>, peat-mesh#383/#389): that is a separate
+      primitive carrying application content (chat, overlay revisions, attachment offers), <b>not</b> the
+      missing <code>command_log</code> CRDT and <b>not</b> ADR-046 authority-gated command routing.</li>
     </ul>
 
     <h3>3 · Maritime / beyond-line-of-sight relay <span class="st ship">Relay Shipped</span> · <span class="st prop">Satellite Proposed</span></h3>
@@ -1705,7 +1709,7 @@ cargo build -p peat-quickstart --release   <span class="cm"># binary/crate name 
       <span class="fw">PARLEY<b>LABS</b></span> &nbsp; <span class="beep">beep · boop · beep</span>
       <svg class="squig" width="54" height="9" viewBox="0 0 54 9" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5 q4.5 -4 9 0 t9 0 t9 0 t9 0 t9 0 t9 0"/></svg>
       <br><span class="ft">Peat onboarding curriculum · styled per the Parley Labs Brand Guide · © Parley Labs</span>
-      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-08-10</b> · incremental · peat <code>5629fee</code> (rc.33) · mesh <code>f3ba37a</code> (rc.64) · btle <code>2946c62</code> (0.4.0) · lite <code>7a8a8fb</code> (0.2.5) · gw <code>a7527c7</code> · node <code>27e5c6c</code> (0.4.22) · flutter <code>dd3f268</code> (0.1.0) · sapient <code>e311e82</code> (0.1.0)<!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
+      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-08-17</b> · incremental · peat <code>7f89476</code> (rc.33) · mesh <code>3d2985e</code> (rc.64) · btle <code>8d9d247</code> (0.4.0) · lite <code>7a8a8fb</code> (0.2.5) · gw <code>a7527c7</code> · node <code>b4b6ed3</code> (0.4.22) · flutter <code>dd3f268</code> (0.1.0) · sapient <code>e311e82</code> (0.1.0)<!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
     </span>
       <div class="fb" id="fb">
         <b>Was this helpful?</b>

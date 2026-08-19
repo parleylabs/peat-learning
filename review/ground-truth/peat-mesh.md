@@ -522,3 +522,49 @@ Ed25519 identity in `src/security/keypair.rs`/`certificate.rs`; no active ChaCha
   `tests/shared_endpoint_backend_e2e.rs` let a consumer build the backend around an already-bound endpoint.
 - **ADRs:** `docs/adr/` = **17** files; `0016-bounded-history-write-and-convergence-policy.md` still
   **Proposed** (+25 lines documenting the Immediate/Grouped durable-persistence policy).
+
+## Delta — 2026-08-17 (incremental; `f3ba37a` → `3d2985e`, rc.64 `[Unreleased]`)
+
+Two commits add **authenticated durable application delivery** (#383, issue #382) and **received-document
+queries** (#389). No change to `SyncMessageType` wire bytes (the capability rides a *separate* ALPN,
+not a sync-tag byte) and no crypto change. All throughput/efficacy figures NEEDS_RUNTIME.
+
+- **Authenticated, explicit-audience durable application delivery [Shipped, #383].**
+  `src/storage/application_delivery.rs` (887 lines): `ApplicationDeliveryManager` (`:429`) is a durable
+  state machine — every accepted operation and per-recipient transition is persisted to
+  `application-delivery.redb` **before** return. `DeliveryAudience` (`:44-51`) = `Direct` (exactly one
+  target, `:982-984`) / `Group` (≥1 + `group_id`) / `Broadcast` (an explicit recipient snapshot resolved
+  at submit, never an implicit empty-target fallback, `:48-50`). Confidentiality is **by addressing, not
+  body encryption**: bodies are stored plaintext in redb (`:294`) and a transport adapter only pulls the
+  envelopes for its own authenticated peer (`pending_for_peer` `:748`), so a non-target never receives
+  the bytes. Two auth layers: (1) formation auth is mandatory — sender identity is bound to
+  `Connection::remote_id()` (`:494-496`, `:576`) and a forged `sender_node_id` is rejected
+  (`receive_authenticated` `:840-842`) → spoof rejection; (2) an **optional Layer-2 membership
+  certificate** gate via `with_certificate_bundle` (`:546`): possessing the formation secret is not
+  enough — the endpoint must also pass `CertificateBundle::validate_peer` (Ed25519) or the handler
+  closes with `403 membership certificate required` (`:569-575`; formation-auth failure → `401`).
+  Durable retry (`Failed`→`Queued` `:825`; background 1-s re-drive `sync/automerge_backend.rs:804-840`),
+  restart-resume (idempotent `submit` on `client_operation_id` `:675-681`), expiry (`:890`) and cancel
+  (`:814`); priority order `Metadata < Normal < Bulk` (`:61-76`). Bounds: 10 000 ops (`:34`), 256 targets
+  (`:35`), 1 MiB body (`:36`). **Fail-closed schema validation** via a consumer-neutral
+  `RegistryValidatorSlot` (`:176-199`): peat-mesh can't depend on a schema registry, so a higher layer
+  installs an `Arc<dyn RegistryValidator>`; until then `validate` errs and inbound delivery is
+  unavailable. Validation runs on both `submit` (`:668`) and `receive_authenticated` (`:850`).
+  ALPN `CAP_APPLICATION_DELIVERY_ALPN = b"peat/application-delivery/1"` (`:23`), registered on the
+  **canonical** Iroh router (`sync/automerge_backend.rs:784-787`) beside the Automerge + blob-announce
+  ALPNs — no second endpoint.
+- **Received-document queries [Shipped, #389].** `ApplicationDocumentStore::query(collection, cursor,
+  limit) -> ApplicationDocumentPage` (`:318-407`): bounded cursor pagination over the recipient-local
+  materialized store. Limit 1..=100 (`:325`), page ≤ 4 MiB (`:376`), cursor ≤ 1024 B (`:332`); the opaque
+  URL-safe-base64 cursor is **collection-bound** — replay against another collection is rejected
+  (`:340-342`). Deterministic key order; materialize-once/dedupe survives a restart.
+- **Crypto (FIPS-clean on the whole delivery/auth path):** HMAC-SHA256 (formation challenge-response),
+  HKDF-SHA256 (key/EndpointId derivation), Ed25519 (membership certs), SHA-256 (body digest / doc keys),
+  AES-256-GCM + ECDH-P256 (at-rest/E2E). No ChaCha20/X25519 in the shipped path
+  (`Cargo.toml:45-56`; `security/encryption.rs:10` records the 2026-05-18 swap).
+- **Public surface:** `storage/mod.rs:86-92` re-exports the `Delivery*` types, `ApplicationDocument*`,
+  `ApplicationDocumentStore`, `RegistryValidator[Slot]`, and the ALPN (feature `automerge-backend`).
+  Seven e2e tests in `tests/application_delivery_e2e.rs` (confidentiality, spoof rejection, restart
+  retry, membership gating, materialize-once, expiry/cancel/retry fail-closed, bounded query).
+- **Version:** still `0.9.0-rc.64` in `Cargo.toml`; these two commits sit in `[Unreleased]` on top of the
+  rc.64 tag.

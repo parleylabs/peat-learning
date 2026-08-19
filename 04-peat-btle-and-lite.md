@@ -163,6 +163,22 @@ Both overloads and the wire framing are unit-tested (`PeatBtleSendChatTest.kt`),
 > path), not a crypto regression — but treat it as plaintext-over-air, distinct from the AES-256-GCM
 > mesh crypto described below, and don't route sensitive content through it.
 
+### The anonymous-tracks receive path now stamps sender identity **[Shipped, `[Unreleased]`]**
+
+A subtle receive-path bug in the BLE→QUIC position bridge is fixed (peat-btle#91, `[Unreleased]` on top
+of 0.4.0). A `tracks` document keys on the sender's `peripheral_id` — its document id is `ble-<HEX8>`
+(`src/translator.rs:302`) — and `tracks` is the **one** collection whose decoder *requires*
+`peripheral_id` on the decode context (`src/peat_mesh.rs:709-712`). But `peripheral_id` is not on the
+wire (the payload is a bare `BlePosition`); it rides the BLE connection identity. The anonymous receive
+bridge `on_ble_data_received_anonymous` (`src/peat_mesh.rs:2879`) used to pass `None` unconditionally, so
+every inbound `tracks` frame **errored while other collections kept decoding** — meaning a BLE-only peer
+could transmit position (PLI) that no peer could receive, silently breaking position reporting across the
+bridge. The fix resolves the sender through `PeerManager`'s existing `identifier → NodeId` index
+(`get_node_id`, `src/peat_mesh.rs:2950`) and stamps it onto the decode context (`:778`). The **fail-loud
+contract is preserved**: an *unknown* identifier still passes `None`, and the translator errs rather than
+defaulting to `ble-00000000` — collapsing unknown senders onto one id would merge every such peer into a
+single phantom track (`:2944-2948`), a behaviour pinned by test. No UniFFI surface changed.
+
 ### Discovery beacons
 
 Discovery uses a compact **16-byte `PeatBeacon` body** (`discovery/beacon.rs`, `BEACON_SIZE = 16`)

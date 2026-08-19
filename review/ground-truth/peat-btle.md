@@ -202,3 +202,33 @@ change; crate still `0.4.0` with the new API under `[Unreleased]`.
 - **Published-vs-source non-FIPS split UNCHANGED** — this commit alters neither the crates.io artifact nor
   the source crypto (Cargo.toml still declares `aws-lc-rs` non-fips default + optional `aws-lc-rs-fips`).
   FIPS source posture unchanged.
+
+## Delta — 2026-08-17 (incremental; `2946c62` → `8d9d247`, 0.4.0 `[Unreleased]`)
+
+One fix (PR #91, commit `cfe464d`): **stamp `peripheral_id` on the anonymous-tracks receive path**.
+Two files touched — `src/peat_mesh.rs` (+34/-10) and a new `tests/anonymous_tracks_peripheral_id.rs`.
+No UniFFI surface change, no crypto change.
+
+- **The bug it fixes.** A `tracks` document keys on the sender's `peripheral_id` — its doc id is
+  `ble-<HEX8>` (`src/translator.rs:302`, prefix `:79`) — and `tracks` is the one collection whose decoder
+  requires `peripheral_id` on `DecodeInboundCtx` (`src/peat_mesh.rs:709-712`). The anonymous receive
+  bridge `on_ble_data_received_anonymous` (`:2879`) previously passed `None` unconditionally, so every
+  inbound `tracks` frame **Err'd** while other collections kept decoding — meaning a BLE-only peer could
+  transmit position (PLI) that no peer could receive, silently breaking the BLE→QUIC position bridge.
+- **The fix [Shipped].** It resolves the sender through `PeerManager`'s existing
+  `identifier → NodeId` index: `self.peer_manager.get_node_id(identifier)` (`:2950`), passed into
+  `try_handle_translator_marker` (`:2952-2956`) which stamps it onto the context
+  (`peripheral_id: source_node.map(|n| n.as_u32())`, `:778`) before `decode_inbound_sync`; the resolved
+  sender is surfaced on `DataReceivedResult` instead of the old `NodeId(0)` placeholder (`:2964-2967`).
+- **Fail-loud contract preserved.** An *unknown* identifier still passes `None`, and the translator
+  **Errs** rather than defaulting to `ble-00000000` — collapsing unknown senders onto one id would merge
+  every such peer into a single phantom track (rationale `:2944-2948`). Pinned by
+  `anonymous_tracks_frame_from_an_unknown_peer_does_not_fabricate_an_id` (`tests/…:162`), plus a
+  non-`tracks` control asserting the anonymous path was not narrowed.
+- **FIPS / published-vs-source split unchanged.** Source still routes all crypto through `aws-lc-rs 1.17`
+  (`Cargo.toml:111-112`; AES-256-GCM/ECDH-P256/HKDF-SHA256/HMAC-SHA256/SHA-256, no RustCrypto/BLAKE3);
+  the `fips` feature links CMVP-validated `aws-lc-fips-sys`. The crates.io-published `peat-btle 0.4.0`
+  (the build peat-flutter pulls) still ships non-FIPS ChaCha20-Poly1305 + X25519 — source is two
+  migrations ahead but neither was re-published.
+- **Version:** unchanged `0.4.0`; CHANGELOG top is still `[Unreleased]` (the fix landed as a commit and
+  was not separately itemized under Unreleased).

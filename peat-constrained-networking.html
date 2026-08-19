@@ -739,7 +739,7 @@
 
   <p>You define each collection with the profile its data deserves. Positions and sensor readings want a "shared picture" profile — broadcast to the whole group, merged by everyone. Orders want a "directed tasking" profile — sent only to chosen recipients, writable only by an authorized commander, and acknowledged on receipt.</p>
 
-  <div class="note">The YAML below is <b>illustrative</b>, not a copy of a shipped schema. The shared-picture profile is close to what ships: peat-node collection config (ADR-016, peat-node#55) persists per-collection TTL and deletion policy, QoS priority is real, and <code>lww</code> maps to a shipped CRDT. The directed-tasking profile is mostly <span class="st st-prop">Proposed</span>/<span class="st st-spec">Speculative</span>: targeted delivery is the ADR-046 epic <span class="st st-flight">In flight</span> (#853), and <code>command_log</code> is a CRDT that <b>does not exist anywhere yet</b>.</div>
+  <div class="note">The YAML below is <b>illustrative</b>, not a copy of a shipped schema. The shared-picture profile is close to what ships: peat-node collection config (ADR-016, peat-node#55) persists per-collection TTL and deletion policy, QoS priority is real, and <code>lww</code> maps to a shipped CRDT. The directed-tasking profile is mostly <span class="st st-prop">Proposed</span>/<span class="st st-spec">Speculative</span>: targeted <b>command</b> delivery is the ADR-046 epic <span class="st st-flight">In flight</span> (#853), and <code>command_log</code> is a CRDT that <b>does not exist anywhere yet</b>.</div>
 
   <div class="grid">
     <div class="card">
@@ -767,7 +767,7 @@
 
   <p>The mute sensor from section 09 needs no third profile. It simply uses each of these in one direction only: it publishes into a shared-picture collection it never reads back, and it listens to a tasking collection it never writes to.</p>
 
-  <div class="warn"><b>One real gap remains, and it matters for autonomy under human authority.</b> peat-lite's current data types are safe for facts and counts, but none is safe for orders. Today a command is an ordinary JSON document in a <code>commands</code> collection; settling two conflicting commands by "newest wins" could quietly fire the wrong one. A tasking collection needs a <code>command_log</code> type that records orders in sequence, marks superseded ones plainly, and is write-gated to an authorized commander — so a person can always see the chain and a machine never acts outside it. The shared-picture half works today <span class="st st-ship">Shipped</span>; the targeted-delivery half is the ADR-046 work already underway <span class="st st-flight">In flight</span> (#853); the command-log type itself still has to be designed <span class="st st-spec">Speculative</span>.</div>
+  <div class="warn"><b>One real gap remains, and it matters for autonomy under human authority.</b> peat-lite's current data types are safe for facts and counts, but none is safe for orders. Today a command is an ordinary JSON document in a <code>commands</code> collection; settling two conflicting commands by "newest wins" could quietly fire the wrong one. A tasking collection needs a <code>command_log</code> type that records orders in sequence, marks superseded ones plainly, and is write-gated to an authorized commander — so a person can always see the chain and a machine never acts outside it. The shared-picture half works today <span class="st st-ship">Shipped</span>; the targeted-<b>command</b>-delivery half is the ADR-046 work already underway <span class="st st-flight">In flight</span> (#853); the command-log type itself still has to be designed <span class="st st-spec">Speculative</span>.</div>
   <div class="crumbs"><button class="btn" data-go="cn10">← Back</button><button class="btn" data-go="cn12">Next: gaps &amp; where to go →</button></div>
 </section>
 
@@ -824,7 +824,7 @@
       <span class="fw">PARLEY<b>LABS</b></span> &nbsp; <span class="beep">beep · boop · beep</span>
       <svg class="squig" width="54" height="9" viewBox="0 0 54 9" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5 q4.5 -4 9 0 t9 0 t9 0 t9 0 t9 0 t9 0"/></svg>
       <br><span class="ft">Peat onboarding curriculum · styled per the Parley Labs Brand Guide · © Parley Labs</span>
-      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-08-10</b> · incremental · peat <code>5629fee</code> (rc.33) · mesh <code>f3ba37a</code> (rc.64) · btle <code>2946c62</code> (0.4.0) · lite <code>7a8a8fb</code> (0.2.5) · gw <code>a7527c7</code> · node <code>27e5c6c</code> (0.4.22) · flutter <code>dd3f268</code> (0.1.0) · sapient <code>e311e82</code> (0.1.0)<!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
+      <br><span class="ft" id="sync-stamp"><!--SYNC-->Last synced <b style="color:var(--brand-green)">2026-08-17</b> · incremental · peat <code>7f89476</code> (rc.33) · mesh <code>3d2985e</code> (rc.64) · btle <code>8d9d247</code> (0.4.0) · lite <code>7a8a8fb</code> (0.2.5) · gw <code>a7527c7</code> · node <code>b4b6ed3</code> (0.4.22) · flutter <code>dd3f268</code> (0.1.0) · sapient <code>e311e82</code> (0.1.0)<!--/SYNC--> · <a href="changelog.html">what's changed →</a></span>
     </span>
       <div class="fb" id="fb">
         <b>Was this helpful?</b>

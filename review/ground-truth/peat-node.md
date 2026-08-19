@@ -312,3 +312,45 @@ behind mesh HEAD (rc.64). No crypto change. Helm chart still **0.4.10** (`chart/
   CRUD, sync writes, at-rest persistence, and subscriptions share one peat-mesh `DocumentStore` lifecycle
   (`src/node.rs`); mDNS elects exactly one dial initiator by stable endpoint ID
   (`should_initiate_mdns_connection(local, remote) = local < remote`, `src/node.rs:52-55,1409`).
+
+## Delta — 2026-08-17 (incremental; `27e5c6c` → `b4b6ed3`, crate stays 0.4.22, post-release commits)
+
+Four commits (PR #236 + follow-ups): adopt the **canonical `peat.track.v1.Track`** for the tracks
+collection (breaking wire change on the sidecar RPCs) and **propagate document deletions across the mesh**
+via tombstones. RPC count unchanged (**27/27** — proto field/message changes, not new RPCs).
+
+- **Canonical Track adoption [Shipped].** `proto/sidecar.proto` now imports the vendored
+  `peat.track.v1.Track` (`proto/track.proto:1,21`, `VENDORED FROM peat-schema 0.9.0-rc.33 — DO NOT EDIT`)
+  and versions the payload by field number: `PutTrackRequest` has `reserved 1; reserved "track";` +
+  `peat.track.v1.Track canonical_track = 2;` (`sidecar.proto:340-343`); `GetTracksResponse` has
+  `reserved 1; reserved "tracks";` + `repeated peat.track.v1.Track canonical_tracks = 2;` (`:352-355`).
+  Field 1 is *reserved*, not reused, so an old client's field 1 becomes an unknown field rather than a
+  silent mis-decode (rationale `:335-339`). The retired flat sidecar-local `Track`
+  (id/source_node/latitude/longitude/category/…) maps onto the nested canonical shape
+  (`id→track_id`, `source_node→source.node_id`, lat/lon→`position.*`, `cep_m→position_error.circular_error`,
+  `heading_deg→kinematics.heading`, `speed_mps→kinematics.velocity`; `category`/`cell_id`/`formation_id`
+  carry in `attributes_json`) — documented as a **BREAKING WIRE CHANGE** at `:316-332`. Test
+  `connect_protocol_track_rpcs_use_canonical_track` (`tests/grpc_test.rs:740`) round-trips over Connect
+  HTTP+JSON and asserts the retired flat field names never reappear and same-`track_id` re-put updates in
+  place.
+- **Deletion now propagates across the mesh [Shipped].** `SidecarNode::delete_document`
+  (`src/node.rs:2459`) mints a `Tombstone` (from `peat_mesh::qos`, `:32`) **before** the local
+  `backend.remove` (`:2470-2477`) — a failed `put_tombstone` leaves the doc intact rather than deleting
+  it locally with no way to propagate — then pushes a `TombstoneBatch` to every connected peer via
+  `coordinator().send_tombstones_to_peer` (best-effort, per-peer failures logged, `:2485-2500`).
+  Previously the delete was **local-only**, so peers re-pushed the doc on the next sync round (nodes
+  accumulated undeletable documents). The three anti-resurrection guards (`prepare_doc_for_sync`,
+  `apply_sync_message`, `apply_state_snapshot`) all key on `has_tombstone` (`:2454-2458`). Test
+  `delete_propagates_to_peer_and_does_not_resurrect` (`tests/sync_test.rs:347`) proves the doc leaves the
+  peer **and stays gone** after further sync traffic.
+- **Known limitation [In-flight, blocked upstream].** Re-creating a *deleted* id does not propagate:
+  the peer's own receive-side `has_tombstone` guard rejects the re-write, and peat-mesh rc.63 has **no
+  tombstone-removal wire message** (`SyncMessageType` covers Tombstone/TombstoneBatch/TombstoneAck only;
+  `remove_tombstone` is local/GC-only). Recorded as the ignored test
+  `recreating_a_deleted_document_id_still_syncs` (`tests/sync_test.rs:491`,
+  `#[ignore = "blocked upstream: peat-mesh rc.63 has no tombstone-removal wire message"]`). Practical
+  consequence: a deleted id is unusable mesh-wide until its tombstone is GC'd (default TTL 168 h), so a
+  caller reusing stable ids (`tracks:<callsign>`) must treat delete-then-recreate as unsupported.
+- **Versions:** crate stays `0.4.22` (`Cargo.toml:7`) — the four commits sit on top of the 0.4.22 release
+  without a further bump; peat-mesh pin `= 0.9.0-rc.63` (`Cargo.toml:173`, one RC behind mesh HEAD);
+  Helm chart still `0.4.10` (`chart/peat-node/Chart.yaml:5-6`), trailing the crate.

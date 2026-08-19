@@ -502,6 +502,75 @@ but runtime-unbenchmarked here (NEEDS_RUNTIME):
   (`network/iroh_transport.rs:1406+`), and a consumer can build the canonical Automerge backend around an
   already-bound endpoint and open store (`sync/automerge_backend.rs`, `tests/shared_endpoint_backend_e2e.rs`).
 
+### Authenticated durable application delivery (rc.64 `[Unreleased]`, peat-mesh#383/#389) **[Shipped]**
+
+CRDT sync (§3.4) converges *shared* collections: every formation member holds the whole document set.
+A second, complementary primitive now ships for **addressed** application traffic — a message meant for
+*these specific nodes*, not the whole formation. `src/storage/application_delivery.rs` adds an
+`ApplicationDeliveryManager` (`:429`): a durable state machine where every accepted operation and each
+per-recipient transition is persisted to a dedicated `application-delivery.redb` **before** the call
+returns. It does **not** change the sync wire protocol — the `SyncMessageType` bytes are byte-identical
+to rc.63 — because delivery rides a **separate ALPN**, `CAP_APPLICATION_DELIVERY_ALPN =
+b"peat/application-delivery/1"` (`:23`), registered on the *same canonical* Iroh router as Automerge sync
+and blob-announce (`sync/automerge_backend.rs:784-787`) — one endpoint, three protocols.
+
+The design in four facts, each code-anchored:
+
+- **Audience is explicit.** `DeliveryAudience` (`:44-51`) is `Direct` (exactly one target, `:982-984`),
+  `Group` (≥1 target plus a `group_id`), or `Broadcast` — and even `Broadcast` carries an *explicit
+  recipient snapshot resolved at submit time*, never an implicit "everyone" fallback (`:48-50`). An empty
+  audience is rejected; the target set is bounded to 256 (`:979`).
+- **Confidentiality is by addressing, not body encryption.** Bodies sit in redb as plaintext (`:294`); a
+  transport adapter only ever pulls the envelopes for its own authenticated peer (`pending_for_peer`,
+  `:748`), so a non-target never receives the bytes. Transit confidentiality is the QUIC/TLS connection
+  plus formation auth — the same posture the rest of the mesh uses.
+- **Two authentication layers, both fail-closed.** Formation auth is mandatory and the sender identity is
+  bound to `Connection::remote_id()` (`:494-496`), so a forged `sender_node_id` is rejected outright
+  (`receive_authenticated`, `:840-842`) — the spoof-rejection path. On top, an **optional Layer-2
+  membership certificate** gate (`with_certificate_bundle`, `:546`) means holding the formation secret is
+  not sufficient: the endpoint must also pass an Ed25519 `CertificateBundle::validate_peer` or the handler
+  closes with `403 membership certificate required` (`:569-575`; a formation-auth failure closes `401`).
+- **Durable, restart-safe, priority-ordered.** `submit` is idempotent on a `client_operation_id`
+  (re-submitting identical content returns the same id; divergent content is rejected, `:675-681`); a
+  background task re-drives delivery every second (`sync/automerge_backend.rs:804-840`); `retry` flips
+  `Failed`→`Queued` (`:825`), and `cancel`/`expire` are terminal. Recipients are served in priority order
+  `Metadata < Normal < Bulk` (`:61-76`). Bounds: 10 000 operations, 256 targets, 1 MiB body (`:34-36`).
+
+Schema validation is **fail-closed through a consumer-neutral slot**: peat-mesh cannot depend on any
+particular schema registry, so a higher layer installs an `Arc<dyn RegistryValidator>` after construction
+(`RegistryValidatorSlot`, `:176-199`); until it is installed, `validate` errs and inbound delivery is
+simply unavailable. Validation runs on both `submit` (`:668`) and `receive_authenticated` (`:850`). A
+companion read side (peat-mesh#389) exposes `ApplicationDocumentStore::query(collection, cursor, limit)`
+(`:318-407`) — bounded cursor pagination (limit 1..=100, page ≤ 4 MiB, cursor ≤ 1024 B) over the
+recipient-local materialized store, with an opaque **collection-bound** cursor so a cursor minted for one
+collection cannot be replayed against another (`:340-342`). Seven end-to-end tests cover confidentiality,
+spoof rejection, restart retry, membership gating, materialize-once, expiry/cancel, and the bounded query
+(`tests/application_delivery_e2e.rs`). Crypto is FIPS-clean throughout: HMAC-SHA-256 (formation
+challenge-response), HKDF-SHA-256, Ed25519 (membership certs), SHA-256 (body digest / document keys),
+AES-256-GCM + ECDH-P256 (at-rest / E2E) — no ChaCha20 / X25519 on the path.
+
+```mermaid
+%% Legend: green = Shipped · rounded = durable step · every gate is fail-closed
+flowchart TD
+  sub["submit(operation)<br/>idempotent on client_operation_id"] --> aud{"DeliveryAudience"}
+  aud -->|"Direct (exactly 1)"| redb[("application-delivery.redb<br/>op + per-recipient state<br/>persisted before return")]
+  aud -->|"Group (+group_id)"| redb
+  aud -->|"Broadcast (explicit snapshot)"| redb
+  redb --> pull["peer pulls its own envelopes<br/>(pending_for_peer) over<br/>ALPN peat/application-delivery/1"]
+  pull --> fauth{"formation auth<br/>sender = remote_id?"}
+  fauth -->|"no → 401 / spoof rejected"| drop["rejected"]
+  fauth -->|"yes"| cert{"membership cert<br/>(optional gate)"}
+  cert -->|"missing → 403"| drop
+  cert -->|"valid"| val{"schema validator<br/>installed?"}
+  val -->|"no → fail-closed"| drop
+  val -->|"yes"| mat["materialize once (dedupe)<br/>→ ApplicationDocumentStore"]
+  mat --> q["query(collection, cursor, limit)<br/>bounded, collection-bound cursor"]
+```
+
+*Every node above is **Shipped** (peat-mesh#383/#389, rc.64 `[Unreleased]`). This is addressed
+application-document delivery — distinct from the authority-gated **command** tasking primitive
+(`command_log`, still Speculative) discussed in Module 6 §6.3; the two are different mechanisms.*
+
 ---
 
 ## 3.4b Blob distribution & provider gossip **[Shipped]**

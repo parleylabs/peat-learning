@@ -960,3 +960,79 @@ cross-refs, self-contained HTML + feedback beacon preserved), published-artifact
 re-counted; ADR statuses/counts re-derived), and fact-wide-occurrence (rc.58→rc.64, v0.4.18→v0.4.22,
 0.9.0-rc.31→rc.33, and the old per-repo HEADs grepped across all `0*.md` + both HTML tracks + registry +
 ground-truth).
+
+## 2026-08-17 — incremental refresh (CI mode)
+
+Delta-driven refresh. Four repos moved; no full sweep due (last full 2026-07-20, +28 days); **no open
+`curriculum-feedback` issues** (checked via GitHub). Repos: peat `5629fee→7f89476` (rc.33,
+`[Unreleased]`), peat-mesh `f3ba37a→3d2985e` (rc.64, `[Unreleased]`), peat-btle `2946c62→8d9d247` (0.4.0,
+`[Unreleased]`), peat-node `27e5c6c→b4b6ed3` (crate stays 0.4.22). peat-lite / peat-gateway / peat-flutter
+/ peat-sapient: no drift.
+
+**Headline — peat-mesh authenticated durable application delivery [Shipped] (#383/#389).** A new
+addressed-delivery primitive (`peat-mesh/src/storage/application_delivery.rs`): durable, formation-
+authenticated delivery to explicit `Direct`/`Group`/`Broadcast` audiences over a **separate ALPN**
+`peat/application-delivery/1` (`:23`, registered on the canonical router `sync/automerge_backend.rs:784-787`
+— **no new `SyncMessageType` byte**, sync wire bytes byte-identical to rc.63). Confidentiality by addressing
+(bodies plaintext in redb; `pending_for_peer` filters per authenticated peer), formation-auth spoof
+rejection + an optional Ed25519 membership-cert gate (403/401), a fail-closed `RegistryValidatorSlot`,
+durable restart-safe retry/expiry/cancel with `Metadata<Normal<Bulk` priority, bounds 10 000/256/1 MiB, and
+bounded collection-bound received-document queries (`query()` `:318-407`). Its peat-ffi UniFFI facade
+(`application_delivery_*`, `Acknowledged→Delivered`, `subscribe` delegating to `list`) and three peat-schema
+**collaboration schemas** — GeoChat, Overlay Revision, Attachment Offer → **11 builtin descriptors**
+(`type_registry.rs:1642`) — landed with it (peat#1078). FIPS-clean throughout (HMAC/HKDF-SHA-256, Ed25519,
+SHA-256, AES-256-GCM, ECDH-P256; no ChaCha20/X25519). Documented in Module 3 §3.4 (new subsection + new
+mermaid **M-045**), Module 9 §9.3 (collaboration schemas), and Module 6 §6.3 / 00b (kept sharply distinct
+from the still-Speculative `command_log` and Proposed ADR-046 command tasking — addressed application
+delivery ships; authority-gated tasking does not).
+
+**peat-node canonical Track + tombstone-propagating delete (#236).** The sidecar tracks RPCs adopt the
+canonical `peat.track.v1.Track` — a **breaking wire change**: field 1 reserved, `canonical_track /
+canonical_tracks = 2` (`proto/sidecar.proto:340-355`). `delete_document` (`src/node.rs:2459`) now mints a
+`peat-mesh` `Tombstone` **before** the local remove and pushes a `TombstoneBatch` to peers — previously
+local-only (nodes accumulated undeletable documents). One honest limitation recorded, not hidden:
+delete-then-recreate of the same id still does not propagate (peat-mesh rc.63 has no tombstone-removal wire
+message; ignored test `sync_test.rs:491`) — labeled **In-flight, blocked upstream**. RPC count unchanged
+(27/27). Documented in Module 8 §8.2.
+
+**peat-btle BLE→QUIC position-bridge fix (#91).** `on_ble_data_received_anonymous` now stamps the sender's
+`peripheral_id` (resolved via `PeerManager.get_node_id`) onto the decode context, so BLE-only position (PLI)
+frames — which key `tracks` docs on `ble-<HEX8>` — decode instead of erroring; the fail-loud unknown-sender
+contract is preserved. Documented in Module 4.
+
+**peat-ffi mDNS auto-dial for asymmetric discovery (#1081).** `run_peat_mdns_auto_dial` (`lib.rs:1181`)
+drains the FFI-owned peat mDNS browse stream and treats every discovery event as actionable, so one-way
+Android-to-observer discovery still yields an authenticated connection (10-s bounded retry, privacy-safe
+logging). Documented in Module 6.
+
+**Diagrams.** New **M-045** (application-delivery flow, mermaid, 03 §3.4). Re-derived and confirmed
+UNCHANGED (Last verified → 2026-08-17): **M-019** (SyncMessageType bytes — delivery uses a separate ALPN,
+enum untouched), **M-035** (tasking today-vs-wanted — `commands` block byte-identical; only its cited line
+numbers drifted), **M-017/M-018** (discovery — mDNS auto-dial is FFI plumbing atop the existing browse
+stream), **M-038 + H-006** (blob-announce/provider gossip — new delivery ALPN is a sibling), **M-041**
+(tombstone lifecycle — peat-node's delete now exercises it; lifecycle facts hold).
+
+**Fact-check gate catch (line-drift, fixed fact-wide).** The independent fact-check gate found that
+`peat-node/proto/sidecar.proto:342-373` (the `commands` region) drifted to **359-389** when #236 inserted
+the canonical-Track lines. The cited code is byte-identical; only the line numbers moved. Corrected across
+**all 8 occurrences** (`00b`, `06` ×2, `07`, `review/diagrams.md`, `review/gaps-contributions.md`,
+`review/ground-truth.md`, `review/use-cases.md`) — exactly what the §2 staleness safety-net is for.
+
+**New unverifiable claims:** one consolidated NEEDS_RUNTIME entry — the application-delivery layer's runtime
+behavior (delivery/materialize latency, the 1-s retry-drive cadence and restart-resume timing under load,
+received-query pagination throughput) is code-confirmed + covered by 7 e2e tests but never benchmarked in
+the cloud env. `needs_runtime_count` 16 → 17 (expected climb, neutral). `unresolved_drift_count` held at 3
+(published peat-btle 0.4.0 non-FIPS, peat-tak unreachable, peat-sapient proto/VERSION). `misses_found = 0`
+(the sidecar line-drift is normal code-move drift, caught before shipping). `peat-tak` still unreachable via
+the scoped proxy (terminal-prompt/403) — stays an open todo, not folded into the tracked-clone set.
+
+**Gates:** all passed — independent fact-check (every changed claim re-verified `path:line` against the new
+HEADs; one stale line-range caught + fixed fact-wide), house-rules (Shipped/In-flight/Proposed/Speculative
+labels correct, addressed-delivery vs command-tasking line kept clean in 00b/03/06/index.html, FIPS-only, no
+vendor names, autonomy framing preserved), cohesion/flow (cross-references resolve, terminology uniform),
+visual/diagram (M-045 authored + verified ≤12 nodes/legend/self-contained; M-017/018/019/035/038/041 + H-006
+re-derived unchanged), regression/blast-radius (hub↔module mirroring, SYNC stamps, self-contained HTML +
+GoatCounter `parley-peat` beacon + `id="fb"` widget + base64 wordmark all preserved), published-artifact &
+reference (every `repo#NNN` and version pin confirmed at HEAD; peat-node crate 0.4.22 / mesh pin rc.63 /
+Helm 0.4.10), and fact-wide-occurrence (sidecar.proto line-range + the old per-repo HEADs grepped across all
+`0*.md` + three HTML tracks + registry + ground-truth).

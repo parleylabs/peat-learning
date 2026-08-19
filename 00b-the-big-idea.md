@@ -320,9 +320,13 @@ to find `Root` or `Cluster` as code identifiers.
 
 > **Where this lands in the code.** `peat-protocol`'s `security` (authorization) and `command`
 > (down-flow with ACK / timeout / conflict) — Module 2 §2.7 and Module 6 Trace C. The command
-> down-flow plumbing is real; targeted delivery to a specific node or role is **In-flight**
-> (ADR-046, epic #853), and there is **no `command_log` CRDT** — commands today are ordinary JSON
-> documents in a `commands` collection (`peat-node/proto/sidecar.proto:342-373`).
+> down-flow plumbing is real; authority-gated targeted *command* delivery to a specific node or role is
+> **In-flight** (ADR-046, epic #853), and there is **no `command_log` CRDT** — commands today are ordinary
+> JSON documents in a `commands` collection (`peat-node/proto/sidecar.proto:359-389`). Note the distinct
+> and now-**Shipped** primitive it is easy to conflate with: peat-mesh's *addressed application-document*
+> delivery (durable, authenticated, Direct/Group/Broadcast recipient sets — Module 3 §3.4) carries
+> application content, not authority-gated orders. Addressed delivery ships; authority-gated tasking does
+> not yet.
 
 ## 6. CRDTs instead of consensus — the strongest shipped story
 

@@ -454,3 +454,57 @@ Twelve commits; workspace `0.9.0-rc.33`; `peat-ffi` crate `0.2.12` → **`0.2.15
   unchanged (002/009/015/016/023/024/030/041/047/057/070). `CellRole` still 7. **FIPS source posture
   unchanged** — AES-256-GCM / ECDH-P256 / Ed25519 / HKDF-SHA-256 / HMAC-SHA-256; no ChaCha20/X25519 in
   source.
+
+## Delta — 2026-08-17 (incremental; `5629fee` → `7f89476`, workspace rc.33, `[Unreleased]`)
+
+Two commits: a **client application-delivery facade** + **collaboration content schemas** (#1078,
+consuming peat-mesh #383/#389) and an **mDNS auto-dial** fix for asymmetric discovery (#1081, refs #828).
+No wire or crypto change.
+
+- **peat-ffi application-delivery UniFFI surface [Shipped, #1078].**
+  `peat-ffi/src/application_delivery.rs` + `lib.rs:233-235`. Ops on `PeatNode`:
+  `application_delivery_submit` (`:334`; hex node-IDs → canonical `EndpointId`, Direct requires exactly
+  one target `:361-367`, builtin schema validation enforced `:368-370`), `_get` (`:409`), `_list`
+  (`:422`), `_cancel` (`:456`), `_retry` (`:471`). Status is body-free
+  (`ApplicationDeliveryOperation` `:82-95`); the owner `Acknowledged` maps to FFI **`Delivered`** (`:280`).
+  Durable status pagination via `application_delivery_subscribe(cursor, limit)` (`:489`) — it deliberately
+  delegates to `_list` (`:494`): callers rescan from `cursor=None`, notifications are never the source of
+  truth. Received-document reads: `application_delivery_get_received_document` (`:498`) and
+  `application_delivery_list_received_documents(collection, cursor, limit)` (`:516`, pages via owner
+  `query()` with FFI re-bounding). A `BuiltinDeliveryValidator` (`:116`, backed by
+  `BuiltinRegistry::with_peat_schema_types()`) is installed at node bring-up
+  (`install_builtin_validator`, `lib.rs:2238`) so the fail-closed slot is satisfied.
+  **Source doc-comment lag (code observation, not curriculum prose):** the module comment
+  (`application_delivery.rs:8-12`) still says the facade exposes no bounded received-collection iterator —
+  contradicted by the shipped `application_delivery_list_received_documents`. Describe the shipped query
+  API, not the stale caveat.
+- **Collaboration content schemas [Shipped, peat-schema, #1078].** `peat-schema/src/type_registry.rs`
+  adds three builtin descriptors, all carrying an explicit `audience` (direct = 1 recipient / group = ≥1 +
+  `group_id` / broadcast = empty; ≤64 recipients, `:534-585`):
+  - **GeoChat** `peat.collaboration.geochat.v1` (collection `collaboration-geochat`, `:772-821`) —
+    bounded operator chat: `body` ≤ 8192 B, retention window ≤ 30 days (`MAX_RETENTION_MS` `:449`),
+    optional `thread_id`/`reply_to_id`, `delivery_state ∈ {queued,sent,delivered,failed,expired}`.
+  - **Overlay Revision** `peat.collaboration.overlay.revision.v1` (`collaboration-overlay-revisions`,
+    `:824-887`) — a collaborative geospatial revision **or** tombstone (`deleted=true` must omit geometry
+    + visual, `:853-862`); geometry ∈ point/line/polygon/circle/route with coordinate + count + radius
+    bounds; visual = `#RRGGBB`/`#AARRGGBB` color, stroke 0–100, bounded title/icon/remarks.
+  - **Attachment Offer** `peat.collaboration.attachment.offer.v1` (`collaboration-attachment-offers`,
+    `:891-973`) — metadata-first offer (`content_kind ∈ {photo,file}`, `file` ≤ 256 MiB, 64-hex sha256,
+    `BlobRef`, no bytes inline); **a photo requires a `thumbnail` strictly smaller than the full photo**
+    (`:932-940`), a plain file must not carry one (`:944-948`).
+  - The builtin registry now holds **11** descriptors (capability, node_config, node_state, cell_config,
+    cell_state, track, hierarchical_command, marker, geochat, overlay_revision, attachment_offer);
+    locked by `iter_lists_all_registered_types` → `assert_eq!(ids.len(), 11)` (`:1642`).
+- **mDNS auto-dial for asymmetric discovery [Shipped, #1081, refs #828].** `peat-ffi/src/lib.rs`:
+  new `dial_mdns_peer` (`:1158`, de-dups against `connected_peers()`) and `run_peat_mdns_auto_dial`
+  (`:1181`), spawned in `create_node_with_identity` after canonical backend setup (`:2244-2249`). It
+  consumes the FFI-owned peat mDNS browse stream (which `MeshAutomergeBackend::with_iroh_parts` shares
+  but does not drain), treats **every** discovery event — `PeerFound` *and* `PeerUpdated` — as an
+  actionable dial candidate so one-way Android-to-observer discovery still connects, elects one initiator,
+  and authenticates through the mesh backend. Bounded retry: 10-s `RETRY_INTERVAL`,
+  `MissedTickBehavior::Skip`, per-peer `last_attempt` gate, re-scan of `known \ connected` on tick;
+  `PeerLost` clears state. Privacy-safe logging (no peer id/address). Tests:
+  `canonical_backend_authenticates_an_elected_mdns_dial` and
+  `canonical_backend_dials_when_only_non_elected_peer_discovers`.
+- **Version:** workspace stays `0.9.0-rc.33` (peat-ffi crate 0.2.15 / AAR 0.1.7 unchanged); both commits
+  sit in `[Unreleased]` on top of the rc.33 line.
