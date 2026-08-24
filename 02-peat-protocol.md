@@ -18,7 +18,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `5629fee` (workspace `0.9.0-rc.33`), `peat-mesh` rc.64 (`f3ba37a`).
+Audited at `peat` HEAD `7f89476` (workspace `0.9.0-rc.33`), `peat-mesh` rc.64 (`3d2985e`).
 Citations below point at the working-tree source.
 
 ---
@@ -140,7 +140,7 @@ flowchart LR
 condition; the two arrows back to earlier phases are the recovery paths (a lost leader re-runs
 formation; a formation that times out or has too few members falls back to discovery). This
 three-phase staging is **Shipped** — the diagram is the teaching scaffold; the transitions map to
-real re-election triggers in `peat-mesh` (`hierarchy/maintenance.rs:227/252/312`).
+real re-election triggers in `peat-protocol` (`hierarchy/maintenance.rs:227/252/312`).
 
 ## 2.2 Phase 1 — Discovery (`src/discovery/`)
 

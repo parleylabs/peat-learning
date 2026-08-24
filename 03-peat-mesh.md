@@ -5,7 +5,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@f3ba37a` (`0.9.0-rc.64`).
+`peat-mesh@3d2985e` (`0.9.0-rc.64`).
 
 > **iroh reached 1.0 (rc.46, peat-mesh#276) [Shipped].** The QUIC transport that underpins the whole
 > mesh left the release-candidate train: `iroh` is now pinned to the **stable `1.0.2`** line
@@ -151,9 +151,14 @@ flowchart LR
     G -->|"fail"| R["rejected"]
 ```
 
-The formation gate is an HMAC-SHA-256 challenge-response over ALPN `peat/formation-auth/1`: the
-pre-shared formation key is proven without ever crossing the wire (constant-time compare). The
-handshake itself lives in `peat-protocol`; Module 2b covers it in detail.
+The formation gate is a versioned HMAC-SHA-256 challenge-response carried on the accepted sync
+connection — not a dedicated ALPN (`FORMATION_AUTH_VERSION = 1`, `storage/mesh_sync_transport.rs:65`;
+30 s `FORMATION_AUTH_TIMEOUT`): the pre-shared formation key is proven without ever crossing the wire
+(constant-time compare, `subtle`), the MAC being `HMAC-SHA-256(key, nonce ‖ formation_id)`
+(`security/formation_key.rs:163`). Since rc.59 the handshake is **transport-owned in `peat-mesh`**
+(`accept_formation_auth`/`respond_to_formation_auth`, `storage/mesh_sync_transport.rs:857,942`);
+peat-protocol's older protocol-owned handshake was removed (peat#1045 / peat-mesh#358). Module 2·5
+covers it in detail (see §3.4).
 
 > **Android mDNS interop (c863d16, peat-mesh#266) [Shipped].** On Android, iroh's own
 > `MdnsAddressLookup` browse never fires, so a peer could advertise but never *discover*. The
@@ -807,12 +812,13 @@ and reconnecting to the wider mesh on egress (one of the curriculum's five refer
   genuinely-missing deltas transfer — not the full history (unless the collection is in
   `FullHistory` sync mode).
 
-This offline-first reconcile-on-reconnect path is the strongest shipped story in Peat. The one
-caveat lives at the embedded edge: **peat-btle reconnect re-delivery of pending CRDT state is
-[In-flight] (peat-btle#73)**, so the BLE leg may not re-deliver everything queued during a long
-outage; the QUIC/peat-node path is the robust one. Tombstone retention (168 h / 7-day default)
-governs what survives a long offline window — tracked by peat-node#136 (*not* the misattributed
-"#857", which is actually ADR-046 Phase-4 selectors).
+This offline-first reconcile-on-reconnect path is the strongest shipped story in Peat, and it now
+holds at the embedded edge too: **peat-btle reconnect re-delivery of pending CRDT state is
+[Shipped]** (peat-btle#83, *Fixes* #73) — a reconnect schedules an immediate catch-up sync on both
+link directions and preserves offline peripheral mutations across backoff windows, so the BLE leg
+re-delivers a long-outage backlog the way the QUIC/peat-node path does. Tombstone retention (168 h /
+7-day default) governs what survives a long offline window — tracked by peat-node#136 (*not* the
+misattributed "#857", which is actually ADR-046 Phase-4 selectors).
 
 ```mermaid
 flowchart LR
@@ -822,10 +828,10 @@ flowchart LR
   ret -. "peer reconnects within window" .-> redel["tombstone still present →<br/>deletion re-delivered"]
 ```
 
-*The QUIC/peat-node path is **[Shipped]**: a deletion leaves a tombstone that is retained ~7 days
+*Both legs are **[Shipped]**: a deletion leaves a tombstone that is retained ~7 days
 (peat-node#136) so a peer offline **shorter** than the window still learns of it on reconnect; a peer
 offline longer can miss it — which is why retention must exceed the slowest expected outage. The
-peat-btle reconnect re-delivery of pending state is **[In-flight]** (peat-btle#73).*
+peat-btle leg now re-delivers pending state on reconnect as well (peat-btle#83, *Fixes* #73).*
 
 ---
 

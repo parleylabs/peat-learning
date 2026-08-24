@@ -458,7 +458,7 @@ a validated SLA. Treat QoS today as ordering and budgeting, not a hard latency g
 flowchart LR
   ch["local write"] --> wa["WriteAdmission<br/>rate / burst / bytes / revisions<br/>local only — remote bypasses"]
   wa --> cls["QoSClass<br/>5 levels (P1–P5)"]
-  cls --> sm["SyncMode<br/>LatestOnly / FullHistory / Windowed"]
+  cls --> sm["SyncMode<br/>LatestOnly / FullHistory / WindowedHistory"]
   sm --> ba["BandwidthAllocation<br/>per bandwidth_limit_kbps profile"]
   ba --> ec["EvictionController<br/>drops lowest-priority when the budget is full"]
   ec --> outp["sent to peers, ordered by class"]
@@ -485,9 +485,12 @@ no split-brain stall, and two independently-elected leaders converge determinist
 
 - **Formation key** **[Shipped]** — `openssl rand -base64 32`; set via `PEAT_FORMATION_KEY` or
   `[security] formation_key`. This is the cell-admission secret (Module 2b §2·5.4). The handshake is
-  an **HMAC-SHA-256 challenge-response** over ALPN `peat/formation-auth/1` (30 s timeout); the key is
-  proven by the HMAC and **never crosses the wire**, with a constant-time compare
-  (`peat-protocol/src/network/formation_handshake.rs`).
+  a versioned **HMAC-SHA-256 challenge-response** carried on the accepted sync connection
+  (`FORMATION_AUTH_VERSION = 1`; 30 s `FORMATION_AUTH_TIMEOUT`) — not a dedicated ALPN; the key is
+  proven by the HMAC and **never crosses the wire**, with a constant-time compare. Since rc.59 the
+  handshake is transport-owned in `peat-mesh`
+  (`storage/mesh_sync_transport.rs:857,942`); peat-protocol's older handshake was removed (peat#1045 /
+  peat-mesh#358).
 - **PKI** **[Documented — guide config, not verified in code]** — the operator guide shows optional
   X.509 device certs (`[security.pki]` with `ca_cert` / `node_cert` / `node_key`,
   `verify_peer = true`, `OPERATOR_GUIDE.md:722`). This is operator-guide configuration; Peat's

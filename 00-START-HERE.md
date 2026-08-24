@@ -183,9 +183,9 @@ exotic transports and the autonomy-tasking primitive are not yet built.**
    scoring, **no quorum, so no split-brain stall**), accumulates state offline, then
    reconnects and converges automatically. Negentropy reconciles the document sets and
    transfers only the genuinely-missing deltas; Automerge merges deterministically. This
-   offline-first convergence is the backbone of Peat and is **fully Shipped** — with one
-   caveat: BLE-path reconnect re-delivery of pending state is **In-flight (peat-btle#73)**;
-   the QUIC/peat-node path is the robust one.
+   offline-first convergence is the backbone of Peat and is **fully Shipped** — including
+   BLE-path reconnect re-delivery of pending state, which now schedules a reconnect catch-up
+   sync (peat-btle#83, *Fixes* #73), matching the QUIC/peat-node path.
 
 5. **Remote sensor field over a constrained link** *(embedded legs Shipped; long-range
    Proposed).* Battery ESP32 sensors run peat-lite firmware, report over UDP to a bridge

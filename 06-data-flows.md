@@ -142,9 +142,9 @@ see `peat-node/proto/sidecar.proto` v1 caveats). The five classes and their poli
 
 **If the network partitions** between steps 4 and 5, the core mesh path does not break: the
 Automerge change is already committed locally, and it syncs whenever the link returns — that is the
-offline-first guarantee. One honest caveat on the embedded leg: **BLE-path reconnect re-delivery of
-pending CRDT state is In-flight** (peat-btle #73), so a node that was offline on the BLE leg for a
-long window may not re-deliver everything it queued. The QUIC/peat-node path is the robust one.
+offline-first guarantee. This now holds on the embedded leg too: **BLE-path reconnect re-delivery of
+pending CRDT state is Shipped** (peat-btle#83, *Fixes* #73), so a node that was offline on the BLE leg
+for a long window re-delivers its queued backlog on reconnect, matching the QUIC/peat-node path.
 
 **At the mobile-client edge (peat-ffi `0.2.10`, peat#1000) [Shipped].** Two pieces make a phone a
 better citizen of this flow when links flap. First, change notifications are **origin-tagged**: the

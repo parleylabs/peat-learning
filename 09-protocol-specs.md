@@ -306,10 +306,13 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
   cleanly when talking to a v0 node (`adr/065:31-72`). **ADR-065 is `Status: Proposed`** and is not
   confirmed implemented in the security code — treat version-negotiated signing as proposed, not a
   shipped property.
-- **Formation-key auth ([Shipped]):** `HMAC-SHA-256(formation_key, nonce)` with a constant-time compare
-  (`005-security.md:284`). Shipped exactly: ALPN `peat/formation-auth/1`, the key never crosses the wire,
-  and the comparison uses the `subtle` crate. This is FIPS 198-1 and is separate from the Ed25519 device
-  challenge.
+- **Formation-key auth ([Shipped]):** `HMAC-SHA-256(formation_key, nonce ‖ formation_id)` with a
+  constant-time compare (shipped in `peat-mesh/src/security/formation_key.rs:163`; spec `005-security.md`
+  §5.1). Shipped exactly: a **versioned challenge/response** (`FORMATION_AUTH_VERSION = 1`) carried on the
+  accepted sync connection — **not a dedicated ALPN** — the key never crosses the wire, and the comparison
+  uses the `subtle` crate. Since rc.59 it is transport-owned in `peat-mesh`
+  (`storage/mesh_sync_transport.rs:857,942`; peat-protocol's older handshake was removed, peat#1045 /
+  peat-mesh#358). This is FIPS 198-1 and is separate from the Ed25519 device challenge.
 - **Authorization — spec and code list *different* role names.** Spec 005 §6.1 defines
   `Role { Observer, Member, Operator, Leader, Supervisor }` (`005-security.md:305-315`). **The shipped
   RBAC enum is `Role { Leader, Member, Observer, Commander, Admin }`** (peat-protocol
@@ -340,7 +343,7 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
   > (`peat-btle/Cargo.toml:17,25,26`). So a validated FIPS 140 boundary is now reachable in the BLE
   > crate itself when built `--features fips`; the KMS / Vault HSM backends in peat-gateway remain the
   > path where a crate still uses non-validated software AES. **The published-vs-source split still
-  > stands, and is now wider:** peat-btle *source* (HEAD `2946c62`) is FIPS-approved through AWS-LC and
+  > stands, and is now wider:** peat-btle *source* (HEAD `8d9d247`) is FIPS-approved through AWS-LC and
   > has also dropped BLAKE3 for SHA-256 identity derivation, but it is still version **0.4.0 /
   > [Unreleased]**. The crates.io-published peat-btle 0.4.0 that downstream binaries like peat-flutter
   > build against still depends on `chacha20poly1305` + `x25519-dalek`
@@ -392,7 +395,7 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
    [Shipped]** — approved algorithms, and now with a route to the CMVP-validated module: peat-btle's
    2026-07-23 AWS-LC migration lets a build opt into the validated `aws-lc-fips-sys` module via the
    `fips` feature (default builds use the non-FIPS AWS-LC provider). Only P-256 ships (not P-384). One
-   published-vs-source split persists: peat-btle *source* (`2946c62`) routes all crypto through
+   published-vs-source split persists: peat-btle *source* (`8d9d247`) routes all crypto through
    `aws-lc-rs` and derives identity with SHA-256, but the crates.io-published peat-btle 0.4.0 still
    ships ChaCha20/X25519 — neither migration was ever re-published.
    The docs that *still* advertise ChaCha20-Poly1305 / X25519 are the **peat-mesh and peat-btle READMEs**
@@ -429,8 +432,9 @@ labeled by status so you know what actually runs. (Full set in the curriculum's 
   is no split-brain stall), and commits Automerge changes **locally first**. On reconnect, the watchdog
   re-establishes QUIC, **negentropy reconciles the document sets and transfers only the missing deltas**,
   and Automerge merges deterministically. Two independently-elected leaders converge by Automerge's
-  last-writer semantics — no special reconciliation code. One caveat: **peat-btle reconnect re-delivery
-  of pending CRDT state is [In-flight] (#73)**, so the QUIC/peat-node path is the robust one. (A
+  last-writer semantics — no special reconciliation code. **peat-btle reconnect re-delivery
+  of pending CRDT state is [Shipped]** (peat-btle#83, *Fixes* #73), so the BLE leg re-delivers its
+  backlog on reconnect the way the QUIC/peat-node path does. (A
   satellite/SBD or LoRa fallback for beyond-line-of-sight is **[Proposed] — ADR-051 / ADR-052, no
   crate, no code**; the figures you may see, e.g. ~1,960 B Iridium SBD frames or 7–87 km LoRa, are
   external *hardware* specs, not Peat measurements.)

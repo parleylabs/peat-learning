@@ -16,8 +16,8 @@ download list; the capability map is what tells you whether the system does what
 - **Speculative** — design discussed for teaching, not even an ADR-complete proposal anywhere.
 
 Everything below was checked against the audited HEADs in
-[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `5629fee` (rc.33), `peat-mesh`
-rc.64 (`f3ba37a`), `peat-btle` 0.4.0 (`2946c62`), `peat-lite` 0.2.5, `peat-gateway` `a7527c7` (0.1.0), `peat-node` 0.4.22. The operating
+[`learning/review/ground-truth.md`](review/ground-truth.md): `peat` `7f89476` (rc.33), `peat-mesh`
+rc.64 (`3d2985e`), `peat-btle` 0.4.0 (`8d9d247`), `peat-lite` 0.2.5, `peat-gateway` `a7527c7` (0.1.0), `peat-node` 0.4.22. The operating
 principle is **code over everything**: where a README, a spec, or a months-old guide disagrees with
 the source on the audited HEAD, the source wins.
 
