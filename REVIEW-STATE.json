@@ -2,7 +2,7 @@
   "review": "Peat learning-curriculum hardening to enterprise-onboarding grade",
   "prompt": "learning/PROMPT-peat-training-doc-improvement.md",
   "date": "2026-08-17",
-  "last_full_run": "2026-07-20",
+  "last_full_run": "2026-08-24",
   "status": "complete",
   "phases_completed": [
     "Phase 1 — Ground truth established (per-repo audits + merged ground-truth.md)",
@@ -571,6 +571,43 @@
         "feedback_addressed": 0,
         "misses_found": 0
       }
+    },
+    {
+      "when": "2026-08-24",
+      "mode": "full sweep",
+      "repos_changed": {
+        "peat": "no drift (7f89476, rc.33 [Unreleased])",
+        "peat-mesh": "no drift (3d2985e, rc.64 [Unreleased])",
+        "peat-btle": "no drift (8d9d247, 0.4.0 [Unreleased])",
+        "peat-lite": "no drift (7a8a8fb, 0.2.5)",
+        "peat-gateway": "no drift (a7527c7, 0.1.0; mesh pin =rc.40)",
+        "peat-node": "no drift (b4b6ed3, 0.4.22; mesh pin =rc.63)",
+        "peat-flutter": "no drift (dd3f268, 0.1.0)",
+        "peat-sapient": "no drift (e311e82, 0.1.0)"
+      },
+      "docs_touched": [
+        "03-peat-mesh.md (§3.3 formation gate rewritten: removed phantom ALPN peat/formation-auth/1 + 'lives in peat-protocol' -> versioned FORMATION_AUTH_VERSION=1 challenge/response on the sync connection, transport-owned in peat-mesh mesh_sync_transport.rs:857,942; §3.4/§3.7 tombstone caption + BLE reconnect re-delivery In-flight->Shipped; audited stamp f3ba37a->3d2985e)",
+        "02-peat-protocol.md (§ three-phase legend crate label peat-mesh->peat-protocol for hierarchy/maintenance.rs:227/252/312; audited stamp peat 5629fee->7f89476, mesh f3ba37a->3d2985e)",
+        "04-peat-btle-and-lite.md (BLE reconnect re-delivery In-flight(#73)->Shipped(#83 Fixes #73, src/peat_mesh.rs:4506 test); BleAdapter trait snippet aligned to real signatures start_scan/start_advertising/set_discovery_callback/connect(&NodeId)->Box; Cargo.toml:47->:53 peat-lite-frame cite; audited stamps btle 2946c62->8d9d247, mesh f3ba37a->3d2985e; source-HEAD 2946c62->8d9d247)",
+        "00-START-HERE.md (BLE reconnect re-delivery caveat In-flight->Shipped)",
+        "06-data-flows.md (BLE reconnect re-delivery caveat In-flight->Shipped)",
+        "08-running-and-operating.md (formation-key handshake: removed phantom ALPN, transport-owned in peat-mesh + FORMATION_AUTH_TIMEOUT; M-043 QoS diagram sync-mode label Windowed->WindowedHistory)",
+        "09-protocol-specs.md (formation-key auth: removed phantom ALPN, MAC over nonce||formation_id, shipped in peat-mesh formation_key.rs, spec cite 005-security.md:284->§5.1; BLE reconnect re-delivery In-flight->Shipped; source-HEAD 2946c62->8d9d247)",
+        "07-repo-links-and-gaps.md (ground-truth stamp line peat 5629fee->7f89476, mesh f3ba37a->3d2985e, btle 2946c62->8d9d247)",
+        "index.html (hub mirror: formation handshake ALPN removed x1; BLE reconnect re-delivery In flight->Shipped x2 incl status-span flight->ship; audited-commits header 5629fee/f3ba37a/2946c62 advanced; SYNC stamp full sweep)",
+        "peat-constrained-networking.html (SYNC stamp full sweep)",
+        "changelog.html (Current-sync SYNC block full-sweep pill + prepended 2026-08-24 row)",
+        "review/diagrams.md (Phase 6b: all 68 rows re-derived + Last verified -> 2026-08-24; M-041 status Shipped;In-flight(BLE)->Shipped, provenance #73->#83; P-08 status; M-025 Cargo.toml:47->:53; new full-sweep note)"
+      ],
+      "diagrams_touched": "Phase 6b full re-derivation of all 68 registry rows (M-001-M-045, H-001-H-011, C-001-C-012) against current code by four independent per-subsystem verifiers; every Last verified advanced to 2026-08-24. FACT changes: M-041 (tombstone lifecycle) status Shipped;In-flight(BLE)->Shipped - the In-flight(BLE) slice (peat-btle#73 reconnect re-delivery) shipped in peat-btle#83 (commit 0555bc4, ancestor of audited HEAD, regression-tested peat_mesh.rs:4506); provenance repointed #73->#83; P-08 backlog row updated. M-043 (QoS pipeline) sync-mode node label Windowed->WindowedHistory (sync_mode.rs:52). M-013/M-014/H-009 (formation handshake) already correct in the registry (transport-owned since 08-10) but four stale PROSE spots still cited the removed peat-protocol ALPN peat/formation-auth/1 - corrected fact-wide. All other rows re-derived and confirmed unchanged. No diagram fact left unconfirmable.",
+      "notes": "Monthly full sweep (last full 2026-07-20, +35d, escalation due). NO code drift: all eight repos still at the 2026-08-17 audited commits. Ran as a multi-agent workflow on this model: orchestrator scoped + performed all writes; four independent read-only fact-check verifiers (peat-core / peat-mesh / edge-node-gateway / flutter-sapient) re-audited every changed/high-risk claim and every diagram row against source (path:line). §1c re-derivations all CONFIRMED clean: ADR 81 files/77 numbered/11 Accepted (002,009,015,016,023,024,030,041,047,057,070; ADR-049 IMPLEMENTED excluded correctly), CellRole=7, RBAC Role=5, AuthorityLevel=5, RPC 27/27, SyncMessageType 10 wire bytes, HierarchyLevel Node/Cell/Cohort/Federation/Coalition (ADR-066 Proposed), published peat-btle 0.4.0 non-FIPS split intact (chacha20poly1305+x25519-dalek, checksum a57dd351) vs source aws-lc-rs, gateway =rc.40 / node =rc.63 / flutter peat-ffi =0.2.12, ADR-051/052 Proposed with no SBD/LoRa transport, peat-transport/src/tak removed, command_log Speculative (absent). No open curriculum-feedback issues (checked; 0). ALL gates passed (fact-check, house-rules, cohesion, visual/diagram, regression/blast-radius, published-artifact, fact-wide-occurrence). The sweep's value was catching verified-then-wrong facts that earlier WEEKLY incrementals had shipped: (1) formation auth still described as removed peat-protocol ALPN peat/formation-auth/1 in 4 prose spots (transport-ownership was propagated to diagrams+§3.4+Module2.5 on 08-10 but not the sibling prose); (2) BLE reconnect re-delivery labeled In-flight(#73) in 9 spots though peat-btle#83 shipped the fix ~07-23; (3) per-module/hub audited-commit stamps stale at pre-08-17 commits (peat 5629fee, mesh f3ba37a, btle 2946c62) in 6 spots. All fixed fact-wide + verified zero residual occurrences. Two tighten-only prompt-amendment proposals filed: #25 (re-derive aggregate ADR counts on any docs/adr/** change), #26 (propagate per-run audited-commit stamps + status flips fact-wide). peat-tak still unreachable via the scoped proxy - remains an open todo. No visual-standard migration this sweep (edit budget went to fact-wide propagation across 11 files).",
+      "meta": {
+        "drift_found": 0,
+        "claims_resolved": 0,
+        "claims_demoted": 0,
+        "feedback_addressed": 0,
+        "misses_found": 3
+      }
     }
   ],
   "verification_2026-06-26": {
@@ -884,7 +921,7 @@
   },
   "self_improvement": {
     "mechanism": "The loop self-CORRECTS curriculum drift every run (single-loop). To also self-IMPROVE (double-loop): the WEEKLY run consumes the reader-feedback signal (open curriculum-feedback GitHub issues), triages each against code, and records a run_log.meta scorecard + a quality_trend snapshot; the MONTHLY full sweep runs a retrospective (PROMPT-peat-training-doc-improvement.md §9b) that turns misses into PROPOSED prompt/gate amendments for HUMAN APPROVAL — a human-gated ratchet: tighten-only, evidence-required, never loosen a gate autonomously. EACH proposal is filed as a dedicated `prompt-amendment` GitHub issue (so it notifies + stays tracked, not buried in the refresh PR), with its number recorded in the amendment's `issue` field. Checks live in §1c (full) + gates 6-7 / Phase 0 step 2b / Phase 5 meta (incremental).",
-    "last_retrospective": "2026-07-20",
+    "last_retrospective": "2026-08-24",
     "proposed_amendments": [
       {
         "when": "2026-06-26",
@@ -926,6 +963,24 @@
         "target": "PROMPT-peat-curriculum-refresh.md §6 + PROMPT-peat-training-doc-improvement.md §9b + REVIEW-STATE.json quality_trend shape",
         "status": "applied (human-approved this session)",
         "issue": 18
+      },
+      {
+        "when": "2026-08-24",
+        "observed_miss": "Aggregate ADR figures (81 files / 77 numbered / 11 Accepted) were not re-derived when ADR-075 was added; the 2026-07-27 and 2026-08-03 incrementals carried the stale 80/76 count until 2026-08-10 caught it (misses_found=1 that run). The incremental routing (§2) routes a docs/adr/** change only to docs citing the changed ADR number, and the aggregate count is tied to no ADR number.",
+        "evidence": "REVIEW-STATE quality_trend 2026-08-10 note ('ADR count 80/76->81/77; ADR-075 landed 2026-07-20 and was missed by the 07-27/08-03 CI passes'); changelog 2026-07-27 row adds ADR-075 to Module 7 with no count bump; 2026-08-24 re-derivation ls peat/docs/adr/*.md=81 (77 numbered + 4 ref), 11 Accepted.",
+        "proposed_check": "Add a routing rule: whenever any */docs/adr/** changes in an incremental, re-derive the aggregate ADR figures by direct ls/grep (total, numbered, per-status incl. Accepted) and fact-wide-sweep them across 01, 07 §7.6, index.html - not only the docs citing the specific changed ADR number.",
+        "target": "routing table (PROMPT-peat-curriculum-refresh.md §2) + incremental gate 7",
+        "status": "proposed",
+        "issue": 25
+      },
+      {
+        "when": "2026-08-24",
+        "observed_miss": "A fact corrected in one surface is left stale in its siblings. The 2026-08-24 sweep (zero code drift) repaired three fact-wide lapses introduced by earlier weekly incrementals: (1) per-module 'Audited at HEAD' inline stamps + hub audited-commits header left at pre-08-17 commits (peat 5629fee, mesh f3ba37a, btle 2946c62) though REVIEW-STATE + footer SYNC were advanced on 08-17 (6 spots); (2) BLE reconnect re-delivery labeled In-flight(#73) in 9 spots though peat-btle#83 shipped the fix ~07-23; (3) formation auth still described as the removed peat-protocol ALPN peat/formation-auth/1 in 4 prose spots though diagrams+§3.4+Module2.5 were updated on 08-10.",
+        "evidence": "2026-08-24 sweep diff (02:21, 04:230, 07:19-20, 09:346/398, index.html:203-204 stale stamps; 03/08/09/index formation-auth ALPN; 9 In-flight-#73 spots) + the four per-subsystem verifier reports (path:line each); review/CHANGELOG-review.md 2026-08-24 + review/diagrams.md Phase 6b note.",
+        "proposed_check": "(1) Every incremental advances the per-module 'Audited at/against HEAD' inline stamps + the hub audited-commits header for every repo whose commit moved - tracked alongside footer SYNC + REVIEW-STATE, not separate. (2) When a capability status flips (In-flight->Shipped) or a component moves repos / loses an ALPN, grep the capability name / ALPN literal / issue number across ALL 0*.md + both HTML tracks + the registry and update every occurrence, not just the routed doc or the diagram.",
+        "target": "incremental gate 7 + PROMPT-peat-curriculum-refresh.md §6 (Phase 5 stamp step) + §1c",
+        "status": "proposed",
+        "issue": 26
       }
     ]
   },
@@ -992,6 +1047,13 @@
       "unresolved_drift_count": 3,
       "open_feedback_issues": 0,
       "note": "Incremental. needs_runtime_count 16->17 (+1: consolidated application-delivery/collaboration-schema runtime efficacy - delivery/materialize latency, retry-drive cadence, received-query throughput - CONFIRMED from source + 7 e2e tests but never benchmarked in the cloud env; expected climb as new Shipped capabilities land, NOT a health signal). unresolved_drift_count held at 3 (external/registry/standalone-repo unknowns unchanged: published peat-btle 0.4.0 non-FIPS, peat-tak unreachable, peat-sapient proto/VERSION). misses_found=0: the fact-check gate caught the sidecar.proto:342-373 line-drift (normal code-move drift, exactly what the staleness safety-net is for) and it was fixed fact-wide before shipping - no wrong fact reached the docs. open_feedback_issues still 0."
+    },
+    {
+      "when": "2026-08-24",
+      "needs_runtime_count": 17,
+      "unresolved_drift_count": 6,
+      "open_feedback_issues": 0,
+      "note": "FULL SWEEP, zero code drift. needs_runtime_count held at 17 (no new Shipped capability from drift; the one status flip - BLE reconnect re-delivery In-flight->Shipped - is backed by an in-repo regression test peat_mesh.rs:4506, so it is NOT a cloud-unbenchmarkable NEEDS_RUNTIME item). unresolved_drift_count RISES 3->6 and THIS IS A REAL HEALTH SIGNAL, reported explicitly per §9b step 4: misses_found=3 verified-then-wrong facts that earlier WEEKLY incrementals SHIPPED to the live curriculum and that only this MONTHLY sweep caught - (1) formation auth still described as the removed peat-protocol ALPN peat/formation-auth/1 (4 prose spots; transport-ownership propagated to diagrams+§3.4+Module2.5 on 08-10 but not the sibling prose), (2) BLE reconnect re-delivery labeled In-flight(#73) though peat-btle#83 shipped the fix ~07-23 (9 spots), (3) per-module/hub audited-commit stamps stale at pre-08-17 commits (6 spots) - PLUS the 3 standing external/registry/unreachable unknowns (published peat-btle 0.4.0 non-FIPS, peat-tak unreachable, peat-sapient proto/VERSION). All 3 misses are now fixed fact-wide, but they reached the shipped docs (unlike prior runs where a miss was caught before shipping and did not count), so honesty requires the rise. Root cause = the weekly incremental's fact-wide propagation is too narrow (corrects the routed doc/diagram but not sibling prose + inline stamps); filed as tighten-only proposals #25 + #26. open_feedback_issues still 0. Expected trajectory: if #25/#26 are merged, next month's unresolved_drift_count should fall back toward 3 (the irreducible external unknowns)."
     }
   ]
 }

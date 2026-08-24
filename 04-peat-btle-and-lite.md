@@ -20,7 +20,7 @@ crates: [`peat-btle/`](../peat-btle/) (Bluetooth LE mesh transport) and
 > **standalone leaf crates**: they depend on nothing else in Peat (beyond `peat-btle`'s one optional
 > link to `peat-lite`), and `peat-mesh` pulls them in only through opt-in Cargo features.
 
-**Audited against:** peat-btle `2946c62` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `f3ba37a` /
+**Audited against:** peat-btle `8d9d247` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `3d2985e` /
 0.9.0-rc.64.
 
 ---
@@ -83,10 +83,11 @@ The crate is organized around one trait so the *same* mesh logic runs across pla
 ```rust
 pub trait BleAdapter: Send + Sync {
     async fn init(&mut self, config: &BleConfig) -> Result<()>;
-    async fn scan(&self, config: &DiscoveryConfig, cb: DiscoveryCallback) -> Result<()>;
-    async fn advertise(&self, beacon: &PeatBeacon) -> Result<AdvertisementHandle>;
-    async fn connect(&self, peer: &DiscoveredDevice) -> Result<Arc<dyn BleConnection>>;
-    // ...
+    async fn start_scan(&self, config: &DiscoveryConfig) -> Result<()>;
+    async fn start_advertising(&self, config: &DiscoveryConfig) -> Result<()>;
+    fn set_discovery_callback(&mut self, callback: Option<DiscoveryCallback>);
+    async fn connect(&self, peer_id: &NodeId) -> Result<Box<dyn BleConnection>>;
+    // ... start/stop, stop_scan/stop_advertising, disconnect, callbacks, connected_peers
 }
 ```
 
@@ -121,10 +122,13 @@ write after the 3-byte ATT header (a BLE-spec default, not a Peat constant). So 
   `SyncState { Idle, Sending, Receiving, WaitingAck }` machine at `:256`).
 - **`DeltaEncoder` / `PeerSyncState`** (`sync/delta.rs:32,69,84`) — track *per-peer* what has
   already been sent (`needs_send(key, timestamp)`), so on reconnect only the **changed** keys go
-  over the air. **Caveat:** re-delivery of *pending* CRDT state queued during a long outage is
-  **[In-flight]** (peat-btle#73) — the encoder tracks per-peer sent state, but full reconnect
-  re-delivery is not finished. The robust reconnect path today is the QUIC/peat-node path
-  (Module 3), not the BLE leg.
+  over the air. Re-delivery of *pending* CRDT state queued during a long outage is now
+  **[Shipped]** (peat-btle#83, which *Fixes* #73; commit `0555bc4`, `src/peat_mesh.rs`): a reconnect
+  schedules an immediate catch-up sync on both link directions in the same maintenance pass, carries
+  the current `VectorClock` in the per-peer delta, and preserves offline peripheral mutations across
+  backoff windows — regression-tested by `test_reconnect_redelivers_state_authored_while_peer_unreachable`
+  (`src/peat_mesh.rs:4506`). The BLE leg now redelivers on reconnect the way the QUIC/peat-node path
+  (Module 3) does.
 
 The GATT sync flow as a sequence:
 
@@ -224,7 +228,7 @@ old 32-byte X25519 key (`peer_key.rs:42,251`). Three honest caveats for a defens
   the KMS/Vault HSM backends in peat-gateway (Module 5). A binary may claim the validated module only
   when built with `--features fips`.
 - **Published-vs-source split — the shipped crate is not yet FIPS-clean, and the source is now two
-  migrations ahead of it.** The FIPS-approved code above is the *source* at HEAD `2946c62`, still
+  migrations ahead of it.** The FIPS-approved code above is the *source* at HEAD `8d9d247`, still
   version **0.4.0 / [Unreleased]**. The peat-btle 0.4.0 **published to crates.io** — the one a
   downstream consumer like peat-flutter actually builds — still depends on `chacha20poly1305` +
   `x25519-dalek` (`peat-flutter/rust/Cargo.lock:3498-3531,631,6402`). Same version string, same
@@ -400,7 +404,7 @@ That envelope is what lets a tiny sensor participate in the same document model 
 > Peat arrow into `peat-btle` / `peat-lite` is marked `optional = true`.
 
 - **`peat-btle` → `peat-lite`:** optional, behind the **`peat-lite-frame`** feature
-  (`peat-btle/Cargo.toml:47,174`). It lets BLE carry the universal `Document` envelope
+  (`peat-btle/Cargo.toml:53,174`). It lets BLE carry the universal `Document` envelope
   (`MessageType::Document = 0x07`) so the BLE leg and the rest of the mesh share one document format.
   **[Shipped]**
 - **`peat-mesh` → both:** optional. peat-mesh's `bluetooth` feature integrates `peat-btle`
