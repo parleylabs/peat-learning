@@ -5,7 +5,7 @@
 **Goal:** understand how bytes actually move between nodes. `peat-mesh` is the peer-to-peer
 networking library: pluggable transports, Automerge CRDT sync over QUIC, peer discovery, and
 topology formation. Repo path: [`peat-mesh/`](../peat-mesh/). Audited against
-`peat-mesh@f3ba37a` (`0.9.0-rc.64`).
+`peat-mesh@0ad275c` (`0.9.0-rc.66`).
 
 > **iroh reached 1.0 (rc.46, peat-mesh#276) [Shipped].** The QUIC transport that underpins the whole
 > mesh left the release-candidate train: `iroh` is now pinned to the **stable `1.0.2`** line
@@ -211,7 +211,10 @@ pub enum SyncMessageType {
 The enum, the byte values, and the `ADR-034` / `ADR-040 #435` annotations all match the source
 verbatim. (ADR-040 is the repo-local ADR whose on-disk title is *"Nostr protocol lessons"*;
 negentropy is the applied lesson. Note: ADR-034 is referenced in code comments here but is not in
-the umbrella ADR index — treat the citation as the code's own.)
+the umbrella ADR index — treat the citation as the code's own.) These ten bytes are the **whole** sync
+wire: the newer application planes (application-delivery, reconstructible-history transfer,
+blob-announce) each ride their **own dedicated ALPN**, so they add capability without adding a
+`SyncMessageType` tag — the enum has been byte-stable across rc.63→rc.66.
 
 **Why negentropy?** Without it, deciding *which* documents differ between two peers can cost work
 proportional to the number of documents. **Negentropy** is a set-reconciliation protocol that
@@ -454,15 +457,16 @@ from getting pathologically deep in the first place. A new per-collection regist
 - **Local writes only.** Authenticated remote convergence **bypasses** admission — a bound is a
   contract on a producer, never a reason to reject a peer's already-committed state (which would break
   CRDT convergence). Unregistered collections are admitted unchanged.
-- **It is one landed slice of a larger, still-Proposed policy.** Three peat-mesh ADRs frame this:
-  **peat-mesh ADR-0014 (Accepted, `docs/adr/0014-…md`)** rules that a `FullHistory` collection must
+- **It is the first landed slice of a policy that has now largely shipped.** Three peat-mesh ADRs frame
+  this: **peat-mesh ADR-0014 (Accepted, `docs/adr/0014-…md`)** rules that a `FullHistory` collection must
   **never auto-convert** to `LatestOnly` to save space — silent semantic weakening is forbidden, so
   `LatestOnly` remains the *only* bounded-history path today and **`WindowedHistory` does not yet bound
   on-disk storage** (`docs/adr/0015-windowed-history-retention.md` is a **Proposed** stub, no code).
-  **peat-mesh ADR-0016 (Proposed, 2026-08-01)** is the umbrella "every writable collection needs an
-  explicit budget contract" design; the write-admission mechanism above is its first shipped slice,
-  while the finite-segment / epoch / producer-backpressure lifecycle it describes is **[Proposed]**.
-  The operator-facing surface for these budgets is named as peat-node's own **ADR-003** (Module 8 §8.3).
+  **peat-mesh ADR-0016 (now `Accepted`, 2026-08-01)** is the umbrella "every writable collection needs an
+  explicit budget contract" design; write-admission was its first slice, and as of **rc.66** the
+  finite-segment / epoch / producer-backpressure lifecycle it describes **ships** too — the
+  reconstructible-history plane below (peat-mesh#396). The operator-facing surface for these budgets is
+  named as peat-node's own **ADR-003** (Module 8 §8.3).
 
 ### Durability, attribution, and one canonical endpoint (rc.59–rc.64) **[Shipped]**
 
@@ -502,6 +506,30 @@ but runtime-unbenchmarked here (NEEDS_RUNTIME):
   (`network/iroh_transport.rs:1406+`), and a consumer can build the canonical Automerge backend around an
   already-bound endpoint and open store (`sync/automerge_backend.rs`, `tests/shared_endpoint_backend_e2e.rs`).
 
+### Explicit multi-interface binding + graceful mDNS teardown (rc.66, peat-mesh#397) **[Shipped]**
+
+The pull-based interface-filter machinery above assumes peat-mesh may *enumerate* host interfaces and
+pick which to advertise. That breaks on mobile OSes that own the routing table — Android in particular
+can keep an isolated Wi-Fi/Ethernet/USB network attached for one purpose while routing Internet traffic
+over another, and a source address alone does not select the Android `Network`. rc.66 adds a
+caller-owned binding surface: `IpBindSpec { addr, prefix_len, is_default_route }`
+(`network/iroh_transport.rs:89`) and `bind_with_explicit_ip_bindings(builder, &[IpBindSpec])` (`:445`),
+reached through a new `from_formation_with_discovery_at_ip_bindings(…)` constructor (`:983`). The bind
+path **validates the routes** — it rejects unspecified/multicast addresses, a prefix longer than 32 (v4)
+/ 128 (v6), duplicate addresses, and **more than one default route per address family** (`:456-497`).
+This is the mesh half of the same work as peat's **ADR-076 "Android-selected IP bindings"** (`Accepted`);
+the peat-repo side binds each native socket to the chosen `Network` before bind (peat#1095).
+
+Two discovery correctness fixes ride with it. mDNS now advertises the **exact bound port** read back from
+`endpoint.bound_sockets()` (falling back to the requested port only when it was 0, `:1073-1122`), so a
+node that asked for an ephemeral port still advertises the real one; and it advertises the **dialable hex
+EndpointId** as the TXT `node_id` so a NAT/firewalled node stays dialable by a peer that initiates. On the
+teardown side, closing a transport now runs a **graceful mDNS teardown before endpoint shutdown**:
+`IrohTransport::shutdown_discovery()` (`:1163`) → `MdnsDiscovery::shutdown` (`discovery/mdns.rs:243`)
+stops the browse, unregisters (awaiting `UnregisterStatus::OK/NotFound`), waits ~200 ms for the goodbye
+retransmit, then shuts the daemon — so a peer's browse cache does not keep a dead advertisement. New
+repo-local **ADR-0017 "Explicit IP bindings"** (`Accepted`) records the decision.
+
 ### Authenticated durable application delivery (rc.64 `[Unreleased]`, peat-mesh#383/#389) **[Shipped]**
 
 CRDT sync (§3.4) converges *shared* collections: every formation member holds the whole document set.
@@ -511,8 +539,9 @@ A second, complementary primitive now ships for **addressed** application traffi
 per-recipient transition is persisted to a dedicated `application-delivery.redb` **before** the call
 returns. It does **not** change the sync wire protocol — the `SyncMessageType` bytes are byte-identical
 to rc.63 — because delivery rides a **separate ALPN**, `CAP_APPLICATION_DELIVERY_ALPN =
-b"peat/application-delivery/1"` (`:23`), registered on the *same canonical* Iroh router as Automerge sync
-and blob-announce (`sync/automerge_backend.rs:784-787`) — one endpoint, three protocols.
+b"peat/application-delivery/1"` (`:23`), registered on the *same canonical* Iroh router as Automerge sync,
+blob-announce, and — since rc.66 — reconstructible-history transfer (`sync/automerge_backend.rs`) — one
+endpoint, **four** separate-ALPN protocols (the history plane is described below).
 
 The design in four facts, each code-anchored:
 
@@ -570,6 +599,59 @@ flowchart TD
 *Every node above is **Shipped** (peat-mesh#383/#389, rc.64 `[Unreleased]`). This is addressed
 application-document delivery — distinct from the authority-gated **command** tasking primitive
 (`command_log`, still Speculative) discussed in Module 6 §6.3; the two are different mechanisms.*
+
+### Reconstructible collection history: finite segments + authenticated subordinate transfer (rc.66, ADR-076 / ADR-0016, peat-mesh#396) **[Shipped]**
+
+The bounded-history story that was one shipped slice plus a Proposed lifecycle last month is now a
+**typed, enforced history plane**. rc.66 adds two net-new modules — `src/storage/history_segments.rs`
+(the segment store and enforcement) and `src/storage/history_transfer.rs` (the wire protocol) — that
+implement peat's **ADR-076 Reconstructible Collection History Contract** against the published
+`peat_schema::history::v1` types. **Label carefully:** the *contract itself* — that a deployment field-
+qualifies these guarantees end-to-end — is **Proposed** (ADR-076 is `Proposed`, implementation-approved
+under peat#1084; whole-system qualification is tracked by peat-sim#77 and is **NEEDS_RUNTIME**). But the
+*schema types, validation, and the mesh-side enforcement below* are **Shipped** — in code and covered by
+tests. peat-mesh's own umbrella **ADR-0016 is now `Accepted`.**
+
+What ships, each code-anchored:
+
+- **Finite reconstructible segments.** A collection's history is stored as sealed segments in redb
+  (`HistorySegmentStore`, `history_segments.rs:358`; `SEGMENTS_TABLE`/`EPOCHS_TABLE`); a sealed segment
+  carries a **SHA-256 content identity**, and a reconstruction whose bytes don't hash to that identity
+  fails closed (`MaterializedShaMismatch`, `:89`).
+- **Durability acknowledgements.** `AuthenticatedDurabilityTarget` + `DurabilityProgress` drive retention:
+  a segment becomes retention-eligible only once its durability target is met (`evaluate_retention_by_identity`,
+  `:1802`); the wire carries an `AckFrame` (`TAG_ACK`, `history_transfer.rs:38`).
+- **Retention enforcement, stale-writer fencing, tombstones.** `EnforcementState::Enforced` gates the
+  retention path (`:3746`); a writer holding a superseded epoch is rejected with
+  `StaleEpoch { attempted, active_successor }` (`:1148`) and counted (`stale_writer_rejections`); removed
+  segments leave a persistent tombstone (`RESERVED_SEGMENT_KEY_PREFIX`), layered on the existing ADR-034
+  tombstone table.
+- **Admission control + metrics.** A bounded, persisted transfer queue backpressures or rejects
+  (`TransferAdmissionOutcome`, `TransferBackpressured`/`TransferRejected`); 12 counters surface through
+  `HistoryMetricsSnapshot` (`:214`).
+- **Authenticated subordinate transfer.** History moves over its **own dedicated ALPN**,
+  `CAP_HISTORY_SEGMENT_ALPN = b"peat/history-segment/1"` (`history_transfer.rs:17`) — **not** a new
+  `SyncMessageType` byte (the sync enum is byte-identical, §3.4) — behind formation auth plus an optional
+  Ed25519 membership certificate, failing closed `401`/`403` (`:227,242`). This is the fourth
+  separate-ALPN plane on the canonical router (sync · application-delivery · history-segment · blob-announce).
+
+The sealed-segment lifecycle is the load-bearing state machine:
+
+```mermaid
+%% Legend: green = Shipped (schema types + mesh enforcement, rc.66) · blue = Proposed (end-to-end field qualification, ADR-076 / peat-sim#77)
+%% Source: peat-schema history.proto SegmentLifecycle; peat-mesh history_segments.rs
+flowchart LR
+  active["Active<br/>(open, accepting writes)"] --> sealed["Sealed<br/>(closed on epoch/seal;<br/>SHA-256 content identity)"]
+  sealed --> durable["Durably Acknowledged<br/>(durability target met)"]
+  durable --> eligible["Retention Eligible<br/>(EnforcementState::Enforced)"]
+  eligible --> removed["Removed<br/>(persistent tombstone)"]
+  stale["stale writer<br/>(superseded epoch)"] -.->|"rejected: StaleEpoch"| active
+```
+
+*Green nodes are **Shipped** in rc.66 (schema types `peat_schema::history::v1` + the peat-mesh enforcement
+cited above, with tests). The end-to-end guarantee that a fielded deployment reconstructs history under
+partition/loss is **Proposed** (ADR-076) and **NEEDS_RUNTIME** (peat-sim#77) — do not read the shipped
+plumbing as a qualified field capability.*
 
 ---
 

@@ -18,7 +18,7 @@ module — take your time. Repo path: [`peat/peat-protocol/`](../peat/peat-proto
 > role names, version numbers), so this module cites `path:line` and flags every place a doc and
 > the code diverge.
 
-Audited at `peat` HEAD `5629fee` (workspace `0.9.0-rc.33`), `peat-mesh` rc.64 (`f3ba37a`).
+Audited at `peat` HEAD `cd9e282` (workspace `0.9.0-rc.34`), `peat-mesh` rc.66 (`0ad275c`).
 Citations below point at the working-tree source.
 
 ---
@@ -478,6 +478,17 @@ change needed to onboard a new fleet or UAS. The mapping is verbatim across four
 > the coalescing window and compaction threshold (Module 3, rc.46–rc.47 storage work) keys on the
 > **colon**-delimited prefix (`telemetry:sensor-1` → `telemetry`). They are orthogonal mechanisms
 > over two different key schemes — no code links them.
+
+> **Sync mode ≠ history guarantee (ADR-076, rc.34).** The `Sync mode` column above
+> (`FullHistory`/`LatestOnly`/`WindowedHistory`) is now formally *synchronization behaviour only* — it
+> "cannot by itself establish domain-history or durability guarantees" (`peat-protocol/src/qos/sync_mode.rs:4-6`).
+> Those guarantees are a separate, typed contract: **peat's ADR-076 Reconstructible Collection History
+> Contract**. rc.34 ships the `peat_schema::history::v1` policy/segment/durability types plus a
+> conservative migration that maps a legacy sync mode to a history policy without ever silently dropping
+> history (`collection_history_policy_from_sync_mode`, `sync_mode.rs:20-64`; absence defaults to
+> `FullHistory` — "absence never authorizes history loss"). The types and validation are **[Shipped]**;
+> the end-to-end guarantee is **Proposed** (ADR-076, `Proposed`, peat#1084). The mesh-side enforcement is
+> in Module 3 §3.4; the schema package is in Module 9.
 
 ---
 

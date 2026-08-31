@@ -20,8 +20,8 @@ crates: [`peat-btle/`](../peat-btle/) (Bluetooth LE mesh transport) and
 > **standalone leaf crates**: they depend on nothing else in Peat (beyond `peat-btle`'s one optional
 > link to `peat-lite`), and `peat-mesh` pulls them in only through opt-in Cargo features.
 
-**Audited against:** peat-btle `2946c62` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `f3ba37a` /
-0.9.0-rc.64.
+**Audited against:** peat-btle `8d9d247` / 0.4.0, peat-lite `7a8a8fb` / 0.2.5, peat-mesh `0ad275c` /
+0.9.0-rc.66.
 
 ---
 
@@ -224,7 +224,7 @@ old 32-byte X25519 key (`peer_key.rs:42,251`). Three honest caveats for a defens
   the KMS/Vault HSM backends in peat-gateway (Module 5). A binary may claim the validated module only
   when built with `--features fips`.
 - **Published-vs-source split — the shipped crate is not yet FIPS-clean, and the source is now two
-  migrations ahead of it.** The FIPS-approved code above is the *source* at HEAD `2946c62`, still
+  migrations ahead of it.** The FIPS-approved code above is the *source* at HEAD `8d9d247`, still
   version **0.4.0 / [Unreleased]**. The peat-btle 0.4.0 **published to crates.io** — the one a
   downstream consumer like peat-flutter actually builds — still depends on `chacha20poly1305` +
   `x25519-dalek` (`peat-flutter/rust/Cargo.lock:3498-3531,631,6402`). Same version string, same
