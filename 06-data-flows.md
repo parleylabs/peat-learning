@@ -134,8 +134,10 @@ see `peat-node/proto/sidecar.proto` v1 caveats). The five classes and their poli
 > ceilings (peat-mesh `qos/write_admission.rs`; configured via peat-node's `CollectionConfig`, Module 8
 > §8.3). This gates **local producer writes only** — an over-budget local write is rejected with a typed
 > `RESOURCE_EXHAUSTED`, but **authenticated remote convergence bypasses admission**, because rejecting a
-> peer's already-committed CRDT state would break convergence. It is the first shipped slice of the
-> still-Proposed bounded-history policy (peat-mesh ADR-0016 / peat-node ADR-003). peat-node **shipped**
+> peer's already-committed CRDT state would break convergence. It was the first shipped slice of what was
+> then a Proposed bounded-history policy; **peat-mesh ADR-0016 is now `Accepted`, and as of rc.66 the
+> finite-segment / durability / retention lifecycle ships** as the typed reconstructible-history plane
+> (ADR-076, peat-mesh#396 — Module 3 §3.4). peat-node **shipped**
 > the operator surface for these limits in `v0.4.19` (rate/burst + byte/revision ceilings) and added an
 > **opt-in grouped-durability** knob in `v0.4.20` that batches many writes into one storage transaction
 > while keeping immediate durability the default (Module 8 §8.3); neither changes the wire format.

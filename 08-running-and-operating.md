@@ -133,10 +133,11 @@ state to the left of `me:`, remote nodes after). The binary defaults to a *quiet
 > it takes `--bind` / `--name` CLI flags. When something does not pick up an env var, first confirm
 > which binary you are actually running.
 
-### What the production sidecar (`peat-node`) gained recently — through v0.4.22 **[Shipped]**
+### What the production sidecar (`peat-node`) gained recently — through v0.5.1 **[Shipped]**
 
 If you run `peat-node` (the sidecar most deployments use), a handful of operability changes in the
-`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `27e5c6c` (v0.4.22). The
+`v0.4.4 → v0.4.8` line are worth knowing, all confirmed in `peat-node` at `6357757` (**v0.5.1**; the
+sidecar crossed from the `0.4.x` line to `0.5.1` this cycle — see the v0.5.0/v0.5.1 subsection below). The
 v0.4.9 release itself added no new runtime surface — it eliminated a `grpc_test` port-collision flake
 (the test server now binds `127.0.0.1:0` and reads the OS-assigned port instead of a hardcoded one)
 and shipped a zero-friction two-node attachment quick-start under `examples/compose/attachments/`
@@ -221,13 +222,14 @@ and shipped a zero-friction two-node attachment quick-start under `examples/comp
 >   lifecycle (`src/node.rs`), and reciprocal mDNS discovery elects **exactly one dial initiator** by stable
 >   endpoint ID (`should_initiate_mdns_connection(local, remote) = local < remote`, `src/node.rs:52-55,1409`)
 >   so a second connection can no longer replace the channel carrying the initial document sweep. At HEAD the
->   mesh pin is `=0.9.0-rc.63` (`Cargo.toml:173`), one RC behind mesh HEAD (rc.64). The **Helm chart is still
+>   mesh pin is `=0.9.0-rc.63` (`Cargo.toml:173`), now three RCs behind mesh HEAD (rc.66). The **Helm chart is still
 >   `0.4.10`** (`chart/peat-node/Chart.yaml`) — it tracks well behind the crate; deploy an explicit
 >   `image.tag` rather than trusting the chart's `appVersion`.
 
-> **Canonical Track on the sidecar RPCs + mesh-propagated deletes (post-0.4.22, peat-node#236) [Shipped].**
-> Four commits landed on top of the 0.4.22 tag (the crate version was **not** bumped — `Cargo.toml:7`
-> still reads `0.4.22`), touching the wire in two ways. RPC count is still **27/27**.
+> **Canonical Track on the sidecar RPCs + mesh-propagated deletes (released in v0.5.0, peat-node#236) [Shipped].**
+> This work — pre-release on top of the 0.4.22 tag last cycle — is now **released in v0.5.0** (the v0.5.0
+> changelog calls the track migration a **BREAKING protobuf change**; regenerate clients before upgrading).
+> It touches the wire in two ways. RPC count is still **27/27**.
 >
 > - **The tracks collection now uses the canonical `peat.track.v1.Track` (BREAKING wire change).**
 >   `proto/sidecar.proto` imports the vendored `peat.track.v1.Track` (`proto/track.proto`, vendored from
@@ -261,6 +263,39 @@ and shipped a zero-friction two-node attachment quick-start under `examples/comp
 >   auto-pass once upstream lands the fix. Operationally: a deleted id is unusable mesh-wide until its
 >   tombstone is GC'd (default 168 h), so a caller reusing stable ids (`tracks:<callsign>`) must treat
 >   delete-then-recreate as unsupported for now.
+
+> **v0.5.0 → v0.5.1: transport-neutral port, node-ID static peering, and a supported Ansible role [Shipped].**
+> The sidecar crossed to the `0.5.x` line this cycle. Three operator-facing changes matter:
+>
+> - **The mesh UDP port is now transport-neutral (v0.5.1, peat-node#255).** The public flag is `--udp-port`
+>   and the env var is `PEAT_NODE_UDP_PORT` (`src/main.rs:201`); the old `--iroh-udp-port` /
+>   `PEAT_NODE_IROH_UDP_PORT` remain as **hidden compatibility inputs** (the legacy env is promoted to the
+>   new name at startup when the new one is unset, `src/main.rs:481-486`). The *binary's* own default is
+>   still an **ephemeral** port — the well-known **51071** is a **deployment convention**, not a binary
+>   default: the Ansible role and the Compose examples bind and publish UDP **51071** by default
+>   (`ansible/roles/peat_node/defaults/main.yml`), and the Helm chart's `udpPort` defaults to null. One
+>   compatibility trap: the **v0.5.0 runtime predates** the neutral setting, so if you set
+>   `PEAT_NODE_UDP_PORT` you must deploy the **v0.5.1** role and image together; a v0.5.0 runtime needs the
+>   legacy env var.
+> - **Static peering by node ID (v0.5.0, peat-node#249).** A new `--peer-node` / `PEAT_NODE_PEER_NODES`
+>   (repeatable) takes `node_id@host:port` (`src/main.rs:177-184`) — distinct from the pre-existing
+>   `--peer`, which takes an already-derived `endpoint_id@host:port`. Here the operator supplies a stable
+>   **node ID** (default a random UUID, `--node-id`), and the sidecar derives the Iroh endpoint ID
+>   deterministically as `HKDF-SHA256(formation_shared_key, "iroh:" + node_id)` (`src/identity.rs:23-24`);
+>   the offline `derive-id` subcommand prints it. So any holder of the formation key can address a peer by
+>   its node ID alone — no key exchange needed to bootstrap a static mesh. Note this node ID is an
+>   operator-chosen label, **not** the SHA-256-of-Ed25519 `NodeId` used elsewhere in the stack.
+> - **A supported Ansible deployment role (v0.5.0, peat-node#239–#247).** Non-Kubernetes nodes now deploy
+>   through a first-party Ansible role in two modes: a **Docker Compose project** in one directory under
+>   `peat_node_container_path`, or a **Debian/RPM systemd package** from **signed** APT/DNF repositories,
+>   running under a dedicated `peat` service user with data at `/var/lib/peat-node` (mode 0750). The role
+>   supports mixed inventories, **Vault-backed formation secrets** (`no_log` on secret-writing tasks),
+>   explicit service identities, attachment `outbox/` (read-only in the container) + `inbox/` (read-write)
+>   directories, and it can generate a **static full mesh** from an inventory group (each host peered by its
+>   node ID). v0.5.1 also makes package installs resilient to stale APT metadata (refreshes the cache before
+>   install, #253). This sits alongside — it does not replace — the Helm chart / Zarf / UDS bundles. The
+>   Helm chart still lags at `0.4.10` (`chart/peat-node/Chart.yaml`), so keep deploying an explicit
+>   `image.tag`. The sidecar's mesh pin is unchanged at `peat-mesh =0.9.0-rc.63` (`Cargo.toml:173`).
 
 The capability facts below are unchanged from v0.4.8:
 

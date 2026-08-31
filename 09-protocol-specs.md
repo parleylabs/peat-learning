@@ -151,6 +151,19 @@ Field-number ranges are reserved (`003-schema.md:93-97`): **1–99** core, **100
 extensions, **200–299** organization-specific, **1000+** application-defined. The shipped peat-schema
 crate compiles these protos via `prost`.
 
+> **New at rc.34: the `peat.history.v1` package (ADR-076) [Shipped types, Proposed guarantee].**
+> `peat-schema/proto/history.proto` (a new package, its own header `Version: 0.1.0`) adds the typed
+> vocabulary for peat's **Reconstructible Collection History Contract**: `CollectionHistoryPolicy`,
+> `SynchronizationPolicy`, `CausalRetentionPolicy`, `SegmentPolicy`, `DurabilityPolicy`,
+> `EffectiveCollectionHistoryPolicy`, `DurabilityProgress`, `HistorySegmentDescriptor`, and the
+> `SegmentLifecycle`/`EpochLifecycle` enums, exposed as `peat_schema::history::v1`
+> (`peat-schema/src/lib.rs:190-195`). The generated types, a 792-line hand-written validator
+> (`src/validation/history.rs`), a conservative migration from legacy sync modes
+> (`peat-protocol/src/qos/sync_mode.rs:20-64`), and ~19 contract tests
+> (`peat-schema/tests/history_contract.rs`) are all **[Shipped]** in rc.34. The *end-to-end guarantee*
+> that a deployment reconstructs history under loss is **Proposed** (ADR-076, `Proposed`, peat#1084;
+> whole-system qualification is peat-sim#77, **NEEDS_RUNTIME**). The mesh-side enforcement is Module 3 §3.4.
+
 > **Vocabulary caution [In-flight].** The hierarchy proto has already been **renamed to the abstract
 > vocabulary** — `hierarchy.proto` ships `CellSummary` / `CohortSummary` / `FederationSummary` /
 > `CoalitionSummary` with no `Squad` / `squad_id` left (`peat-schema/proto/hierarchy.proto:24,71,72,122,172`).
@@ -181,6 +194,15 @@ Highlights, verified against `003-schema.md`:
   (ADR-020/028/029). Confirm any specific field mapping against that code plus spec 003 §9 before
   quoting it as exact.
 
+> **A second, mesh-free CoT↔SAPIENT mapping [Shipped].** Distinct from the `peat-schema`/`<__peat>` path
+> above, the new `peat-direct-sapient-cot` crate (Module 7 §7.8) pins its own CoT↔SAPIENT field map in
+> code (`peat-direct-sapient-cot/src/converter.rs`), scoped to SAPIENT `DetectionReport` ↔ CoT atom
+> (`a-*`): CoT `lat/lon` → SAPIENT `Location.y/x` (**axis-swapped**), `hae` → `z`, `ce/le` →
+> `x_error/y_error`; coordinate system `LatLngDegM`, datum `Wgs84E`; the CoT `uid`/`type`/callsign/group
+> ride as `TrackObjectInfo` key/values; each message gets a fresh report ULID plus a stable per-contact
+> object ULID. It never touches `peat-schema` or the mesh — it is a standalone format converter, not the
+> bridge. SAPIENT `RangeBearing` → CoT is explicitly not implemented.
+
 > **New at rc.30: richer motion and error fields on tracks [Shipped].** `peat-schema/proto/common.proto`
 > gained two message types: **`Kinematics`** (`velocity` m/s, `heading` 0–360°, `acceleration` m/s²,
 > `vertical_speed` m/s, `common.proto:37`) and **`PositionError`** (`circular_error` = CEP m,
@@ -191,8 +213,10 @@ Highlights, verified against `003-schema.md`:
 > and `vertical_error_m` fields are now marked **`[deprecated]`** in favour of these — but read carefully:
 > consumers such as the SAPIENT bridge **dual-write** old and new fields for backward compatibility
 > (Module 7), so the deprecated fields are still populated, not gone. Note also the proto **schema
-> version** is a separate track from the crate version: every `.proto` header now reads `Version: 0.5.0`
-> (pre-1.0, signalling the wire schema is not yet frozen) while the `peat-schema` *crate* is `0.9.0-rc.33`.
+> version** is a separate track from the crate version: the established `.proto` headers read
+> `Version: 0.5.0` (pre-1.0, signalling the wire schema is not yet frozen) — the one exception is the new
+> `history.proto` package, which starts its own line at `Version: 0.1.0` — while the `peat-schema` *crate*
+> is `0.9.0-rc.34`.
 
 > **New: three collaboration content schemas for addressed delivery [Shipped].** Alongside the
 > peat-mesh application-delivery primitive (Module 3 §3.4), `peat-schema/src/type_registry.rs` registers
@@ -340,7 +364,7 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
   > (`peat-btle/Cargo.toml:17,25,26`). So a validated FIPS 140 boundary is now reachable in the BLE
   > crate itself when built `--features fips`; the KMS / Vault HSM backends in peat-gateway remain the
   > path where a crate still uses non-validated software AES. **The published-vs-source split still
-  > stands, and is now wider:** peat-btle *source* (HEAD `2946c62`) is FIPS-approved through AWS-LC and
+  > stands, and is now wider:** peat-btle *source* (HEAD `8d9d247`) is FIPS-approved through AWS-LC and
   > has also dropped BLAKE3 for SHA-256 identity derivation, but it is still version **0.4.0 /
   > [Unreleased]**. The crates.io-published peat-btle 0.4.0 that downstream binaries like peat-flutter
   > build against still depends on `chacha20poly1305` + `x25519-dalek`
@@ -392,7 +416,7 @@ amended **2026-05-18** to the FIPS-approved cipher suite (`005-security.md:728` 
    [Shipped]** — approved algorithms, and now with a route to the CMVP-validated module: peat-btle's
    2026-07-23 AWS-LC migration lets a build opt into the validated `aws-lc-fips-sys` module via the
    `fips` feature (default builds use the non-FIPS AWS-LC provider). Only P-256 ships (not P-384). One
-   published-vs-source split persists: peat-btle *source* (`2946c62`) routes all crypto through
+   published-vs-source split persists: peat-btle *source* (`8d9d247`) routes all crypto through
    `aws-lc-rs` and derives identity with SHA-256, but the crates.io-published peat-btle 0.4.0 still
    ships ChaCha20/X25519 — neither migration was ever re-published.
    The docs that *still* advertise ChaCha20-Poly1305 / X25519 are the **peat-mesh and peat-btle READMEs**

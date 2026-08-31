@@ -1036,3 +1036,87 @@ GoatCounter `parley-peat` beacon + `id="fb"` widget + base64 wordmark all preser
 reference (every `repo#NNN` and version pin confirmed at HEAD; peat-node crate 0.4.22 / mesh pin rc.63 /
 Helm 0.4.10), and fact-wide-occurrence (sidecar.proto line-range + the old per-repo HEADs grepped across all
 `0*.md` + three HTML tracks + registry + ground-truth).
+
+---
+
+## 2026-08-31 — full sweep (monthly, CI mode)
+
+Monthly full sweep (previous full sweep 2026-07-20; 42 days elapsed > 30-day interval). Every prose claim
+re-audited and every diagram row re-verified against current code. Multi-agent on the latest model: four
+read-only per-repo ground-truth agents (peat / peat-mesh / peat-node / peat-sapient) + one read-only
+Phase-6b diagram agent; the orchestrator performed every file write, the commit, and the push (no base64
+HTML crossed an agent boundary). No open `curriculum-feedback` issues this run.
+
+**Repos moved (4 of 8):**
+- **peat** `7f89476 → cd9e282` (workspace **rc.33 → rc.34**). ADR-076 **Reconstructible Collection History
+  Contract** (Proposed ADR, impl-approved peat#1084; #1084/#1085/#1086): `peat_schema::history::v1` is
+  **Shipped** — `proto/history.proto` (11 messages + 11 enums), generated types (`lib.rs:190-195`), a 792-line
+  hand-written validator (`src/validation/history.rs`), a conservative sync-mode→history-policy migration
+  (`peat-protocol/src/qos/sync_mode.rs:20-64`, "absence never authorizes history loss"), ~19 contract tests
+  (`tests/history_contract.rs`), and a `peat_protocol::history` facade (`lib.rs:90`). Runtime
+  enforcement/qualification is **Proposed + NEEDS_RUNTIME** (peat-sim#77). #1091 builds the schema **without a
+  system protoc** (checked-in `proto/peat-schema-descriptor.bin` + `skip_protoc_run()`, `build.rs:29-32`) — an
+  air-gapped-CI win. #1089 supply-chain: **h2 0.4.13→0.4.16** (RUSTSEC-2026-0258), **lru →0.18.2**
+  (RUSTSEC-2026-0253), and the temporary peat-mesh git pin removed (floor now rc.66). #1095 Android
+  selected-IP-bindings = **ADR-076-android (Accepted)**. FIPS clean (ChaCha only in the vendored `netwatch`
+  crate pulled transitively by iroh, never peat crypto).
+- **peat-mesh** `3d2985e → 0ad275c` (**rc.64 → rc.66**). #396 **enforces** ADR-076 (net-new
+  `history_segments.rs` 5355 L + `history_transfer.rs` 1402 L): finite SHA-256-sealed segments, durability
+  acks, retention enforcement (`EnforcementState::Enforced`), stale-writer fencing
+  (`StaleWriterBehavior::RejectWithActiveEpoch`), tombstones, transfer admission control, 12 metrics counters,
+  and authenticated subordinate transfer — over a **fourth dedicated ALPN** `peat/history-segment/1` with
+  **no new `SyncMessageType` byte**. **peat-mesh ADR-0016 flipped Proposed→Accepted**; new repo-local
+  **ADR-0017** (explicit IP bindings, Accepted); peat-mesh ADRs **17→18**. #397 explicit multi-interface
+  IPv4/IPv6 binding (`IpBindSpec`, route validation, exact-port mDNS, graceful `shutdown_discovery()`).
+  Leader election **still deterministic** (hysteresis 0.1, no consensus).
+- **peat-node** `b4b6ed3 → 6357757` (**0.4.22 → 0.5.1**, a minor-version jump). Canonical
+  `peat.track.v1.Track` **released in v0.5.0** (BREAKING protobuf) — corrected the prior "crate not bumped /
+  still 0.4.22" callout; transport-neutral **`--udp-port` / `PEAT_NODE_UDP_PORT`** (#255; legacy
+  `--iroh-udp-port` hidden; Ansible/Compose default UDP **51071**, a deployment convention not a binary
+  default); **static peering by node ID** (#249, `--peer-node`, HKDF-derived endpoint id); a **supported
+  Ansible role** (#239–#247; Docker Compose or signed Debian/RPM systemd package, Vault-backed secrets,
+  attachment outbox:ro/inbox:rw, static full-mesh generation). RPC **27/27** unchanged; mesh pin still
+  `=rc.63` (now 3 RCs behind mesh HEAD); Helm chart still `0.4.10`.
+- **peat-sapient** `e311e82 → 8861470` (0.1.0). New **4th crate `peat-direct-sapient-cot`** (PR #55): a
+  standalone, mesh-free CoT↔SAPIENT converter (no `peat-mesh`/`peat-schema`), scoped to SAPIENT
+  `DetectionReport` ↔ CoT atom, 16 tests, arch doc Accepted 2026-08-28. `proto/VERSION` now readable (submodule
+  pin, not semver) — that external unknown is **resolved**. `fips_crypto_provider()` unchanged (X25519 kx still
+  offered); the SAPIENT crates' `peat-schema` caret `rc.30` reopened a ~4-rc lag vs the umbrella's `=rc.34`.
+
+**Re-derived stable anchors:** ADR archive **83 files** (79 numbered, **74 distinct numbers** — five reused,
+023/025/059/064/**076**; highest ADR-076), **12 Accepted** (was 11; +076-android). **ADR-076 is a duplicate
+number** — "Android-selected IP bindings" (Accepted) and "Reconstructible Collection History Contract"
+(Proposed) both carry it; prose disambiguates by title. `CellRole` = 7; RPC 27/27; FIPS source posture
+unchanged. Gateway now lags mesh **~26 RCs** (rc.40 vs rc.66).
+
+**Docs touched:** 01 (ADR count + duplicate-number note + gateway lag + M-006 label), 02 (sync-mode ≠ history
+guarantee callout), 03 (write-admission ADR-0016 Accepted + lifecycle Shipped; "three protocols"→four; new
+reconstructible-history subsection + **M-046** diagram; multi-interface-binding subsection; SyncMessageType
+own-ALPN note; header rc.66), 05 (gateway lag), 06 (bounded-history note), 07 (audited HEADs; node 0.5.1 +
+Ansible; sapient 3→4 crate + direct converter; §7.8 schema-lag reopened), 08 (v0.4.22→v0.5.1 heading; released-
+v0.5.0 callout; new v0.5.0/v0.5.1 subsection; mesh-pin lag 1→3 RCs), 09 (peat.history.v1 package; crate rc.34;
+mesh-free CoT↔SAPIENT field map), index.html (mirrors + two new hub cards + SYNC), peat-constrained-networking
+(retention/deletion warn + SYNC), changelog.html (SYNC + tags + prepended full-sweep row).
+
+**Phase 6b:** all 68 registry rows re-verified against HEAD and advanced to 2026-08-31; only **M-006**
+(gateway rc-lag `~24`→`~26`) changed a depicted fact; **M-046** authored (reconstructible-segment lifecycle,
+mixed Shipped/Proposed). No twin disagreements; no unverifiable diagram facts.
+
+**Gates:** fact-check (every new/changed claim re-verified `path:line` at HEAD — the peat-node delete-
+propagation line refs and sidecar.proto:340-355 re-confirmed; the "11 Accepted" methodology re-confirmed
+before advancing to 12), house-rules (Shipped/In-flight/Proposed/Speculative labels correct; the ADR-076
+schema-types-Shipped vs contract-Proposed split kept precise; FIPS-only; no vendor names; autonomy framing
+preserved), cohesion/flow, visual/diagram (M-046 ≤12 nodes + legend + self-contained; palette correct),
+regression/blast-radius (hub↔module mirroring, SYNC stamps, GoatCounter `parley-peat` beacon + `id="fb"`
+widget + base64 wordmark preserved), published-artifact/reference (version pins + `repo#NNN` confirmed at
+HEAD), fact-wide-occurrence (ADR counts, gateway rc-lag, peat-node 0.4.22→0.5.1, "three protocols"→four,
+sapient 3→4 crate grepped across all `0*.md` + three HTML tracks + registry + ground-truth). All passed.
+
+**Self-improvement (§9b):** health lines both flat-or-down — `unresolved_drift_count` **3→2** (sapient
+`proto/VERSION` resolved), `open_feedback_issues` 0, `misses_found` 0; `needs_runtime_count` **17→18** (+1
+ADR-076 end-to-end guarantee — expected, neutral). Filed one new `prompt-amendment` proposal: detect duplicate
+ADR numbers and report distinct-number-count vs file-count separately, flagging any cited ADR-NNN that is
+ambiguous (evidence: ADR-076 collision this sweep; 023/025/059/064 latent).
+
+New unverifiable this run: ADR-076 reconstructible-history **end-to-end field guarantee** (NEEDS_RUNTIME,
+peat-sim#77). Resolved: peat-sapient `proto/VERSION` (now readable).
